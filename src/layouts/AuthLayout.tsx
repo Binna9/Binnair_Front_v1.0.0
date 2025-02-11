@@ -14,6 +14,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <source src="/vid/LoginBackGround.mp4" type="video/mp4" />
       </video>
 
+      {/* ✅ 배경 블러 및 그래픽 요소 */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute w-[72vw] h-auto opacity-40 blur-3xl bg-black rounded-full"></div>
+        <div className="absolute w-[70vw] h-auto bg-gradient-to-b from-black to-black rounded-full shadow-[0px_20px_50px_rgba(0,0,0,1.0)]"></div>
+        <img
+          src="/img/auth-logo.png"
+          alt="Auth Logo"
+          className="w-[70vw] opacity-60 brightness-0 drop-shadow-[10px_10px_50px_rgba(0,0,0,1.0)]"
+        />
+      </div>
+
       {/* ✅ 로그인 및 회원가입 콘텐츠 */}
       <div className="relative z-10 flex flex-col items-center space-y-6 w-full">
         {children}

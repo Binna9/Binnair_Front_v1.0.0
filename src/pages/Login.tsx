@@ -21,22 +21,6 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
-        {/* ✅ 흐린 그림자 효과 (완전 검은색) */}
-        <div className="absolute w-[72vw] h-auto opacity-40 blur-3xl bg-black rounded-full"></div>
-
-        {/* ✅ 로고 배경 그림자 (더 진하게) */}
-        <div className="absolute w-[70vw] h-auto bg-gradient-to-b from-black to-black rounded-full shadow-[0px_20px_50px_rgba(0,0,0,1.0)]"></div>
-
-        {/* ✅ 실제 로고 (완전 검은색) */}
-        <img
-          src="/img/auth-logo.png"
-          alt="Auth Logo"
-          className="w-[70vw] opacity-60 brightness-0 drop-shadow-[10px_10px_50px_rgba(0,0,0,1.0)]"
-        />
-      </div>
-
-      {/* ✅ 기본 로그인 카드 */}
       <Card className="p-8 w-full max-w-md card-login relative z-50 border-none">
         <h2 className="flex justify-center">
           <img

@@ -99,6 +99,21 @@
     position: relative; /* ✅ 다른 요소와 충돌 방지 */
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
   }
+  .sidebar {
+    @apply fixed right-0 top-14 w-80 h-full bg-white/60 backdrop-blur-md shadow-lg p-6 z-40 flex flex-col;
+  }
+
+  /* ✅ 사이드바 왼쪽 가장자리를 부드럽게 블렌딩 */
+  .sidebar::before {
+    content: "";
+    position: absolute;
+    left: -10px; /* ✅ 살짝 바깥쪽으로 설정하여 부드럽게 */
+    top: 0;
+    width: 10px; /* ✅ 적당한 범위의 그라데이션 */
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(224, 219, 219, 0.6));
+    pointer-events: none; /* ✅ 클릭 방지 */
+  }
 }
 
 @layer utilities {

@@ -5,11 +5,10 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import Layout from '@/components/Layout';
-import Dashboard from '@/pages/Dashboard';
+import MainPage from '@/pages/MainPage'; // ✅ 메인 페이지 추가
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
+import ForgotPassword from '@/pages/ForgotPassword';
 
 export default function App() {
   return (
@@ -19,18 +18,16 @@ export default function App() {
   );
 }
 
-// ✅ 애니메이션 적용된 라우트 관리 컴포넌트
 function AnimatedRoutes() {
   const location = useLocation();
 
   return (
     <AnimatePresence>
-      {' '}
       <motion.div
         key={location.pathname}
         initial={{ opacity: 0, scale: 1 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 1 }} // ✅ 높이 변화 방지
+        exit={{ opacity: 0, scale: 1 }}
         transition={{ duration: 0.4, ease: 'easeInOut' }}
         style={{
           position: 'absolute',
@@ -41,13 +38,11 @@ function AnimatedRoutes() {
         }}
       >
         <Routes location={location}>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Dashboard />} />
-          </Route>
+          <Route path="/" element={<MainPage />} />{' '}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />{' '}
-          <Route path="*" element={<Login />} />{' '}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
