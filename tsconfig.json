@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "outDir": "dist", // ✅ 빌드 결과가 저장될 폴더 지정
+    "rootDir": "src", // ✅ 소스 코드가 있는 폴더 지정
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "baseUrl": "./",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "strict": true,
+    "paths": {
+      "@/*": ["src/*"],
+      "@app/*": ["src/app/*"],
+      "@pages/*": ["src/pages/*"],
+      "@assets/*": ["src/assets/*"],
+      "@components/*": ["src/components/*"],
+      "@styles/*": ["src/styles/*"],
+      "@utils/*": ["src/utils/*"],
+      "@lib/*": ["src/lib/*"]
+    }
+  },
+  "include": ["src"], // ✅ 입력 파일은 src 폴더만 포함
+  "exclude": ["node_modules", "dist"] // ✅ dist 폴더를 제외하여 충돌 방지
+}
