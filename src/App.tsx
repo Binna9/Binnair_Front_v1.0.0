@@ -39,6 +39,7 @@ function AnimatedRoutes() {
       >
         <Routes location={location}>
           <Route path="/" element={<MainPage />} />{' '}
+          {/* ✅ 메인 페이지 직접 등록 */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -1,18 +1,11 @@
 import { ReactNode } from 'react';
+import LoginBackground from '@/components/LoginBackground';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="w-screen h-screen fixed top-0 left-0 flex flex-col items-center justify-center relative space-y-8">
       {/* ✅ 공용 배경 비디오 */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover filter grayscale"
-      >
-        <source src="/vid/LoginBackGround.mp4" type="video/mp4" />
-      </video>
+      <LoginBackground />
 
       {/* ✅ 배경 블러 및 그래픽 요소 */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">

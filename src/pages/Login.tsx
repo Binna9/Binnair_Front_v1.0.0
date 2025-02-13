@@ -6,17 +6,39 @@ import { FaApple, FaGithub } from 'react-icons/fa';
 import { SiNaver } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
-import AuthLayout from '@/layouts/AuthLayout'; // ✅ 공용 레이아웃 추가
+import AuthLayout from '@/layouts/AuthLayout';
+import api from '@/lib/api';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loginId, setLoginId] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Logging in with:', email, password, staySignedIn);
+
+    try {
+      const response = await api.post('/auth/login', {
+        loginId: loginId,
+        loginPassword: loginPassword,
+      });
+
+      if (response.status === 200) {
+        const { accessToken, refreshToken } = response.data;
+
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        navigate('/'); // ✅ 로그인 성공 후 메인 페이지로 이동
+      }
+    } catch (error) {
+      console.log('❌ 로그인 실패 발생! navigate 실행 여부 확인:', error);
+
+      // ✅ 상태만 업데이트하고, 페이지 이동을 막음
+      setError('로그인 실패: ID 또는 비밀번호를 확인하세요.');
+    }
   };
 
   return (
@@ -36,8 +58,8 @@ export default function Login() {
             <Input
               type="text"
               placeholder="ID or Phone Number"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={loginId}
+              onChange={(e) => setLoginId(e.target.value)}
               required
               className="bg-white/90 border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
@@ -49,8 +71,8 @@ export default function Login() {
             <Input
               type="password"
               placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={loginPassword}
+              onChange={(e) => setLoginPassword(e.target.value)}
               required
               className="bg-white/90 border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
             />
@@ -67,6 +89,7 @@ export default function Login() {
               Stay Signed In
             </label>
           </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button type="submit" className="w-full py-3 font-sans">
             로그인
           </Button>

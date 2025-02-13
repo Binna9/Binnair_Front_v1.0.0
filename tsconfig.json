@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "outDir": "dist", // ✅ 빌드 결과가 저장될 폴더 지정
     "rootDir": "src", // ✅ 소스 코드가 있는 폴더 지정
     "jsx": "react-jsx",
