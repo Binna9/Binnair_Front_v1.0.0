@@ -1,8 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.kanit {
+  font-family: 'Kanit', sans-serif;
+}
 
 @layer base {
   :root {
@@ -31,6 +36,14 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -58,6 +71,14 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -99,21 +120,6 @@
     position: relative; /* ✅ 다른 요소와 충돌 방지 */
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
   }
-  .sidebar {
-    @apply fixed right-0 top-14 w-80 h-full bg-white/60 backdrop-blur-md shadow-lg p-6 z-40 flex flex-col;
-  }
-
-  /* ✅ 사이드바 왼쪽 가장자리를 부드럽게 블렌딩 */
-  .sidebar::before {
-    content: "";
-    position: absolute;
-    left: -10px; /* ✅ 살짝 바깥쪽으로 설정하여 부드럽게 */
-    top: 0;
-    width: 10px; /* ✅ 적당한 범위의 그라데이션 */
-    height: 100%;
-    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(224, 219, 219, 0.6));
-    pointer-events: none; /* ✅ 클릭 방지 */
-  }
 }
 
 @layer utilities {
@@ -139,6 +145,14 @@
     -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
     mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
   }
+
 }
 
-
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

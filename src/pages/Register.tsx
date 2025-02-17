@@ -1,52 +1,32 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useNavigate } from 'react-router-dom';
-
+import { useRegister } from '@/hooks/useRegister';
 import AuthLayout from '@/layouts/AuthLayout';
 
 export default function Register() {
-  const [loginId, setLoginId] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [nickName, setNickName] = useState('');
-  const [userName, setUserName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const navigate = useNavigate();
-
-  // 🔹 회원가입 처리
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    console.log({
-      loginId,
-      password,
-      nickName,
-      userName,
-      email,
-      phoneNumber,
-      profileImage,
-      agreeTerms,
-    });
-
-    // 🔹 회원가입 API 연동 가능
-  };
-
-  // 🔹 프로필 이미지 업로드
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setProfileImage(event.target.files[0]);
-    }
-  };
+  const {
+    loginId,
+    setLoginId,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    nickName,
+    setNickName,
+    userName,
+    setUserName,
+    email,
+    setEmail,
+    phoneNumber,
+    setPhoneNumber,
+    profileImage,
+    handleImageUpload,
+    agreeTerms,
+    setAgreeTerms,
+    handleRegister,
+  } = useRegister();
 
   return (
     <AuthLayout>
@@ -58,7 +38,8 @@ export default function Register() {
               className="w-52 h-52 mx-auto mt-[-60px] mb-[-50px] filter brightness-0 grayscale pointer-events-none"
             />
           </h2>
-          <form className="space-y-4">
+
+          <form className="space-y-4" onSubmit={handleRegister}>
             {/* ✅ 프로필 이미지 업로드 */}
             <div className="flex flex-col items-center relative">
               <label htmlFor="profileUpload" className="cursor-pointer">
@@ -80,10 +61,11 @@ export default function Register() {
                 type="file"
                 id="profileUpload"
                 accept="image/*"
-                onChange={handleImageUpload}
+                onChange={handleImageUpload} // ✅ 여기서 handleImageUpload 호출
                 className="hidden"
               />
             </div>
+
             {/* ✅ 로그인 ID */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-gray-700">
@@ -95,7 +77,7 @@ export default function Register() {
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -110,7 +92,7 @@ export default function Register() {
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -125,7 +107,7 @@ export default function Register() {
                 value={nickName}
                 onChange={(e) => setNickName(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -140,7 +122,7 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -155,7 +137,7 @@ export default function Register() {
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -170,7 +152,7 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
@@ -185,11 +167,11 @@ export default function Register() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
-            {/* ✅ 약관 동의 체크박스 */}
+            {/* ✅ 약관 동의 */}
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="agreeTerms"
@@ -201,14 +183,16 @@ export default function Register() {
               </label>
             </div>
 
+            {/* ✅ 회원가입 버튼 */}
             <Button type="submit" className="w-full py-3">
               회원가입
             </Button>
           </form>
 
+          {/* ✅ 로그인 페이지로 이동 버튼 */}
           <div className="flex justify-center space-x-4 mt-4">
             <Button
-              onClick={() => navigate('/login')}
+              onClick={() => (window.location.href = '/login')}
               variant="outline"
               size="sm"
               className="text-xs px-3 py-1"

@@ -1,33 +1,24 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Sun, Moon, User } from 'lucide-react';
+import { Search, Sun, Moon, User, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import HamburgerMenu from './HamburgerMenu';
+import { useAuth } from '@/hooks/useAuth'; // ✅ 커스텀 훅 가져오기
+import { useNavigate } from 'react-router-dom';
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
-  const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  // 다크 모드 토글
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
-    console.log(`🌙 [DarkMode] 다크 모드 상태:`, !darkMode);
   };
 
-  // 햄버거 메뉴 클릭 이벤트
-  const handleMenuClick = (clickedMenu: string) => {
-    setOpenMenus((prevMenus) => {
-      const newMenus = Object.keys(prevMenus).reduce(
-        (acc, menu) => ({
-          ...acc,
-          [menu]: menu === clickedMenu ? !prevMenus[menu] : false,
-        }),
-        {} as { [key: string]: boolean }
-      );
-
-      return newMenus;
-    });
+  const handleMenuClick = (menuName: string) => {
+    setOpenMenu((prevMenu) => (prevMenu === menuName ? null : menuName));
   };
 
   return (
@@ -45,51 +36,108 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 📌 네비게이션 메뉴 */}
       <div className="flex space-x-6 ml-[750px]">
-        {[
-          { name: '이벤트', items: ['할인 이벤트', '기획전', '프로모션'] },
-          { name: '제품', items: ['신제품', '베스트셀러', '카테고리별 보기'] },
-          { name: '장바구니', items: ['최근 본 상품', '찜한 상품'] },
-          { name: '고객센터', items: ['FAQ', '문의하기', '1:1 상담'] },
-        ].map((menu) => (
-          <HamburgerMenu
-            key={menu.name}
-            menuName={menu.name}
-            items={menu.items}
-            isOpen={openMenus[menu.name] || false}
-            onClick={() => handleMenuClick(menu.name)}
-          />
-        ))}
+        <HamburgerMenu
+          menuName="이벤트"
+          items={['할인 이벤트', '기획전', '프로모션']}
+          isOpen={openMenu === '이벤트'}
+          onClick={() => handleMenuClick('이벤트')}
+        />
+        <HamburgerMenu
+          menuName="제품"
+          items={['신제품', '베스트셀러', '카테고리별 보기']}
+          isOpen={openMenu === '제품'}
+          onClick={() => handleMenuClick('제품')}
+        />
+        <HamburgerMenu
+          menuName="장바구니"
+          items={['최근 본 상품', '찜한 상품']}
+          isOpen={openMenu === '장바구니'}
+          onClick={() => handleMenuClick('장바구니')}
+        />
+        <HamburgerMenu
+          menuName="고객센터"
+          items={['FAQ', '문의하기', '1:1 상담']}
+          isOpen={openMenu === '고객센터'}
+          onClick={() => handleMenuClick('고객센터')}
+        />
       </div>
 
-      {/* 📌 로그인 & 회원가입 버튼 */}
-      <div className="flex space-x-4 ml-8">
-        <Button className="bg-white/90 text-gray-900 px-3 py-1 text-xs hover:bg-gray-300 shadow-md">
-          로그인
-        </Button>
-        <Button className="bg-blue-500/90 text-white px-3 py-1 text-xs hover:bg-blue-600 shadow-md">
-          회원가입
-        </Button>
+      {/* ✅ 로그인 여부에 따른 UI 변경 */}
+      <div className="flex space-x-4 ml-8 items-center">
+        {user ? (
+          <div className="flex items-center space-x-3">
+            <span className="text-xl font-bold text-white underline decoration-white underline-offset-4">
+              {user.username}
+            </span>
+            <span className="text-sm text-white">님 안녕하세요!</span>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-4">
+            {/* ✅ 로그인 아이콘 버튼 + 설명 */}
+            <Button
+              onClick={() => navigate('/login')}
+              variant="ghost"
+              className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+            >
+              <LogIn className="text-white w-8 h-8 cursor-pointer" />
+              <span className="text-sm text-gray-300">Log In</span>
+            </Button>
+
+            {/* ✅ 회원가입 아이콘 버튼 + 설명 */}
+            <Button
+              onClick={() => navigate('/register')}
+              variant="ghost"
+              className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+            >
+              <UserPlus className="text-white w-8 h-8 cursor-pointer" />
+              <span className="text-sm text-gray-300">Sign Up</span>
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* 📌 사용자 설정 & 다크모드 버튼 */}
+      {/* ✅ 우측 사용자 설정, 다크모드, 로그아웃 버튼 */}
       <div className="flex items-center space-x-4 ml-6">
-        <Button variant="ghost" className="p-4 hover:bg-gray-700/50">
-          <User className="text-white w-10 h-10 cursor-pointer" />
-        </Button>
-
+        {/* ✅ 사용자 설정 버튼 */}
         <Button
           variant="ghost"
-          className="p-4 hover:bg-gray-700/50"
+          className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+        >
+          <User className="text-white w-10 h-10 cursor-pointer" />
+          <span className="text-sm text-gray-300">Profile</span>
+        </Button>
+
+        {/* ✅ 다크모드 버튼 */}
+        <Button
+          variant="ghost"
+          className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
           onClick={toggleDarkMode}
         >
           {darkMode ? (
-            <Moon className="text-white w-10 h-10 cursor-pointer" />
+            <>
+              <Moon className="text-white w-10 h-10 cursor-pointer" />
+              <span className="text-sm text-gray-300">Dark Mode</span>
+            </>
           ) : (
-            <Sun className="text-white w-10 h-10 cursor-pointer" />
+            <>
+              <Sun className="text-white w-10 h-10 cursor-pointer" />
+              <span className="text-sm text-gray-300">Light Mode</span>
+            </>
           )}
         </Button>
+
+        {/* ✅ 로그아웃 버튼 (아이콘 + 설명 추가) */}
+        {user && (
+          <Button
+            variant="ghost"
+            className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+            onClick={logout}
+          >
+            <LogOut className="text-white w-10 h-10 cursor-pointer" />
+            <span className="text-sm text-gray-300">Log Out</span>
+          </Button>
+        )}
       </div>
     </nav>
   );

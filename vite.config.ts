@@ -4,9 +4,26 @@ import * as path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  server: {
+    port: 5173, // ✅ 프론트엔드 서버 포트
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:8080', // ✅ Spring Boot 백엔드 URL
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/auth/, '/auth'), // ✅ URL 매칭 유지
+      },
+      '/registers': {
+        target: 'http://localhost:8080', // ✅ Spring Boot 백엔드 URL
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/registers/, '/registers'), // ✅ URL 매칭 유지
+      },
+    },
+  },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'), // ✅ './src'에서 'src'로 변경
+      '@': path.resolve(__dirname, 'src'),
       '@components': path.resolve(__dirname, 'src/components'),
       '@pages': path.resolve(__dirname, 'src/pages'),
       '@assets': path.resolve(__dirname, 'src/assets'),
