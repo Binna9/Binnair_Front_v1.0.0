@@ -42,36 +42,38 @@ export default function OptionsList() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   return (
-    <div className="flex justify-center items-center h-screen ">
-      <div className="flex space-x-4 w-full max-w-5xl h-[500px]">
-        {options.map((option, index) => (
-          <div
-            key={index}
-            className={`relative flex-grow cursor-pointer overflow-hidden transition-all duration-500 rounded-2xl shadow-lg
+    <div className="relative z-50">
+      <div className="flex justify-center items-center h-screen ">
+        <div className="flex space-x-4 w-full max-w-5xl h-[500px]">
+          {options.map((option, index) => (
+            <div
+              key={index}
+              className={`relative flex-grow cursor-pointer overflow-hidden transition-all duration-500 rounded-2xl shadow-lg
               ${
                 activeIndex === index
                   ? 'flex-[5] max-w-[600px]'
                   : 'flex-1 max-w-[100px]'
               }`}
-            style={{
-              backgroundImage: `url(${option.background})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-            onClick={() => setActiveIndex(index)}
-          >
-            <div className="absolute inset-0 bg-opacity-30 transition-all duration-500"></div>
-            <div className="absolute bottom-4 left-4 flex items-center space-x-3">
-              <div className="w-10 h-10 flex items-center justify-center bg-white text-gray-800 rounded-full">
-                <i className={option.icon}></i>
-              </div>
-              <div className="text-white">
-                <div className="text-lg font-bold">{option.title}</div>
-                <div className="text-sm opacity-80">{option.subtitle}</div>
+              style={{
+                backgroundImage: `url(${option.background})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+              onClick={() => setActiveIndex(index)}
+            >
+              <div className="absolute inset-0 bg-opacity-30 transition-all duration-500"></div>
+              <div className="absolute bottom-4 left-4 flex items-center space-x-3">
+                <div className="w-10 h-10 flex items-center justify-center bg-white text-gray-800 rounded-full">
+                  <i className={option.icon}></i>
+                </div>
+                <div className="text-white">
+                  <div className="text-lg font-bold">{option.title}</div>
+                  <div className="text-sm opacity-80">{option.subtitle}</div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

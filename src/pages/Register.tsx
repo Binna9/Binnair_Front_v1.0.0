@@ -65,7 +65,6 @@ export default function Register() {
                 className="hidden"
               />
             </div>
-
             {/* ✅ 로그인 ID */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-gray-700">

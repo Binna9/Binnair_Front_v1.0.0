@@ -8,16 +8,46 @@ export default defineConfig({
     port: 5173, // ✅ 프론트엔드 서버 포트
     proxy: {
       '/auth': {
-        target: 'http://localhost:8080', // ✅ Spring Boot 백엔드 URL
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/auth/, '/auth'), // ✅ URL 매칭 유지
+        rewrite: (path) => path.replace(/^\/auth/, '/auth'),
       },
       '/registers': {
-        target: 'http://localhost:8080', // ✅ Spring Boot 백엔드 URL
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/registers/, '/registers'), // ✅ URL 매칭 유지
+        rewrite: (path) => path.replace(/^\/registers/, '/registers'),
+      },
+      '/users': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/users/, '/users'),
+      },
+      '/products': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/products/, '/products'),
+      },
+      '/carts': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/carts/, '/carts'),
+      },
+      '/bookmarks': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/bookmakrs/, '/bookmarks'),
+      },
+      '/addresses': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/addresses/, '/addresses'),
       },
     },
   },

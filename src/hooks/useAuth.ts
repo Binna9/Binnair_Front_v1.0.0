@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ 페이지 이동용
-
-interface User {
-  username: string;
-}
+import { User as UserType } from '@/types/user'; // ✅ 타입 충돌 방지 위해 별칭 사용
+import { useNavigate } from 'react-router-dom';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null); // ✅ 올바른 타입 적용
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem('accessToken');
@@ -24,7 +22,12 @@ export function useAuth() {
 
         if (response.ok) {
           const data = await response.json();
-          setUser({ username: data.username });
+          setUser({
+            userId: data.userId,
+            username: data.username,
+            email: data.email,
+            profileImageUrl: data.profileImageUrl,
+          });
         } else {
           setUser(null);
         }
@@ -59,5 +62,5 @@ export function useAuth() {
     navigate('/auth/login'); // 🚀 리다이렉트
   };
 
-  return { user, logout };
+  return { user, logout, setUser };
 }
