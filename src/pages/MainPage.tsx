@@ -1,26 +1,51 @@
 import MainLayout from '@/layouts/MainLayout';
 import OptionsList from '@/components/OptionsList';
-import Sidebar from '@/components/Sidebar';
 import NoticeBoard from '@/components/NoticeBoard';
+import MachineCard from '@/components/MachineCard';
 
 export default function MainPage() {
   return (
     <MainLayout>
-      <div className="relative w-full max-w-5xl mx-auto">
-        <h1
-          className="playfair absolute top-32 left-12 text-6xl font-extrabold tracking-wide z-20
-          bg-gradient-to-b from-white to-gray-400 text-transparent bg-clip-text
-          drop-shadow-[8px_8px_6px_rgba(0,0,0,0.8)] shadow-[0px_4px_4px_rgba(255,255,255,0.3)]
-          antialiased subpixel-antialiased"
-        >
-          Product
-        </h1>
-
-        <div className="mt-4">
-          <OptionsList />
+      <div className="relative w-full max-w-5xl mx-auto flex">
+        {/* ✅ 왼쪽 공지사항 (NoticeBoard) */}
+        <div className="mr-6">
+          <NoticeBoard />
         </div>
-        <NoticeBoard />
-        <Sidebar />
+
+        {/* ✅ 중앙 콘텐츠 (OptionsList) + 오른쪽 머천카드 */}
+        <div className="flex-1 flex">
+          {/* ✅ 중앙 OptionsList */}
+          <div className="flex-1">
+            <div className="mt-4">
+              <OptionsList />
+            </div>
+          </div>
+
+          {/* ✅ 오른쪽 MachineCard (사이드바 왼쪽) */}
+          <div className="fixed right-56 mt-32 flex flex-col gap-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
+              <MachineCard
+                title="발라리안"
+                description="play ground in world from VAPE"
+                date="2025-02-20"
+                image="https://images.unsplash.com/photo-1496979551903-46e46589a88b"
+                className="relative z-10 shadow-2xl"
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
+              <MachineCard
+                title="스페셜 에디션 후드"
+                description="따뜻하고 스타일리시한 후드"
+                date="2025-02-18"
+                image="https://tvseriescritic.files.wordpress.com/2016/10/stranger-things-bicycle-lights-children.jpg"
+                className="relative z-10 shadow-2xl"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

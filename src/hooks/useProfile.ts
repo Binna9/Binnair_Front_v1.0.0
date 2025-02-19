@@ -2,31 +2,40 @@ import { useState, useEffect } from 'react';
 import apiClient from '@/utils/apiClient'; // ✅ 공용 Axios 모듈 import
 import { ProfileUser, ProfileAddress } from '../types/ProfileUser';
 
-export const useProfile = (userId: string) => {
+export const useProfile = (userId: string | null) => {
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // ✅ 사용자 정보 + 배송지 불러오기
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
+    console.log(`🚀 useProfile: /users/${userId} 요청 시작`);
+
+    const fetchUserProfile = async () => {
       try {
         const [userResponse, addressResponse] = await Promise.all([
           apiClient.get<ProfileUser>(`/users/${userId}`),
           apiClient.get<ProfileAddress[]>('/addresses'),
         ]);
 
+        console.log('✅ 사용자 정보 응답:', userResponse.data);
+        console.log('✅ 배송지 정보 응답:', addressResponse.data);
+
         setUser({
           ...userResponse.data,
+          userId: userId,
           addresses: Array.isArray(addressResponse.data)
             ? addressResponse.data
-            : [], // 🚀 안전한 배열 변환
+            : [],
         });
       } catch (err) {
-        console.error('❌ 사용자 정보를 불러오는 중 오류 발생:', err);
-        setError('❌ 사용자 정보를 불러오는 중 오류 발생');
+        console.error('❌ 프로필 정보를 불러오는 중 오류 발생:', err);
+        setError('❌ 프로필 정보를 불러오는 중 오류 발생');
       } finally {
         setLoading(false);
       }

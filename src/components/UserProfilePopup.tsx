@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { XCircleIcon, CameraIcon } from '@heroicons/react/24/solid';
 import { ProfileUser, ProfileAddress } from '../types/ProfileUser';
 import { useProfileImage } from '../hooks/useProfileImage';
+import { useEffect } from 'react';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -28,8 +29,19 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<ProfileUser>>({ ...user });
 
+  const [currentUser, setCurrentUser] = useState<ProfileUser | null>(null);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      console.log('✅ UserProfilePopup: user 업데이트됨', user);
+      setCurrentUser(user);
+    }
+  }, [isOpen, user]);
+
+  console.log('✅ UserProfilePopup에서 받은 user:', user.userId);
+
   const { profileImage, uploadProfileImage } = useProfileImage(
-    user?.userId || null
+    currentUser?.userId || ''
   );
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressForm, setAddressForm] = useState<Partial<ProfileAddress>>({});
@@ -66,6 +78,8 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       setEditingAddressId(null);
     }
   };
+
+  console.log('✅ UserProfilePopup에서 받은 user:', user);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
@@ -142,7 +156,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
           ) : (
             <>
               <h2 className="text-xl font-semibold">
-                {user.userName} ({user.nickName})
+                {user.userName} [{user.nickName}]
               </h2>
               <p className="text-gray-500">{user.email}</p>
               <p className="text-gray-500">{user.phoneNumber}</p>

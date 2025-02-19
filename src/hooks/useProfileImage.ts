@@ -5,7 +5,12 @@ export function useProfileImage(userId: string | null) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('❌ No userId provided, skipping profile image fetch.');
+      return;
+    }
+
+    console.log(`🔄 Fetching profile image for userId: ${userId}`);
 
     const fetchProfileImage = async () => {
       const token = localStorage.getItem('accessToken');
@@ -29,6 +34,8 @@ export function useProfileImage(userId: string | null) {
 
         const blob = await response.blob();
         const imageUrl = URL.createObjectURL(blob);
+
+        console.log('✅ Profile image URL fetched:', imageUrl);
         setProfileImage(imageUrl);
       } catch (error) {
         console.error('❌ Error fetching profile image:', error);

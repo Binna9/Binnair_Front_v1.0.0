@@ -7,6 +7,7 @@ import {
   Cog6ToothIcon,
 } from '@heroicons/react/24/solid';
 import CartBookmarkPopup from './CartBookmarkPopup';
+import ChatPopUp from './ChatPopup';
 import { useCartBookmark } from '../hooks/useCartBookmark';
 
 const Sidebar = () => {
@@ -22,21 +23,13 @@ const Sidebar = () => {
   const menuItems = [
     { id: 'cart', icon: ShoppingCartIcon, label: '장바구니' },
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
-    { id: 'messages', icon: ChatBubbleLeftRightIcon, label: '메시지' },
+    { id: 'messages', icon: ChatBubbleLeftRightIcon, label: '메시지' }, // ✅ ChatPopUp 추가
     { id: 'help', icon: QuestionMarkCircleIcon, label: '도움말' },
     { id: 'settings', icon: Cog6ToothIcon, label: '설정' },
   ];
 
   return (
     <>
-      {/* ✅ 배경 클릭 시 닫기 */}
-      {selected !== null && (
-        <div
-          className="fixed inset-0 z-10 bg-black/30"
-          onClick={() => setSelected(null)}
-        />
-      )}
-
       {/* ✅ 사이드바 */}
       <div
         className="fixed top-1/2 right-4 transform -translate-y-1/2 flex flex-col gap-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-300 z-20"
@@ -60,7 +53,7 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* ✅ 팝업 연결 */}
+      {/* ✅ 장바구니 팝업 */}
       {selected === 'cart' && (
         <CartBookmarkPopup
           isOpen={selected === 'cart'}
@@ -71,6 +64,8 @@ const Sidebar = () => {
           updateCartQuantity={updateCartQuantity}
         />
       )}
+
+      {/* ✅ 즐겨찾기 팝업 */}
       {selected === 'bookmark' && (
         <CartBookmarkPopup
           isOpen={selected === 'bookmark'}
@@ -78,6 +73,14 @@ const Sidebar = () => {
           items={bookmarkItems}
           closePopup={() => setSelected(null)}
           removeItem={deleteBookmarkItem} // ✅ 삭제 함수 연결
+        />
+      )}
+
+      {/* ✅ ChatPopUp 추가 (사이드바 옆에서 뜨도록) */}
+      {selected === 'messages' && (
+        <ChatPopUp
+          isOpen={selected === 'messages'}
+          closePopup={() => setSelected(null)}
         />
       )}
     </>

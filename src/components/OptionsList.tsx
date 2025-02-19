@@ -41,9 +41,25 @@ const options = [
 export default function OptionsList() {
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const { clientX, currentTarget } = event;
+    const { left, width } = currentTarget.getBoundingClientRect(); // OptionsList 내부 크기 가져오기
+    const sectionWidth = width / options.length;
+    const newIndex = Math.floor((clientX - left) / sectionWidth);
+    setActiveIndex(newIndex);
+  };
+
+  const handleMouseLeave = () => {
+    setActiveIndex(0); // 마우스를 벗어나면 기본값으로 리셋
+  };
+
   return (
-    <div className="relative z-50">
-      <div className="flex justify-center items-center h-screen ">
+    <div className="fixed right-28 relative z-50">
+      <div
+        className="flex justify-center items-center h-screen w-full"
+        onMouseMove={handleMouseMove} // ✅ 이벤트를 이 div 내부에서만 감지
+        onMouseLeave={handleMouseLeave} // ✅ 마우스를 벗어나면 초기화
+      >
         <div className="flex space-x-4 w-full max-w-5xl h-[500px]">
           {options.map((option, index) => (
             <div
@@ -59,7 +75,6 @@ export default function OptionsList() {
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}
-              onClick={() => setActiveIndex(index)}
             >
               <div className="absolute inset-0 bg-opacity-30 transition-all duration-500"></div>
               <div className="absolute bottom-4 left-4 flex items-center space-x-3">
