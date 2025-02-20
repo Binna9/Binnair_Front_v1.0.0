@@ -5,6 +5,7 @@ import * as path from 'path';
 export default defineConfig({
   plugins: [react()],
   server: {
+    hmr: true,
     port: 5173, // ✅ 프론트엔드 서버 포트
     proxy: {
       '/auth': {

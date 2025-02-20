@@ -11,7 +11,6 @@ export default function MainPage() {
         <div className="mr-6">
           <NoticeBoard />
         </div>
-
         {/* ✅ 중앙 콘텐츠 (OptionsList) + 오른쪽 머천카드 */}
         <div className="flex-1 flex">
           {/* ✅ 중앙 OptionsList */}
