@@ -6,13 +6,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     hmr: true,
-    port: 5173, // ✅ 프론트엔드 서버 포트
+    port: 5173,
     proxy: {
       '/auth': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/auth/, '/auth'),
+        rewrite: (path) => path,
+        bypass: (req) => {
+          if (req.method === 'GET' && req.url?.startsWith('/auth/google')) {
+            return req.url; // 클라이언트로 전달
+          }
+        },
       },
       '/registers': {
         target: 'http://localhost:8080',

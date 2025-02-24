@@ -1,66 +1,70 @@
 import { useState, useEffect } from 'react';
-import { User as UserType } from '@/types/user'; // ✅ 타입 충돌 방지 위해 별칭 사용
+import { User as UserType } from '@/types/user';
 import { useNavigate } from 'react-router-dom';
+import {
+  fetchUser,
+  loginUser,
+  logoutUser,
+  googleLogin,
+} from '@/services/authService'; // ✅ 서비스에서 API 요청 처리
 
 export function useAuth() {
-  const [user, setUser] = useState<UserType | null>(null); // ✅ 올바른 타입 적용
+  const [user, setUser] = useState<UserType | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const loadUser = async () => {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
 
       try {
-        const response = await fetch('/auth/user', {
-          method: 'GET',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+        const data = await fetchUser();
+        setUser({
+          userId: data.userId,
+          username: data.username,
+          email: data.email,
+          profileImageUrl: data.profileImageUrl,
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser({
-            userId: data.userId,
-            username: data.username,
-            email: data.email,
-            profileImageUrl: data.profileImageUrl,
-          });
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('❌ [useAuth] API 요청 중 오류 발생:', error);
+      } catch {
         setUser(null);
       }
     };
 
-    fetchUser();
+    loadUser();
   }, []);
 
-  const logout = async () => {
+  const handleLogin = async (loginId: string, loginPassword: string) => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        await fetch('/auth/logout', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
+      const { accessToken, refreshToken } = await loginUser(
+        loginId,
+        loginPassword
+      );
+
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+
+      navigate('/'); // ✅ 로그인 성공 후 이동
     } catch (error) {
-      console.error('❌ [useAuth] 로그아웃 실패:', error);
+      console.log('', error);
     }
-
-    localStorage.removeItem('accessToken');
-    setUser(null);
-
-    navigate('/auth/login'); // 🚀 리다이렉트
   };
 
-  return { user, logout, setUser };
+  const handleGoogleLogin = async (code: string) => {
+    try {
+      const { accessToken } = await googleLogin(code);
+      localStorage.setItem('accessToken', accessToken);
+      navigate('/'); // 로그인 성공 후 홈으로 이동
+    } catch (error) {
+      console.error('❌ [useAuth] Google 로그인 실패:', error);
+      setError('Google 로그인 실패. 다시 시도하세요.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate('/auth/login');
+  };
+
+  return { user, handleLogin, handleGoogleLogin, handleLogout, setUser, error };
 }

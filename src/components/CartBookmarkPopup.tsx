@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 import {
   XCircleIcon,
   ShoppingCartIcon,
@@ -6,11 +7,13 @@ import {
 } from '@heroicons/react/24/solid';
 import { CartItem, BookmarkItem } from '../types/CartBookmarkTypes';
 import { useProductImageBatch } from '../hooks/useProductImageBatch'; // ✅ 여러 제품 이미지 가져오는 커스텀 훅
+import { useCartBookmark } from '../hooks/useCartBookmark';
 
 interface CartBookmarkPopupProps {
   isOpen: boolean;
   type: 'cart' | 'bookmark';
   items: CartItem[] | BookmarkItem[];
+  totalAmount: number | null;
   closePopup: () => void;
   removeItem: (id: string) => void;
   updateCartQuantity?: (id: string, newQuantity: number) => void;
@@ -27,6 +30,11 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
   // ✅ 모든 제품의 ID 추출 후 한번에 이미지 로드
   const productIds = items.map((item) => item.productId);
   const productImages = useProductImageBatch(productIds); // ✅ 여러 개의 이미지 불러오기
+  const { totalAmount } = useCartBookmark('cart');
+
+  useEffect(() => {
+    console.log('🔄 CartBookmarkPopup: totalAmount 상태 변경됨:', totalAmount);
+  }, [totalAmount]);
 
   if (!isOpen) return null;
 
@@ -134,6 +142,16 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
             <p className="text-gray-500 text-center">아이템이 없습니다.</p>
           )}
         </div>
+        {/* ✅ 총 금액 표시 (cart 타입인 경우) */}
+        {type === 'cart' && (
+          <div className="mt-4 text-right font-bold text-lg">
+            {' '}
+            {totalAmount !== null && totalAmount !== undefined
+              ? totalAmount.toLocaleString()
+              : '🚨 totalAmount가 null 또는 undefined입니다.'}{' '}
+            원
+          </div>
+        )}
       </motion.div>
     </div>
   );

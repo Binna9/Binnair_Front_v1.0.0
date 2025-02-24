@@ -12,7 +12,7 @@ import { useProfile } from '@/hooks/useProfile';
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const { user, logout } = useAuth();
+  const { user, handleLogout } = useAuth();
 
   const {
     user: profileUser,
@@ -47,7 +47,7 @@ export default function Navbar() {
           updateUser={updateUser}
           uploadProfileImage={uploadProfileImage}
           updateAddress={updateAddress}
-          logout={logout}
+          logout={handleLogout}
         />
       )}
 
@@ -174,7 +174,7 @@ export default function Navbar() {
             <Button
               variant="ghost"
               className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
-              onClick={logout}
+              onClick={handleLogout}
             >
               <LogOut className="text-white w-10 h-10 cursor-pointer" />
               <span className="text-sm text-gray-300">Log Out</span>

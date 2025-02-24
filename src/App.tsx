@@ -5,10 +5,11 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import MainPage from '@/pages/MainPage'; // ✅ 메인 페이지 추가
+import MainPage from '@/pages/Main'; // ✅ 메인 페이지 추가
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
+import GoogleAuthHandler from './components/GoogleAuthHandler';
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ function AnimatedRoutes() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/google" element={<GoogleAuthHandler />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>

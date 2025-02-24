@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { fetchCartTotalAmount } from '../services/CartBookmarkService';
+import { useAuth } from '../hooks/useAuth';
 import {
   CartItem,
   BookmarkItem,
@@ -8,8 +10,19 @@ import {
 } from '../types/CartBookmarkTypes';
 
 export const useCartBookmark = (selected: string | null) => {
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [bookmarkItems, setBookmarkItems] = useState<BookmarkItem[]>([]);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [forceRender, setForceRender] = useState(false);
+
+  useEffect(() => {
+    fetchCartTotalAmount().then((amount) => {
+      console.log('🟢 totalAmount 업데이트 예정:', amount);
+      setTotalAmount(amount);
+      setForceRender((prev) => !prev); // ✅ 강제 리렌더링 추가
+    });
+  }, []);
 
   // ✅ 장바구니 데이터 가져오기 (토큰 추가)
   const fetchCartItems = async () => {
@@ -35,6 +48,10 @@ export const useCartBookmark = (selected: string | null) => {
         price: item.price,
       }));
       setCartItems(data);
+
+      if (user) {
+        fetchCartTotalAmount().then((amount) => setTotalAmount(amount));
+      }
     } catch (error) {
       console.error('❌ 장바구니 데이터를 불러오는 중 오류 발생:', error);
     }
@@ -145,6 +162,8 @@ export const useCartBookmark = (selected: string | null) => {
   return {
     cartItems,
     bookmarkItems,
+    totalAmount,
+    forceRender,
     deleteCartItem,
     deleteBookmarkItem,
     updateCartQuantity,

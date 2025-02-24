@@ -34,3 +34,8 @@ export interface BookmarkItem {
   productDescription: string;
   price: number;
 }
+
+export interface CartTotal {
+  totalAmount: number;
+  userId: string;
+}
