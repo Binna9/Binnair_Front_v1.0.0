@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import apiClient from '../utils/apiClient';
+import { fetchProductImagesBatch } from '@/services/ProductService';
 
 export function useProductImageBatch(productIds: string[]) {
   const [productImages, setProductImages] = useState<
@@ -9,31 +9,13 @@ export function useProductImageBatch(productIds: string[]) {
   useEffect(() => {
     if (productIds.length === 0) return;
 
-    let isMounted = true; // ✅ 컴포넌트가 언마운트되었을 때 상태 업데이트 방지
+    let isMounted = true;
 
-    const fetchImages = async () => {
-      const images: Record<string, string | null> = {};
-
-      await Promise.all(
-        productIds.map(async (productId) => {
-          try {
-            const response = await apiClient.get(
-              `/products/${productId}/image`,
-              {
-                responseType: 'blob',
-              }
-            );
-            images[productId] = URL.createObjectURL(response.data);
-          } catch (error) {
-            console.error(`❌ 제품 이미지 불러오기 실패: ${productId}`, error);
-            images[productId] = null; // 기본 이미지 설정
-          }
-        })
-      );
+    const loadImages = async () => {
+      const images = await fetchProductImagesBatch(productIds);
 
       if (isMounted) {
         setProductImages((prevImages) => {
-          // ✅ 기존 상태와 비교하여 변경된 경우에만 업데이트
           const isDifferent = Object.keys(images).some(
             (key) => images[key] !== prevImages[key]
           );
@@ -42,12 +24,12 @@ export function useProductImageBatch(productIds: string[]) {
       }
     };
 
-    fetchImages();
+    loadImages();
 
     return () => {
-      isMounted = false; // ✅ 컴포넌트 언마운트 시 상태 업데이트 방지
+      isMounted = false;
     };
-  }, [JSON.stringify(productIds)]); // ✅ 배열 변경 체크 방식 개선
+  }, [JSON.stringify(productIds)]);
 
   return productImages;
 }

@@ -7,38 +7,20 @@ import { SiNaver } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
-import api from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 
 export default function Login() {
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const { handleLogin, error } = useAuth();
+
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    try {
-      const response = await api.post('/auth/login', {
-        loginId: loginId,
-        loginPassword: loginPassword,
-      });
-
-      if (response.status === 200) {
-        const { accessToken, refreshToken } = response.data;
-
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-
-        navigate('/'); // ✅ 로그인 성공 후 메인 페이지로 이동
-      }
-    } catch (error) {
-      console.log('❌ 로그인 실패 발생! navigate 실행 여부 확인:', error);
-
-      // ✅ 상태만 업데이트하고, 페이지 이동을 막음
-      setError('로그인 실패: ID 또는 비밀번호를 확인하세요.');
-    }
+    handleLogin(loginId, loginPassword);
   };
 
   return (
@@ -50,7 +32,7 @@ export default function Login() {
             className="w-52 h-52 mx-auto mt-[-60px] mb-[-60px] filter brightness-0 grayscale pointer-events-none"
           />
         </h2>
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-3">
             <label className="block text-sm font-bold text-gray-700 font-sans font-extrabold">
               로그인 ID
@@ -119,11 +101,7 @@ export default function Login() {
       {/* ✅ SSO 로그인 카드 */}
       <Card className="p-8 w-full max-w-md card-login relative z-10 border-none">
         <div className="flex flex-col items-center space-y-3">
-          <Button className="w-80 flex items-center justify-center space-x-3 bg-white text-gray-700 hover:bg-gray-100 rounded-lg shadow-md py-4 border-none">
-            <img src="/img/google-logo.png" alt="Google" className="h-5 w-5" />
-            <span className="font-medium">구글 계정으로 로그인</span>
-          </Button>
-
+          <GoogleLoginButton />
           <Button className="w-80 flex items-center justify-center space-x-3 bg-yellow-400 hover:bg-yellow-300 rounded-lg shadow-md py-4 border-none">
             <img src="/img/kakao-logo.png" alt="Kakao" className="h-5 w-5" />
             <span className="font-medium text-black">

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "module": "esnext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "outDir": "dist", // ✅ 빌드 결과가 저장될 폴더 지정

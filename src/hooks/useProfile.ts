@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import apiClient from '@/utils/apiClient'; // ✅ 공용 Axios 모듈 import
+import {
+  getUserProfile,
+  updateUserProfile,
+  deleteUserProfile,
+  addUserAddress,
+  updateUserAddress,
+  deleteUserAddress,
+} from '@/services/ProfileService'; // ✅ 서비스 레이어 import
 import { ProfileUser, ProfileAddress } from '../types/ProfileUser';
 
 export const useProfile = (userId: string | null) => {
@@ -18,21 +25,8 @@ export const useProfile = (userId: string | null) => {
 
     const fetchUserProfile = async () => {
       try {
-        const [userResponse, addressResponse] = await Promise.all([
-          apiClient.get<ProfileUser>(`/users/${userId}`),
-          apiClient.get<ProfileAddress[]>('/addresses'),
-        ]);
-
-        console.log('✅ 사용자 정보 응답:', userResponse.data);
-        console.log('✅ 배송지 정보 응답:', addressResponse.data);
-
-        setUser({
-          ...userResponse.data,
-          userId: userId,
-          addresses: Array.isArray(addressResponse.data)
-            ? addressResponse.data
-            : [],
-        });
+        const userData = await getUserProfile(userId);
+        setUser(userData);
       } catch (err) {
         console.error('❌ 프로필 정보를 불러오는 중 오류 발생:', err);
         setError('❌ 프로필 정보를 불러오는 중 오류 발생');
@@ -47,7 +41,7 @@ export const useProfile = (userId: string | null) => {
   // ✅ 사용자 정보 수정
   const updateUser = async (updatedUser: Partial<ProfileUser>) => {
     try {
-      await apiClient.put(`/users/${userId}`, updatedUser);
+      await updateUserProfile(userId!, updatedUser);
       setUser((prevUser) =>
         prevUser ? { ...prevUser, ...updatedUser } : null
       );
@@ -60,7 +54,7 @@ export const useProfile = (userId: string | null) => {
   // ✅ 사용자 삭제
   const deleteUser = async () => {
     try {
-      await apiClient.delete(`/users/${userId}`);
+      await deleteUserProfile(userId!);
       setUser(null);
     } catch (err) {
       console.error('❌ 사용자를 삭제하는 중 오류 발생:', err);
@@ -71,13 +65,10 @@ export const useProfile = (userId: string | null) => {
   // ✅ 배송지 추가
   const addAddress = async (newAddress: ProfileAddress) => {
     try {
-      const response = await apiClient.post<ProfileAddress>(
-        '/addresses',
-        newAddress
-      );
+      const createdAddress = await addUserAddress(newAddress);
       setUser((prevUser) =>
         prevUser
-          ? { ...prevUser, addresses: [...prevUser.addresses, response.data] }
+          ? { ...prevUser, addresses: [...prevUser.addresses, createdAddress] }
           : null
       );
     } catch (err) {
@@ -92,7 +83,7 @@ export const useProfile = (userId: string | null) => {
     updatedAddress: Partial<ProfileAddress>
   ) => {
     try {
-      await apiClient.put(`/addresses/${addressId}`, updatedAddress);
+      await updateUserAddress(addressId, updatedAddress);
       setUser((prevUser) =>
         prevUser
           ? {
@@ -114,7 +105,7 @@ export const useProfile = (userId: string | null) => {
   // ✅ 배송지 삭제
   const deleteAddress = async (addressId: string) => {
     try {
-      await apiClient.delete(`/addresses/${addressId}`);
+      await deleteUserAddress(addressId);
       setUser((prevUser) =>
         prevUser
           ? {
