@@ -32,7 +32,7 @@ const Sidebar = () => {
     <>
       {/* ✅ 사이드바 */}
       <div
-        className="fixed top-1/2 right-4 transform -translate-y-1/2 flex flex-col gap-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-300 z-20"
+        className="fixed top-1/2 right-4 transform -translate-y-1/2 flex flex-col gap-4 bg-white p-4 rounded-2xl shadow-xl border border-gray-300 z-[60]"
         onClick={(e) => e.stopPropagation()} // ✅ 사이드바 클릭 시 배경 클릭 이벤트 방지
       >
         {menuItems.map((item) => (

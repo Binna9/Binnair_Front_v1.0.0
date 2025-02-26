@@ -54,13 +54,13 @@ export default function OptionsList() {
   };
 
   return (
-    <div className="fixed right-28 relative z-50">
+    <div className="relative z-20">
       <div
-        className="flex justify-center items-center h-screen w-full"
+        className="flex justify-center items-center h-screen w-full max-w-[64%] mx-auto"
         onMouseMove={handleMouseMove} // ✅ 이벤트를 이 div 내부에서만 감지
         onMouseLeave={handleMouseLeave} // ✅ 마우스를 벗어나면 초기화
       >
-        <div className="flex space-x-4 w-full max-w-5xl h-[500px]">
+        <div className="flex space-x-2 w-full max-w-full h-[500px]">
           {options.map((option, index) => (
             <div
               key={index}

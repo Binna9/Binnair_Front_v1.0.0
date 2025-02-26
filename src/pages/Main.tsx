@@ -6,22 +6,20 @@ import MachineCard from '@/components/MachineCard';
 export default function MainPage() {
   return (
     <MainLayout>
-      <div className="relative w-full max-w-5xl mx-auto flex">
+      <div className="relative w-full max-w-[1800px] mx-auto flex gap-8">
         {/* ✅ 왼쪽 공지사항 (NoticeBoard) */}
-        <div className="mr-6">
-          <NoticeBoard />
-        </div>
+        <NoticeBoard />
         {/* ✅ 중앙 콘텐츠 (OptionsList) + 오른쪽 머천카드 */}
         <div className="flex-1 flex">
           {/* ✅ 중앙 OptionsList */}
           <div className="flex-1">
-            <div className="mt-4">
+            <div className="mt-12 ml-20">
               <OptionsList />
             </div>
           </div>
 
           {/* ✅ 오른쪽 MachineCard (사이드바 왼쪽) */}
-          <div className="fixed right-56 mt-32 flex flex-col gap-6">
+          <div className="relative top-40 flex flex-col gap-6 z-20 transform -translate-x-36">
             <div className="relative">
               <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
               <MachineCard

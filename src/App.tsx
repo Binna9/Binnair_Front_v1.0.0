@@ -8,20 +8,26 @@ import { AnimatePresence, motion } from 'framer-motion';
 import MainPage from '@/pages/Main'; // ✅ 메인 페이지 추가
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import EventPage from './pages/Event';
 import ForgotPassword from '@/pages/ForgotPassword';
 import GoogleAuthHandler from './components/GoogleAuthHandler';
+import { CartBookmarkProvider } from './context/CartBookmarkContext';
+import '@/index.css';
 
 export default function App() {
   return (
-    <Router>
-      <AnimatedRoutes />
-    </Router>
+    <CartBookmarkProvider>
+      {' '}
+      {/* ✅ Context로 전체 App 감싸기 */}
+      <Router>
+        <AnimatedRoutes />
+      </Router>
+    </CartBookmarkProvider>
   );
 }
 
 function AnimatedRoutes() {
   const location = useLocation();
-
   return (
     <AnimatePresence>
       <motion.div
@@ -43,6 +49,7 @@ function AnimatedRoutes() {
           {/* ✅ 메인 페이지 직접 등록 */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="event" element={<EventPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
           <Route path="*" element={<Login />} />

@@ -8,6 +8,11 @@ export interface CartResponse {
   price: number;
 }
 
+export interface CartItemsResponse {
+  totalAmount: number;
+  carts: CartResponse[];
+}
+
 export interface BookmarkResponse {
   bookmarkId: string;
   productId: string;
@@ -36,6 +41,7 @@ export interface BookmarkItem {
 }
 
 export interface CartTotal {
-  totalAmount: number;
   userId: string;
+  quantity: number;
+  totalAmount: number;
 }

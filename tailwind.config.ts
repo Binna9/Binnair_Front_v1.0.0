@@ -3,7 +3,7 @@ import tailwindcssAnimate from 'tailwindcss-animate';
 
 export default {
   darkMode: 'class', // ✅ 다크 모드를 'class' 방식으로 설정
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', './src/index.css'],
   theme: {
     extend: {
       boxShadow: {

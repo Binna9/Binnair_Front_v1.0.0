@@ -68,7 +68,7 @@ export default function ChatPopUp({
     <>
       {/* ChatPopUp 본체 (사이드바를 가리지 않고 살짝 오른쪽으로 띄우기) */}
       <div
-        className={`fixed bg-white shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-20 transition-transform duration-300 ${
+        className={`fixed bg-white shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 ${
           isOpen
             ? 'opacity-100 scale-100'
             : 'opacity-0 scale-90 pointer-events-none'
@@ -76,7 +76,7 @@ export default function ChatPopUp({
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
-          position: 'absolute',
+          position: 'fixed',
           cursor: dragging ? 'grabbing' : 'grab',
         }}
       >
@@ -93,7 +93,6 @@ export default function ChatPopUp({
             <X size={18} />
           </button>
         </div>
-
         {/* 채팅 메시지 영역 (아래로 누적되는 형태) */}
         <div className="flex-1 p-4 overflow-y-auto space-y-2 flex flex-col">
           {messages.map((msg, index) => (

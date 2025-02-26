@@ -1,40 +1,59 @@
 import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   XCircleIcon,
   ShoppingCartIcon,
   StarIcon,
 } from '@heroicons/react/24/solid';
-import { CartItem, BookmarkItem } from '../types/CartBookmarkTypes';
-import { useProductImageBatch } from '../hooks/useProductImageBatch'; // ✅ 여러 제품 이미지 가져오는 커스텀 훅
-import { useCartBookmark } from '../hooks/useCartBookmark';
+import { useProductImageBatch } from '../hooks/useProductImageBatch';
+import { useCartBookmark } from '@/context/CartBookmarkContext';
+import { CartItem } from '../types/CartBookmarkTypes';
 
 interface CartBookmarkPopupProps {
   isOpen: boolean;
   type: 'cart' | 'bookmark';
-  items: CartItem[] | BookmarkItem[];
-  totalAmount: number | null;
   closePopup: () => void;
-  removeItem: (id: string) => void;
-  updateCartQuantity?: (id: string, newQuantity: number) => void;
 }
 
 const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
   isOpen,
   type,
-  items,
   closePopup,
-  removeItem,
-  updateCartQuantity,
 }) => {
-  // ✅ 모든 제품의 ID 추출 후 한번에 이미지 로드
+  const {
+    cartItems,
+    bookmarkItems,
+    totalAmount,
+    updateCartQuantity,
+    deleteCartItem,
+    deleteBookmarkItem,
+    fetchCartItems,
+    fetchBookmarkItems,
+  } = useCartBookmark();
+
+  // ✅ 현재 선택된 항목 (Cart 또는 Bookmark)
+  const items = type === 'cart' ? cartItems : bookmarkItems;
+  const isCart = type === 'cart';
+
+  // ✅ 제품 이미지 불러오기
   const productIds = items.map((item) => item.productId);
-  const productImages = useProductImageBatch(productIds); // ✅ 여러 개의 이미지 불러오기
-  const { totalAmount } = useCartBookmark('cart');
+  const productImages = useProductImageBatch(productIds);
+
+  const isFetched = useRef(false);
 
   useEffect(() => {
-    console.log('🔄 CartBookmarkPopup: totalAmount 상태 변경됨:', totalAmount);
-  }, [totalAmount]);
+    if (isFetched.current) return;
+    isFetched.current = true;
+
+    console.log('🔄 useEffect 실행됨! type:', type);
+    if (type === 'cart') {
+      console.log('📢 fetchCartItems 호출!');
+      fetchCartItems();
+    } else if (type === 'bookmark') {
+      console.log('📢 fetchBookmarkItems 호출!');
+      fetchBookmarkItems();
+    }
+  }, [type]);
 
   if (!isOpen) return null;
 
@@ -56,13 +75,13 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
 
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
-          {type === 'cart' ? (
+          {isCart ? (
             <ShoppingCartIcon className="w-7 h-7 text-blue-500" />
           ) : (
             <StarIcon className="w-7 h-7 text-yellow-500" />
           )}
           <h2 className="text-xl font-semibold">
-            {type === 'cart' ? '장바구니' : '즐겨찾기'}
+            {isCart ? '장바구니' : '즐겨찾기'}
           </h2>
         </div>
 
@@ -74,7 +93,6 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
                 key={item.id}
                 className="border-b pb-4 flex justify-between items-center space-x-4"
               >
-                {/* ✅ 제품 이미지 표시 */}
                 <div className="flex items-center gap-4">
                   <img
                     src={
@@ -83,7 +101,6 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
                     alt={item.productName}
                     className="w-16 h-16 object-cover rounded-md border"
                   />
-
                   <div>
                     <p className="text-gray-800 font-semibold">
                       {item.productName}
@@ -94,44 +111,51 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
                   </div>
                 </div>
 
-                {/* ✅ 수량 조절 버튼 */}
-                {type === 'cart' &&
-                  'quantity' in item &&
-                  updateCartQuantity && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity - 1)
-                        }
-                        className="px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                        disabled={item.quantity <= 1}
-                      >
-                        -
-                      </button>
-                      <p className="text-gray-700">{item.quantity}</p>
-                      <button
-                        onClick={() =>
-                          updateCartQuantity(item.id, item.quantity + 1)
-                        }
-                        className="px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
-
-                {/* ✅ 가격 정보 */}
-                {typeof item.price === 'number' ? (
-                  <p className="text-gray-700 font-semibold">
-                    {item.price.toLocaleString()} 원
-                  </p>
-                ) : (
-                  <p className="text-gray-500">가격 정보 없음</p>
+                {/* ✅ 장바구니일 때만 수량 조절 UI 표시 */}
+                {isCart && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        updateCartQuantity(
+                          item.id,
+                          (item as CartItem).quantity - 1
+                        )
+                      }
+                      className="px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
+                      disabled={(item as CartItem).quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <p className="text-gray-700">
+                      {(item as CartItem).quantity}
+                    </p>
+                    <button
+                      onClick={() =>
+                        updateCartQuantity(
+                          item.id,
+                          (item as CartItem).quantity + 1
+                        )
+                      }
+                      className="px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300"
+                    >
+                      +
+                    </button>
+                  </div>
                 )}
 
-                {/* ✅ 삭제 버튼 */}
+                <p className="text-gray-700 font-semibold">
+                  {typeof item.price === 'number'
+                    ? `${item.price.toLocaleString()} 원`
+                    : '가격 정보 없음'}
+                </p>
+
+                {/* 삭제 버튼 */}
                 <button
-                  onClick={() => removeItem(item.id)}
+                  onClick={() =>
+                    isCart
+                      ? deleteCartItem(item.id)
+                      : deleteBookmarkItem(item.id)
+                  }
                   className="text-red-500 hover:text-red-700 ml-4"
                 >
                   삭제
@@ -142,14 +166,19 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
             <p className="text-gray-500 text-center">아이템이 없습니다.</p>
           )}
         </div>
-        {/* ✅ 총 금액 표시 (cart 타입인 경우) */}
-        {type === 'cart' && (
+
+        {/* ✅ 장바구니일 때만 총 금액 표시 */}
+        {isCart && (
           <div className="mt-4 text-right font-bold text-lg">
-            {' '}
-            {totalAmount !== null && totalAmount !== undefined
-              ? totalAmount.toLocaleString()
-              : '🚨 totalAmount가 null 또는 undefined입니다.'}{' '}
-            원
+            {totalAmount.toLocaleString()} 원
+          </div>
+        )}
+        {/* ✅ 장바구니일 때만 구매하기 버튼 표시 */}
+        {isCart && (
+          <div className="flex justify-center mt-3">
+            <button className="w-1/4 py-3 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition text-center">
+              구매하기
+            </button>
           </div>
         )}
       </motion.div>
