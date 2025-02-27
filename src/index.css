@@ -9,6 +9,13 @@
   font-family: 'Kanit', sans-serif;
 }
 
+@font-face {
+  font-family: 'Hamburg';
+  src: url('/fonts/Hamburg.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @layer base {
 
   nav {

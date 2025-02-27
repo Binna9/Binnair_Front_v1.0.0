@@ -14,6 +14,7 @@ export default function MainPage() {
           {/* ✅ 중앙 OptionsList */}
           <div className="flex-1">
             <div className="mt-12 ml-20">
+              <h2 className="font-hamburg">Fill Vape</h2>
               <OptionsList />
             </div>
           </div>

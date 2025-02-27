@@ -1,16 +1,19 @@
 {
   "compilerOptions": {
     "module": "esnext",
+    "lib": ["dom", "esnext"],
+    "target": "esnext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "outDir": "dist", // ✅ 빌드 결과가 저장될 폴더 지정
     "rootDir": "src", // ✅ 소스 코드가 있는 폴더 지정
     "jsx": "react-jsx",
+    "types": ["react", "node"],
+    "skipLibCheck": true,
     "allowJs": true,
     "baseUrl": "./",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "strict": true,
     "paths": {
       "@/*": ["src/*"],
       "@app/*": ["src/app/*"],

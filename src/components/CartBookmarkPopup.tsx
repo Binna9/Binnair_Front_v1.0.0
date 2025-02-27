@@ -8,11 +8,15 @@ import {
 import { useProductImageBatch } from '../hooks/useProductImageBatch';
 import { useCartBookmark } from '@/context/CartBookmarkContext';
 import { CartItem } from '../types/CartBookmarkTypes';
+import { BookmarkItem } from '../types/CartBookmarkTypes';
 
 interface CartBookmarkPopupProps {
   isOpen: boolean;
   type: 'cart' | 'bookmark';
+  items: CartItem[] | BookmarkItem[];
   closePopup: () => void;
+  removeItem: (id: string) => Promise<void>;
+  updateCartQuantity?: (cartId: string, newQuantity: number) => Promise<void>;
 }
 
 const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({

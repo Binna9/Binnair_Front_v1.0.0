@@ -11,14 +11,18 @@ import ChatPopUp from './ChatPopup';
 import { useCartBookmark } from '../hooks/useCartBookmark';
 
 const Sidebar = () => {
-  const [selected, setSelected] = useState<string | null>(null); // ✅ 선택 상태
+  const [selected, setSelected] = useState<
+    'cart' | 'bookmark' | 'messages' | 'help' | 'settings' | null
+  >(null);
+
   const {
     cartItems,
     bookmarkItems,
     deleteCartItem,
     deleteBookmarkItem,
     updateCartQuantity,
-  } = useCartBookmark(selected); // ✅ 삭제 함수 추가
+  } = useCartBookmark(selected as 'cart' | 'bookmark'); // ✅ 타입 단언 (as 사용)
+  // ✅ 삭제 함수 추가
 
   const menuItems = [
     { id: 'cart', icon: ShoppingCartIcon, label: '장바구니' },
@@ -40,7 +44,16 @@ const Sidebar = () => {
             key={item.id}
             onClick={(e) => {
               e.stopPropagation(); // ✅ 클릭 이벤트 전파 방지
-              setSelected(selected === item.id ? null : item.id); // ✅ 선택 / 해제 토글
+              setSelected(
+                selected === item.id
+                  ? null
+                  : (item.id as
+                      | 'cart'
+                      | 'bookmark'
+                      | 'messages'
+                      | 'help'
+                      | 'settings')
+              ); // ✅ 타입 강제 지정// ✅ 선택 / 해제 토글
             }}
             className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-300 ${
               selected === item.id

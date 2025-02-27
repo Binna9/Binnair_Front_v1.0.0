@@ -37,7 +37,7 @@ export default function ForgotPassword() {
 
   return (
     <AuthLayout>
-      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none">
+      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
         <h2 className="flex justify-center">
           <img
             src="/img/auth-logo.png"

@@ -21,9 +21,10 @@ const NoticeBoard = () => {
   if (!isVisible) {
     return (
       <button
-        className="fixed left-0 top-1/2 transform -translate-y-1/2 
-                   bg-gray-700 text-white px-3 py-3 rounded-r-lg shadow-lg z-50
-                   flex items-center justify-center w-14"
+        className="fixed left-0 top-1/2 transform -translate-y-1/2
+             bg-white/90 text-gray px-3 py-3 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-50
+             flex items-center justify-center w-14 
+             transition-transform duration-300 hover:scale-110 active:scale-95"
         onClick={() => setIsVisible(true)}
       >
         <ChevronRightIcon className="w-6 h-6" />
@@ -34,7 +35,7 @@ const NoticeBoard = () => {
   return (
     <div
       className="fixed left-4 top-[56%] transform -translate-y-1/2 w-80 h-[600px] 
-    bg-slate-300/90 border-1 border-white/80 transition-all duration-300
+    bg-white/90 border-1 border-white/80 transition-all duration-300
     shadow-2xl rounded-2xl p-5 overflow-hidden text-gray-900 z-50"
     >
       {/* ✅ 공지판 닫기 버튼 (상단 오른쪽) */}

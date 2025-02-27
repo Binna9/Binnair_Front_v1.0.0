@@ -25,7 +25,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none">
+      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
         <h2 className="flex justify-center">
           <img
             src="/img/auth-logo.png"
@@ -99,7 +99,7 @@ export default function Login() {
       </Card>
 
       {/* ✅ SSO 로그인 카드 */}
-      <Card className="p-8 w-full max-w-md card-login relative z-10 border-none">
+      <Card className="p-8 w-full max-w-md card-login relative z-10 border-none overflow-hidden">
         <div className="flex flex-col items-center space-y-3">
           <GoogleLoginButton />
           <Button className="w-80 flex items-center justify-center space-x-3 bg-yellow-400 hover:bg-yellow-300 rounded-lg shadow-md py-4 border-none">

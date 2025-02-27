@@ -30,7 +30,7 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none max-h-[90vh]">
+      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none max-h-[90vh] overflow-hidden">
         <CardContent className="overflow-y-auto max-h-[80vh] custom-scroll">
           <h2 className="flex justify-center">
             <img

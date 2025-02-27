@@ -43,3 +43,15 @@ export const logoutUser = async () => {
     localStorage.removeItem('accessToken'); // 토큰 삭제
   }
 };
+
+export const registerUser = async (formData: FormData) => {
+  try {
+    const response = await apiClient.post('/registers', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ [authService] 회원가입 실패:', error);
+    throw error;
+  }
+};

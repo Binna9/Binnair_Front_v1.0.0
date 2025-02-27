@@ -14,6 +14,7 @@ export default {
         'login-bg': "url('/vid/LoginBackGround.mp4')", // ✅ 절대 경로 사용
       },
       fontFamily: {
+        hamburg: ['Hamburg', 'sans-serif'],
         sans: ['Noto Sans KR', 'Inter', 'sans-serif'], // ✅ 한글 폰트 추가
         heading: ['Noto Sans KR', 'Poppins', 'sans-serif'], // ✅ 제목 폰트도 한글 지원
         body: ['Noto Sans KR', 'Roboto', 'sans-serif'], // ✅ 본문 폰트 한글 적용
