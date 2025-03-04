@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { registerUser } from '@/services/authService';
 
 export const useRegister = () => {
@@ -10,11 +10,31 @@ export const useRegister = () => {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [agreeTerms, setAgreeTerms] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      if (profilePreview) {
+        URL.revokeObjectURL(profilePreview);
+      }
+    };
+  }, [profilePreview]);
+
+  // ✅ 프로필 이미지 업로드 처리
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProfileImage(e.target.files[0]);
+      const file = e.target.files[0];
+
+      // 이전 blob URL 해제
+      if (profilePreview) {
+        URL.revokeObjectURL(profilePreview);
+      }
+
+      // 새 blob URL 생성
+      const newPreviewUrl = URL.createObjectURL(file);
+      setProfilePreview(newPreviewUrl);
+      setProfileImage(file);
     }
   };
 
@@ -62,6 +82,7 @@ export const useRegister = () => {
     setEmail,
     phoneNumber,
     setPhoneNumber,
+    profilePreview,
     profileImage,
     handleImageUpload,
     agreeTerms,

@@ -21,6 +21,7 @@ export default function Register() {
     setEmail,
     phoneNumber,
     setPhoneNumber,
+    profilePreview,
     profileImage,
     handleImageUpload,
     agreeTerms,
@@ -46,7 +47,7 @@ export default function Register() {
                 <div className="w-32 h-32 rounded-full shadow-inner border-4 border-gray-300 flex items-center justify-center bg-gradient-to-t from-gray-300 to-gray-100 hover:from-gray-400 hover:to-gray-200 transition-all relative">
                   {profileImage ? (
                     <img
-                      src={URL.createObjectURL(profileImage)}
+                      src={profilePreview}
                       alt="Profile Preview"
                       className="w-full h-full object-cover rounded-full"
                     />

@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       console.error('🔴 인증 오류 - 로그아웃 처리 필요');
       localStorage.removeItem('accessToken'); // 토큰 삭제
-      window.location.href = '/auth/login'; // 로그인 페이지로 이동
+      window.location.href = '/login'; // 로그인 페이지로 이동
     }
     return Promise.reject(error);
   }
