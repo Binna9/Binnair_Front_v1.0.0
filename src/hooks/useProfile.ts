@@ -21,8 +21,6 @@ export const useProfile = (userId: string | null) => {
       return;
     }
 
-    console.log(`🚀 useProfile: /users/${userId} 요청 시작`);
-
     const fetchUserProfile = async () => {
       try {
         const userData = await getUserProfile(userId);

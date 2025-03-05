@@ -12,17 +12,21 @@ import EventPage from './pages/Event';
 import ForgotPassword from '@/pages/ForgotPassword';
 import GoogleAuthHandler from './components/GoogleAuthHandler';
 import { CartBookmarkProvider } from './context/CartBookmarkContext';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 import '@/index.css';
 
 export default function App() {
   return (
-    <CartBookmarkProvider>
-      {' '}
-      {/* ✅ Context로 전체 App 감싸기 */}
-      <Router>
-        <AnimatedRoutes />
-      </Router>
-    </CartBookmarkProvider>
+    <Provider store={store}>
+      <CartBookmarkProvider>
+        {' '}
+        {/* ✅ Context로 전체 App 감싸기 */}
+        <Router>
+          <AnimatedRoutes />
+        </Router>
+      </CartBookmarkProvider>
+    </Provider>
   );
 }
 

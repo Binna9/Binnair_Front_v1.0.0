@@ -1,70 +1,81 @@
-import { useState, useEffect } from 'react';
-import { User as UserType } from '@/types/user';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginSuccess, logout, setUser, selectAuth } from '@/store/authSlice';
 import {
   fetchUser,
   loginUser,
   logoutUser,
   googleLogin,
-} from '@/services/authService'; // ✅ 서비스에서 API 요청 처리
+} from '@/services/authService';
+import { useNavigate } from 'react-router-dom';
 
 export function useAuth() {
-  const [user, setUser] = useState<UserType | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { accessToken, user } = useSelector(selectAuth); // ✅ Redux에서 accessToken과 user 가져오기
+
+  useEffect(() => {
+    console.log('🔍 현재 Redux 상태:', { accessToken, user });
+  }, [accessToken, user]);
+
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return;
+      if (!accessToken) return; // ✅ accessToken이 없으면 실행하지 않음
 
       try {
         const data = await fetchUser();
-        setUser({
-          userId: data.userId,
-          username: data.username,
-          email: data.email,
-          profileImageUrl: data.profileImageUrl,
-        });
+
+        dispatch(setUser(data)); // ✅ Redux에 사용자 정보 저장
       } catch {
-        setUser(null);
+        dispatch(logout()); // 만료된 경우 로그아웃 처리
       }
     };
 
     loadUser();
-  }, []);
+  }, [accessToken, dispatch]);
 
   const handleLogin = async (loginId: string, loginPassword: string) => {
     try {
-      const { accessToken, refreshToken } = await loginUser(
-        loginId,
-        loginPassword
-      );
+      const { accessToken } = await loginUser(loginId, loginPassword);
 
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      dispatch(loginSuccess({ accessToken })); // ✅ Redux에 accessToken 저장
 
-      navigate('/'); // ✅ 로그인 성공 후 이동
+      navigate('/');
     } catch (error) {
-      console.log('', error);
+      console.error('❌ 로그인 실패:', error);
+      setError('로그인 실패. 다시 시도하세요.');
     }
   };
 
   const handleGoogleLogin = async (code: string) => {
     try {
       const { accessToken } = await googleLogin(code);
-      localStorage.setItem('accessToken', accessToken);
-      navigate('/'); // 로그인 성공 후 홈으로 이동
+
+      dispatch(loginSuccess({ accessToken })); // ✅ Redux에 accessToken 저장
+
+      navigate('/');
     } catch (error) {
-      console.error('❌ [useAuth] Google 로그인 실패:', error);
+      console.error('❌ Google 로그인 실패:', error);
       setError('Google 로그인 실패. 다시 시도하세요.');
     }
   };
 
   const handleLogout = async () => {
     await logoutUser();
+
+    dispatch(logout()); // ✅ Redux에서 accessToken 및 user 초기화
+
     navigate('/auth/login');
   };
 
-  return { user, handleLogin, handleGoogleLogin, handleLogout, setUser, error };
+  return {
+    user,
+    accessToken,
+    handleLogin,
+    handleGoogleLogin,
+    handleLogout,
+    error,
+  };
 }

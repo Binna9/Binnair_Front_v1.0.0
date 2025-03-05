@@ -1,16 +1,5 @@
 import apiClient from '@/utils/apiClient';
 
-export const fetchUser = async () => {
-  try {
-    const response = await apiClient.get('/auth/user');
-
-    return response.data; // 응답 데이터 반환
-  } catch (error) {
-    console.error('❌ [authService] 사용자 정보 가져오기 실패:', error);
-    throw error;
-  }
-};
-
 export const loginUser = async (loginId: string, loginPassword: string) => {
   try {
     const response = await apiClient.post('/auth/login', {
@@ -52,6 +41,17 @@ export const registerUser = async (formData: FormData) => {
     return response.data;
   } catch (error) {
     console.error('❌ [authService] 회원가입 실패:', error);
+    throw error;
+  }
+};
+
+export const fetchUser = async () => {
+  try {
+    const response = await apiClient.get('/auth/user');
+
+    return response.data; // 응답 데이터 반환
+  } catch (error) {
+    console.error('❌ [authService] 사용자 정보 가져오기 실패:', error);
     throw error;
   }
 };

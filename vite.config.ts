@@ -11,6 +11,12 @@ export default defineConfig(({ mode }) => {
       hmr: true,
       port: 5173,
       proxy: {
+        '/api': {
+          target: env.VITE_API_BASE_URL,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ''), // ✅ /api 제거하고 백엔드에 전달
+        },
         '/auth': {
           target: env.VITE_API_BASE_URL,
           changeOrigin: true,

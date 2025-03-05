@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { selectAuth } from '@/store/authSlice';
 import axios from 'axios';
 
 export function useProfileImage(userId: string | null) {
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const { accessToken } = useSelector(selectAuth);
 
   useEffect(() => {
     if (!userId) {
@@ -13,8 +16,7 @@ export function useProfileImage(userId: string | null) {
     console.log(`🔄 Fetching profile image for userId: ${userId}`);
 
     const fetchProfileImage = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
+      if (!accessToken) {
         console.error('❌ No token found, skipping profile image fetch.');
         return;
       }
@@ -23,7 +25,7 @@ export function useProfileImage(userId: string | null) {
         const response = await fetch(`/users/${userId}/image`, {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`, // ✅ Redux에서 가져온 토큰 사용
           },
         });
 
@@ -43,12 +45,11 @@ export function useProfileImage(userId: string | null) {
     };
 
     fetchProfileImage();
-  }, [userId]);
+  }, [userId, accessToken]);
 
   // ✅ 프로필 이미지 업로드 기능 추가
   const uploadProfileImage = async (file: File) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
+    if (!accessToken) {
       console.error('❌ No token found, skipping profile image upload.');
       return;
     }
@@ -62,7 +63,7 @@ export function useProfileImage(userId: string | null) {
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'multipart/form-data',
           },
         }
