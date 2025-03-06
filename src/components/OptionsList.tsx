@@ -56,7 +56,7 @@ export default function OptionsList() {
   return (
     <div className="relative z-20">
       <div
-        className="flex justify-center items-center h-screen w-full max-w-[64%] mx-auto"
+        className="flex justify-center items-center h-auto w-full max-w-[64%] mx-auto"
         onMouseMove={handleMouseMove} // ✅ 이벤트를 이 div 내부에서만 감지
         onMouseLeave={handleMouseLeave} // ✅ 마우스를 벗어나면 초기화
       >

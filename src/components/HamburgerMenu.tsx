@@ -4,9 +4,10 @@ import '../assets/css/hamburger.css';
 
 interface HamburgerMenuProps {
   menuName: string;
-  items: string[];
-  isOpen: boolean;
+  items?: { name: string; id: string }[];
+  isOpen?: boolean;
   onClick: () => void;
+  onItemClick?: (item: { name: string; id: string }) => void;
 }
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
@@ -14,6 +15,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   items,
   isOpen,
   onClick,
+  onItemClick,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null); // ✅ useRef로 closeTimeout 유지
@@ -91,19 +93,19 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && !closing && (
           <motion.div
             ref={menuRef}
-            className="absolute left-0 top-12 w-48 bg-gray-800/70 border-2 border-white/70 text-white rounded-lg shadow-lg"
+            className="absolute left-0 top-12 w-48 bg-gray-800/70 border-2 border-white/70 text-white shadow-lg"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}
           >
             <ul className="py-2 text-center space-y-2">
-              {items.map((item, index) => (
+              {items.map((item) => (
                 <li
-                  key={index}
-                  className={`py-2 px-4 w-4/5 mx-auto transition cursor-pointer hover:bg-white/50 rounded-sm
-                          ${index !== 0 ? 'border-t-2 border-white/30' : ''}`}
+                  key={item.id}
+                  onClick={() => onItemClick(item)} // ✅ 클릭 시 onItemClick 실행
+                  className="py-2 px-4 w-4/5 mx-auto transition cursor-pointer hover:bg-white/50 rounded-sm"
                 >
-                  {item}
+                  {item.name}
                 </li>
               ))}
             </ul>

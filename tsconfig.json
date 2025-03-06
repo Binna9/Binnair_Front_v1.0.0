@@ -5,14 +5,14 @@
     "target": "esnext",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "outDir": "dist", // ✅ 빌드 결과가 저장될 폴더 지정
-    "rootDir": "src", // ✅ 소스 코드가 있는 폴더 지정
+    "outDir": "dist",
+    "rootDir": "src",
     "jsx": "react-jsx",
-    "types": ["react", "node"],
+    "types": ["react", "node", "styled-components"], // ✅ styled-components 타입 추가
     "skipLibCheck": true,
     "allowJs": true,
     "baseUrl": "./",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node", // ✅ bundler → node 변경 (styled-components 찾도록 수정)
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["src/*"],
@@ -25,6 +25,6 @@
       "@lib/*": ["src/lib/*"]
     }
   },
-  "include": ["src"], // ✅ 입력 파일은 src 폴더만 포함
-  "exclude": ["node_modules", "dist"] // ✅ dist 폴더를 제외하여 충돌 방지
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

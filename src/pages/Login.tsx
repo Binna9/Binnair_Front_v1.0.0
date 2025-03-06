@@ -26,15 +26,12 @@ export default function Login() {
   return (
     <AuthLayout>
       <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
-        <h2 className="flex justify-center">
-          <img
-            src="/img/auth-logo.png"
-            className="w-52 h-52 mx-auto mt-[-60px] mb-[-60px] filter brightness-0 grayscale pointer-events-none"
-          />
+        <h2 className="flex justify-center text-black text-6xl font-bold mt-5 mb-[-50px] kanit">
+          BinnAIR
         </h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-3">
-            <label className="block text-sm font-bold text-gray-700 font-sans font-extrabold">
+            <label className="mt-20 block text-sm font-bold text-gray-700 font-sans font-extrabold">
               로그인 ID
             </label>
             <Input

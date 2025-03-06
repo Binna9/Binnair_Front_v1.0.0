@@ -38,11 +38,8 @@ export default function ForgotPassword() {
   return (
     <AuthLayout>
       <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
-        <h2 className="flex justify-center">
-          <img
-            src="/img/auth-logo.png"
-            className="w-52 h-52 mx-auto mt-[-60px] mb-[-50px] filter brightness-0 grayscale pointer-events-none"
-          />
+        <h2 className="flex justify-center text-black text-6xl font-bold mt-5 mb-8 kanit">
+          BinnAIR
         </h2>
         {submitted ? (
           <div className="text-center text-white">

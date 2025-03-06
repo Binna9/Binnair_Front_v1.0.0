@@ -1,8 +1,14 @@
-const Footer = () => {
-  console.log('✅ Footer 컴포넌트가 렌더링되었습니다!');
+import React from 'react';
 
+interface FooterProps {
+  className?: string;
+}
+
+const Footer: React.FC<FooterProps> = ({ className = '' }) => {
   return (
-    <footer className="bg-gray-100/90 text-gray-700 mt-10 py-8 z-20 relative">
+    <footer
+      className={`bg-gray-100/90 text-gray-700 mt-10 py-8 z-20 relative ${className}`}
+    >
       <div className="container mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* 1️⃣ 브랜드 소개 */}

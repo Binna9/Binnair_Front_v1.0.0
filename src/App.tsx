@@ -9,6 +9,7 @@ import MainPage from '@/pages/Main'; // ✅ 메인 페이지 추가
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import EventPage from './pages/Event';
+import CustomerPage from './pages/Customer';
 import ForgotPassword from '@/pages/ForgotPassword';
 import GoogleAuthHandler from './components/GoogleAuthHandler';
 import { CartBookmarkProvider } from './context/CartBookmarkContext';
@@ -53,9 +54,10 @@ function AnimatedRoutes() {
           {/* ✅ 메인 페이지 직접 등록 */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="event" element={<EventPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
+          <Route path="/event" element={<EventPage />} />
+          <Route path="/customer" element={<CustomerPage />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>

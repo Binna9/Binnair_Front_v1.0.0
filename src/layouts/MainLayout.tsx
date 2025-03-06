@@ -14,18 +14,12 @@ export default function MainLayout({
         className="absolute inset-0 bg-cover bg-center bg-[url('/img/MainBackGround.jpg')] 
         before:absolute before:inset-0 before:bg-black/10 z-0"
       ></div>
-
-      {/* 네비게이션 바 */}
       <Navbar />
-
-      {/* ✅ 메인 컨텐츠 구조 */}
       <div className="relative flex flex-1">
         <Sidebar />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 min-h-[1000px] p-6">{children}</main>
       </div>
-
-      {/* ✅ 푸터가 항상 하단에 있도록 설정 */}
-      <Footer />
+      <Footer className="mt-auto" />
     </div>
   );
 }

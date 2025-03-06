@@ -12,9 +12,7 @@ import { useNavigate } from 'react-router-dom';
 export function useAuth() {
   const { accessToken, user } = useSelector(selectAuth); // ✅ Redux에서 accessToken과 user 가져오기
 
-  useEffect(() => {
-    console.log('🔍 현재 Redux 상태:', { accessToken, user });
-  }, [accessToken, user]);
+  useEffect(() => {}, [accessToken, user]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();

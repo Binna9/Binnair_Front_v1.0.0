@@ -53,42 +53,51 @@ export default function Navbar() {
 
       <nav className="fixed top-0 left-0 w-full h-16 bg-gray-800/80 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
         <div className="flex items-center space-x-4">
-          <span className="text-2xl font-bold text-white">ilpoom</span>
+          <span
+            className="text-3xl font-bold text-white cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-gray-300"
+            onClick={() => navigate('/')}
+          >
+            BinnAIR
+          </span>
 
-          <div className="absolute left-[450px] w-96">
-            <Search className="absolute left-3 top-2.5 text-white w-5 h-5" />
+          {/*Search */}
+          <div className="absolute left-[400px] w-96 transition-transform duration-200 hover:scale-105">
+            <Search className="absolute left-3 top-1.5 text-white w-6 h-6" />
             <Input
               type="text"
-              placeholder="Search..."
-              className="pl-10 pr-4 py-2 bg-white/20 text-white placeholder-white rounded-full shadow-md hover:shadow-lg transition-shadow focus:outline-none focus:ring-2 focus:ring-white"
+              placeholder="Search ..."
+              className="pl-12 pr-4 py-2 bg-white/20 text-white/90 placeholder-white/70 rounded-full shadow-lg 
+               hover:shadow-lg transition-shadow 
+               focus:outline-none focus:ring-0 border-none"
             />
           </div>
         </div>
 
-        <div className="flex space-x-6 ml-[750px]">
+        <div className="flex space-x-6 ml-[725px]">
           <HamburgerMenu
             menuName="이벤트"
-            items={['할인 이벤트', '기획전', '프로모션']}
+            items={[{ name: '이벤트', id: 'event' }]}
             isOpen={openMenu === '이벤트'}
             onClick={() => handleMenuClick('이벤트')}
+            onItemClick={(item) => navigate(`/event?section=${item.id}`)}
           />
           <HamburgerMenu
             menuName="제품"
-            items={['신제품', '베스트셀러', '카테고리별 보기']}
+            items={[{ name: '신제품', id: 'new' }]}
             isOpen={openMenu === '제품'}
             onClick={() => handleMenuClick('제품')}
+            onItemClick={(item) => navigate(`/product?section=${item.id}`)}
           />
           <HamburgerMenu
             menuName="장바구니"
-            items={['최근 본 상품', '찜한 상품']}
+            items={[{ name: '장바구니', id: 'cart' }]}
             isOpen={openMenu === '장바구니'}
             onClick={() => handleMenuClick('장바구니')}
+            onItemClick={(item) => navigate(`/cart?section=${item.id}`)}
           />
           <HamburgerMenu
             menuName="고객센터"
-            items={['FAQ', '문의하기', '1:1 상담']}
-            isOpen={openMenu === '고객센터'}
-            onClick={() => handleMenuClick('고객센터')}
+            onClick={() => navigate('/customer')} // ✅ 클릭하면 /customer 이동
           />
         </div>
 

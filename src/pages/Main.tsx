@@ -2,6 +2,7 @@ import MainLayout from '@/layouts/MainLayout';
 import OptionsList from '@/components/OptionsList';
 import NoticeBoard from '@/components/NoticeBoard';
 import MachineCard from '@/components/MachineCard';
+import PopularCard from '@/components/PopularCard';
 
 export default function MainPage() {
   return (
@@ -13,8 +14,19 @@ export default function MainPage() {
         <div className="flex-1 flex">
           {/* ✅ 중앙 OptionsList */}
           <div className="flex-1">
-            <div className="mt-12 ml-20">
-              <h2 className="font-hamburg">Fill Vape</h2>
+            <div className="flex justify-center mt-20 mb-10 gap-16 ml-24">
+              <PopularCard
+                gradient="pink-blue"
+                title="Hot This Month!"
+                description="BinnAIR"
+              />
+              <PopularCard
+                gradient="purple-cyan"
+                title="Hot Last Month!"
+                description="BinnAIR"
+              />
+            </div>
+            <div className="ml-20">
               <OptionsList />
             </div>
           </div>

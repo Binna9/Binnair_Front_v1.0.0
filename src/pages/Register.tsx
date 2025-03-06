@@ -33,18 +33,14 @@ export default function Register() {
     <AuthLayout>
       <Card className="p-8 w-full max-w-md card-login relative z-50 border-none max-h-[90vh] overflow-hidden">
         <CardContent className="overflow-y-auto max-h-[80vh] custom-scroll">
-          <h2 className="flex justify-center">
-            <img
-              src="/img/auth-logo.png"
-              className="w-52 h-52 mx-auto mt-[-60px] mb-[-50px] filter brightness-0 grayscale pointer-events-none"
-            />
+          <h2 className="flex justify-center text-black text-6xl font-bold mt-5 mb-[-50px] kanit">
+            BinnAIR
           </h2>
-
           <form className="space-y-4" onSubmit={handleRegister}>
             {/* ✅ 프로필 이미지 업로드 */}
             <div className="flex flex-col items-center relative">
               <label htmlFor="profileUpload" className="cursor-pointer">
-                <div className="w-32 h-32 rounded-full shadow-inner border-4 border-gray-300 flex items-center justify-center bg-gradient-to-t from-gray-300 to-gray-100 hover:from-gray-400 hover:to-gray-200 transition-all relative">
+                <div className="mt-20 w-32 h-32 rounded-full shadow-inner border-4 border-gray-300 flex items-center justify-center bg-gradient-to-t from-gray-300 to-gray-100 hover:from-gray-400 hover:to-gray-200 transition-all relative">
                   {profileImage ? (
                     <img
                       src={profilePreview}
