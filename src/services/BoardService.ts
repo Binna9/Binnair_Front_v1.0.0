@@ -1,14 +1,30 @@
 import apiClient from '@/utils/apiClient';
-import { BoardType, BoardResponse, BoardRequest } from '@/types/Board';
+import {
+  BoardType,
+  BoardResponse,
+  BoardRequest,
+  PagedBoardResponse,
+} from '@/types/Board';
 
 // ✅ 게시글 목록 조회
 export const fetchBoards = async (
-  boardType: BoardType
-): Promise<BoardResponse[]> => {
-  const response = await apiClient.get<BoardResponse[]>(
-    `/boards?boardType=${boardType}`
-  );
-  return response.data;
+  boardType: BoardType,
+  page: number = 0,
+  size: number = 8
+): Promise<PagedBoardResponse | null> => {
+  try {
+    const response = await apiClient.get<PagedBoardResponse>(
+      `/boards?boardType=${boardType}&page=${page}&size=${size}`
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error('❌ 게시글 조회 실패:', error);
+  }
+
+  return null;
 };
 
 // ✅ 게시글 개별 조회

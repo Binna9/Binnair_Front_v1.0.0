@@ -4,13 +4,16 @@ import {
   Route,
   useLocation,
 } from 'react-router-dom';
+
 import { AnimatePresence, motion } from 'framer-motion';
-import MainPage from '@/pages/Main'; // ✅ 메인 페이지 추가
+import MainPage from '@/pages/Main';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import EventPage from './pages/Event';
 import CustomerPage from './pages/Customer';
+import ProductPage from './pages/ProductPage';
 import ForgotPassword from '@/pages/ForgotPassword';
+import AuthWrapper from './components/AuthWrapper';
 import GoogleAuthHandler from './components/GoogleAuthHandler';
 import { CartBookmarkProvider } from './context/CartBookmarkContext';
 import { Provider } from 'react-redux';
@@ -21,9 +24,9 @@ export default function App() {
   return (
     <Provider store={store}>
       <CartBookmarkProvider>
-        {' '}
-        {/* ✅ Context로 전체 App 감싸기 */}
         <Router>
+          {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
+          <AuthWrapper />
           <AnimatedRoutes />
         </Router>
       </CartBookmarkProvider>
@@ -31,6 +34,7 @@ export default function App() {
   );
 }
 
+// ✅ 페이지 애니메이션 관리
 function AnimatedRoutes() {
   const location = useLocation();
   return (
@@ -50,13 +54,13 @@ function AnimatedRoutes() {
         }}
       >
         <Routes location={location}>
-          <Route path="/" element={<MainPage />} />{' '}
-          {/* ✅ 메인 페이지 직접 등록 */}
+          <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
           <Route path="/event" element={<EventPage />} />
+          <Route path="/product" element={<ProductPage />} />
           <Route path="/customer" element={<CustomerPage />} />
           <Route path="*" element={<Login />} />
         </Routes>

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import MainLayout from '@/layouts/MainLayout';
 import OptionsList from '@/components/OptionsList';
 import NoticeBoard from '@/components/NoticeBoard';
@@ -5,16 +6,72 @@ import MachineCard from '@/components/MachineCard';
 import PopularCard from '@/components/PopularCard';
 
 export default function MainPage() {
+  const [isPopularVisible, setIsPopularVisible] = useState(false);
+  const [isMachineVisible, setIsMachineVisible] = useState(false);
+  const popularRef = useRef(null);
+  const machineRef = useRef(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (popularRef.current) {
+        const popularRect = popularRef.current.getBoundingClientRect();
+        setIsPopularVisible(popularRect.top < window.innerHeight - 100);
+      }
+
+      if (machineRef.current) {
+        const machineRect = machineRef.current.getBoundingClientRect();
+        setIsMachineVisible(machineRect.top < window.innerHeight - 100);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <MainLayout>
-      <div className="relative w-full max-w-[1800px] mx-auto flex gap-8">
-        {/* ✅ 왼쪽 공지사항 (NoticeBoard) */}
+      <div className="w-full max-w-[96rem] mx-auto">
         <NoticeBoard />
-        {/* ✅ 중앙 콘텐츠 (OptionsList) + 오른쪽 머천카드 */}
-        <div className="flex-1 flex">
-          {/* ✅ 중앙 OptionsList */}
-          <div className="flex-1">
-            <div className="flex justify-center mt-20 mb-10 gap-16 ml-24">
+        <div className="flex flex-col gap-28 py-32">
+          {/* OptionsList 섹션 */}
+          <div className="w-full">
+            <div className="w-fit mr-auto text-left pl-72 mb-12">
+              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
+                Leafy Haven: Indoor
+              </h2>
+              <p className="text-lg text-white mb-6 custom-text-shadow">
+                Transform your space into a green sanctuary with our carefully
+                curated selection of indoor plants. <br></br> Each plant is
+                chosen for its unique characteristics and air-purifying
+                qualities.
+              </p>
+            </div>
+            <OptionsList />
+          </div>
+
+          {/* PopularCard 섹션 */}
+          <div
+            ref={popularRef}
+            className={`w-full transition-all duration-700 transform ${
+              isPopularVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-20'
+            } my-16`}
+          >
+            <div className="w-fit mr-auto text-left pl-72 mb-14">
+              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
+                Leafy Haven: Indoor
+              </h2>
+              <p className="text-lg text-white mb-6 custom-text-shadow">
+                Transform your space into a green sanctuary with our carefully
+                curated selection of indoor plants. <br></br> Each plant is
+                chosen for its unique characteristics and air-purifying
+                qualities.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-16">
               <PopularCard
                 gradient="pink-blue"
                 title="Hot This Month!"
@@ -25,34 +82,65 @@ export default function MainPage() {
                 title="Hot Last Month!"
                 description="BinnAIR"
               />
-            </div>
-            <div className="ml-20">
-              <OptionsList />
+              <PopularCard
+                gradient="pink-blue"
+                title="Hot This Month!"
+                description="BinnAIR"
+              />
             </div>
           </div>
 
-          {/* ✅ 오른쪽 MachineCard (사이드바 왼쪽) */}
-          <div className="relative top-40 flex flex-col gap-6 z-20 transform -translate-x-36">
-            <div className="relative">
-              <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
-              <MachineCard
-                title="발라리안"
-                description="play ground in world from VAPE"
-                date="2025-02-20"
-                image="https://images.unsplash.com/photo-1496979551903-46e46589a88b"
-                className="relative z-10 shadow-2xl"
-              />
+          {/* MachineCard 섹션 */}
+          <div
+            ref={machineRef}
+            className={`w-full transition-all duration-700 transform ${
+              isMachineVisible
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-20'
+            } my-16`}
+          >
+            <div className="w-fit mr-auto text-left pl-72 mb-14">
+              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
+                Leafy Haven: Indoor
+              </h2>
+              <p className="text-lg text-white mb-6 custom-text-shadow">
+                Transform your space into a green sanctuary with our carefully
+                curated selection of indoor plants. <br></br> Each plant is
+                chosen for its unique characteristics and air-purifying
+                qualities.
+              </p>
             </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
-              <MachineCard
-                title="스페셜 에디션 후드"
-                description="따뜻하고 스타일리시한 후드"
-                date="2025-02-18"
-                image="https://tvseriescritic.files.wordpress.com/2016/10/stranger-things-bicycle-lights-children.jpg"
-                className="relative z-10 shadow-2xl"
-              />
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8">
+              <div className="relative w-full sm:w-auto max-w-sm">
+                <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
+                <MachineCard
+                  title="발라리안"
+                  description="play ground in world from VAPE"
+                  date="2025-02-20"
+                  image="https://images.unsplash.com/photo-1496979551903-46e46589a88b"
+                  className="relative z-10 shadow-2xl"
+                />
+              </div>
+              <div className="relative w-full sm:w-auto max-w-sm mt-8 sm:mt-0">
+                <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
+                <MachineCard
+                  title="스페셜 에디션 후드"
+                  description="따뜻하고 스타일리시한 후드"
+                  date="2025-02-18"
+                  image="https://tvseriescritic.files.wordpress.com/2016/10/stranger-things-bicycle-lights-children.jpg"
+                  className="relative z-10 shadow-2xl"
+                />
+              </div>
+              <div className="relative w-full sm:w-auto max-w-sm">
+                <div className="absolute inset-0 bg-white opacity-50 blur-2xl rounded-lg scale-105"></div>
+                <MachineCard
+                  title="발라리안"
+                  description="play ground in world from VAPE"
+                  date="2025-02-20"
+                  image="https://images.unsplash.com/photo-1496979551903-46e46589a88b"
+                  className="relative z-10 shadow-2xl"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { Page } from './page';
+
 // ✅ 게시판 타입 (백엔드 ENUM과 일치)
 export type BoardType = 'NOTICE' | 'FAQ' | 'FREE' | 'SUGGESTION';
 export interface BoardResponse {
@@ -19,3 +21,5 @@ export interface BoardRequest {
   content: string; // 게시글 내용
   file?: File; // 파일 업로드 (옵션)
 }
+
+export type PagedBoardResponse = Page<BoardResponse>;

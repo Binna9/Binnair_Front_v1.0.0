@@ -13,7 +13,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* 1️⃣ 브랜드 소개 */}
           <div>
-            <h2 className="text-xl font-bold text-gray-800">SHOP LOGO</h2>
+            <h2 className="text-xl font-bold text-gray-800">BinnAIR</h2>
             <p className="text-sm mt-2">
               최고의 제품을 합리적인 가격에 제공합니다.
             </p>

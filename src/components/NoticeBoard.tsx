@@ -11,17 +11,16 @@ const NoticeBoard = () => {
     setHiddenNotices((prev) => [...prev, boardId]);
   };
 
-  // ✅ 숨겨지지 않은 공지만 필터링
-  const visibleNotices = notices.filter(
-    (notice) => !hiddenNotices.includes(notice.boardId)
-  );
+  // ✅ `notices?.content`에서 필터링
+  const visibleNotices =
+    notices.filter((notice) => !hiddenNotices.includes(notice.boardId)) ?? [];
 
   // ✅ 공지판 닫기 버튼 클릭 시
   if (!isVisible) {
     return (
       <button
         className="fixed left-0 top-1/2 transform -translate-y-1/2
-             bg-white/90 text-gray px-3 py-3 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)] z-50
+             bg-white/90 text-gray px-3 py-3 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)]
              flex items-center justify-center w-14 
              transition-transform duration-300 hover:scale-110 active:scale-95"
         onClick={() => setIsVisible(true)}
@@ -58,7 +57,7 @@ const NoticeBoard = () => {
         <ul className="space-y-3 pr-2">
           {loading ? (
             <li className="text-gray-500 text-center">📢 불러오는 중...</li>
-          ) : visibleNotices.length > 0 ? (
+          ) : visibleNotices?.length > 0 ? (
             visibleNotices.map((notice) => (
               <li
                 key={notice.boardId}
@@ -84,8 +83,9 @@ const NoticeBoard = () => {
           ) : (
             // ✅ 모든 공지가 닫히면 환영 메시지 표시
             <li className="text-center text-gray-700 font-semibold text-lg mt-10">
-              <span className="text-gray-900 font-bold">ilpoom</span>에 오신 걸
-              환영합니다!
+              <span className="text-gray-900 text-2xl font-bold mb-3">
+                BinnAIR
+              </span>
             </li>
           )}
         </ul>

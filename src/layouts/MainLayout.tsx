@@ -9,10 +9,10 @@ export default function MainLayout({
 }) {
   return (
     <div className="relative w-screen min-h-screen flex flex-col z-50">
-      {/* 배경 이미지 */}
+      {/* 배경 이미지 - 고정 버전 */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-[url('/img/MainBackGround.jpg')] 
-        before:absolute before:inset-0 before:bg-black/10 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-fixed bg-[url('/img/MainBackGround.jpg')] 
+     before:absolute before:inset-0 before:bg-black/10 z-0"
       ></div>
       <Navbar />
       <div className="relative flex flex-1">

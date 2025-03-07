@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   Headset,
   Bell,
@@ -10,7 +12,13 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react';
-import { BoardType, BoardRequest, BoardResponse } from '@/types/Board';
+import { RootState } from '@/store/store';
+import {
+  BoardType,
+  BoardRequest,
+  BoardResponse,
+  PagedBoardResponse,
+} from '@/types/Board';
 import {
   fetchBoards,
   fetchBoardById,
@@ -18,6 +26,7 @@ import {
   updateBoard,
   deleteBoard,
 } from '@/services/BoardService';
+import BoardDetail from './BoardDetail'; // 추가된 상세 페이지 컴포넌트 import
 
 // ✅ 섹션 배열 (아이콘 추가)
 const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
@@ -40,8 +49,11 @@ const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
 ];
 
 export default function Board() {
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const navigate = useNavigate();
+
   const [activeSection, setActiveSection] = useState<BoardType>('NOTICE');
-  const [boards, setBoards] = useState<BoardResponse[]>([]);
+  const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isWriting, setIsWriting] = useState(false);
@@ -52,6 +64,15 @@ export default function Board() {
   const [selectedSection, setSelectedSection] = useState<BoardType>('NOTICE');
   const [file, setFile] = useState<File | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+
+  // 상세 페이지 관련 상태 추가
+  const [isViewingDetail, setIsViewingDetail] = useState(false);
+  const [currentBoard, setCurrentBoard] = useState<BoardResponse | null>(null);
+
+  useEffect(() => {
+    setCurrentPage(0); // ✅ activeSection 변경 시 페이지를 0으로 초기화
+  }, [activeSection]);
 
   // ✅ 게시글 목록 불러오기
   useEffect(() => {
@@ -59,7 +80,7 @@ export default function Board() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchBoards(activeSection);
+        const data = await fetchBoards(activeSection, currentPage);
         setBoards(data);
       } catch (err) {
         console.error('Error fetching boards:', err);
@@ -70,7 +91,20 @@ export default function Board() {
     };
 
     loadBoards();
-  }, [activeSection]);
+  }, [activeSection, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const requireLogin = (callback: () => void) => {
+    if (!accessToken) {
+      alert('로그인 후 이용 가능합니다.');
+      navigate('/login');
+      return;
+    }
+    callback();
+  };
 
   // ✅ 글쓰기 모드 토글
   const toggleWriteMode = () => {
@@ -82,6 +116,7 @@ export default function Board() {
     setSelectedSection(activeSection);
     setFiles([]);
     setFile(undefined);
+    setIsViewingDetail(false); // 상세 보기 모드 해제
   };
 
   // ✅ 수정 모드 활성화
@@ -100,6 +135,7 @@ export default function Board() {
       // 수정 모드 설정
       setIsEditing(true);
       setIsWriting(true);
+      setIsViewingDetail(false); // 상세 보기 모드 해제
     } catch (err) {
       console.error('Error fetching board details:', err);
       alert('게시글 정보를 불러오는 중 오류가 발생했습니다.');
@@ -121,6 +157,9 @@ export default function Board() {
       // 삭제 후 목록 새로고침
       const updatedBoards = await fetchBoards(activeSection);
       setBoards(updatedBoards);
+
+      // 상세 페이지 보기 중이었다면 목록 보기로 돌아감
+      setIsViewingDetail(false);
 
       alert('게시글이 삭제되었습니다.');
     } catch (err) {
@@ -196,10 +235,38 @@ export default function Board() {
     }
   };
 
+  // ✅ 게시글 상세 보기 기능
+  const handleViewDetail = async (boardId: string) => {
+    try {
+      setLoading(true);
+      const boardDetail = await fetchBoardById(boardId);
+      setCurrentBoard(boardDetail);
+      setIsViewingDetail(true);
+      setIsWriting(false);
+    } catch (err) {
+      console.error('Error fetching board details:', err);
+      alert('게시글 정보를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ 상세 페이지에서 목록으로 돌아가기
+  const handleBackToList = () => {
+    setIsViewingDetail(false);
+    setCurrentBoard(null);
+  };
+
   return (
-    <div className="container mx-auto p-6 flex justify-center mt-10 min-h-[900px]">
+    <div className="container mx-auto p-6 flex justify-center mt-16 min-h-[900px]">
       {/* 흰색 네모 박스 */}
-      <div className="w-full max-w-[1400px] bg-white shadow-xl rounded-lg flex h-auto">
+      <div
+        className="w-full max-w-[1400px] bg-white rounded-lg flex h-auto"
+        style={{
+          boxShadow:
+            '0 0 20px 10px rgba(0, 0, 0, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        }}
+      >
         {/* 왼쪽 메뉴 (탭) */}
         <div className="w-1/5 border-r p-6 bg-gray-300 rounded-l-lg flex flex-col justify-between">
           <div>
@@ -215,6 +282,8 @@ export default function Board() {
                     if (isWriting) {
                       setSelectedSection(section.id);
                     }
+                    // 상세 페이지 보기 중이었다면 해제
+                    setIsViewingDetail(false);
                   }}
                   className={`w-full flex items-center text-left px-4 py-3 rounded-lg transition ${
                     activeSection === section.id
@@ -232,7 +301,7 @@ export default function Board() {
           {!isWriting && (
             <button
               className="px-4 py-4 bg-white text-gray-900 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition"
-              onClick={toggleWriteMode}
+              onClick={() => requireLogin(toggleWriteMode)}
               disabled={loading}
             >
               <Pencil className="w-5 h-5" /> 글 쓰기
@@ -240,7 +309,7 @@ export default function Board() {
           )}
         </div>
 
-        {/* ✅ 오른쪽 콘텐츠 영역 (게시글 목록 or 글쓰기 폼) */}
+        {/* ✅ 오른쪽 콘텐츠 영역 (게시글 목록 or 글쓰기 폼 or 상세 페이지) */}
         <div className="w-4/5 p-8">
           {isWriting ? (
             // ✅ 글쓰기/수정 모드일 때 (폼)
@@ -354,21 +423,34 @@ export default function Board() {
                 </button>
               </div>
             </div>
+          ) : isViewingDetail && currentBoard ? (
+            // ✅ 상세 페이지 표시
+            <BoardDetail
+              board={currentBoard}
+              onBack={handleBackToList}
+              requireLogin={requireLogin}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+            />
           ) : (
-            // ✅ 게시글 목록 (글쓰기 모드가 아닐 때만 표시)
+            // ✅ 게시글 목록
             <>
               {loading ? (
                 <p className="text-gray-600">⏳ 데이터를 불러오는 중...</p>
               ) : error ? (
                 <p className="text-red-500">{error}</p>
-              ) : boards.length === 0 ? (
+              ) : boards?.content?.length === 0 ? (
                 <p className="text-gray-500">게시글이 없습니다.</p>
               ) : (
                 <ul className="space-y-4">
-                  {boards.map((board) => (
+                  {boards?.content?.map((board) => (
                     <li key={board.boardId} className="border-b pb-4">
                       <div className="flex justify-between items-start">
-                        <h2 className="text-xl font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500">
+                        {/* 제목 클릭 시 상세 페이지 보기 */}
+                        <h2
+                          className="text-xl font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500 cursor-pointer"
+                          onClick={() => handleViewDetail(board.boardId)}
+                        >
                           {board.title}
                         </h2>
 
@@ -387,14 +469,18 @@ export default function Board() {
 
                           {/* 수정/삭제 버튼 */}
                           <button
-                            onClick={() => handleEdit(board.boardId)}
+                            onClick={() =>
+                              requireLogin(() => handleEdit(board.boardId))
+                            }
                             className="text-blue-500 hover:text-blue-700 transition"
                             title="수정"
                           >
                             <Edit className="w-5 h-5" />
                           </button>
                           <button
-                            onClick={() => handleDelete(board.boardId)}
+                            onClick={() =>
+                              requireLogin(() => handleDelete(board.boardId))
+                            }
                             className="text-red-500 hover:text-red-700 transition"
                             title="삭제"
                           >
@@ -403,14 +489,42 @@ export default function Board() {
                         </div>
                       </div>
 
+                      {/* ✅ 생성 날짜 추가 (시, 분, 초) */}
+                      <p className="text-gray-500 text-sm mt-1">
+                        {new Date(board.createDatetime).toLocaleTimeString(
+                          'ko-KR',
+                          {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                          }
+                        )}
+                      </p>
                       <p className="text-gray-800 mt-2">{board.content}</p>
-
                       {board.filePath && (
                         <p className="text-blue-500 mt-2">📎 첨부파일</p>
                       )}
                     </li>
                   ))}
                 </ul>
+              )}
+              {boards?.totalPages > 0 && (
+                <div className="flex justify-center gap-2 mt-4">
+                  {/* 페이지 번호 버튼만 표시 */}
+                  {Array.from({ length: boards.totalPages }, (_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handlePageChange(index)}
+                      className={`px-3 py-2 rounded-md ${
+                        currentPage === index
+                          ? 'bg-blue-400 text-white font-bold'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+                </div>
               )}
             </>
           )}

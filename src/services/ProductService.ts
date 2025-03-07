@@ -1,4 +1,41 @@
 import apiClient from '../utils/apiClient';
+import { ProductType, PagedProductResponse } from '@/types/ProductType';
+
+export const fetchAllProducts = async (
+  page: number = 0,
+  size: number = 10
+): Promise<PagedProductResponse | null> => {
+  try {
+    const response = await apiClient.get<PagedProductResponse>(
+      `/products?page=${page}&size=${size}`
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error('❌ 모든 제품 조회 실패:', error);
+  }
+
+  return null;
+};
+
+// ✅ 개별 제품 조회
+export const fetchProductById = async (
+  productId: string
+): Promise<ProductType | null> => {
+  try {
+    const response = await apiClient.get<ProductType>(`/products/${productId}`);
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error(`❌ 개별 제품 조회 실패: ${productId}`, error);
+  }
+
+  return null;
+};
 
 // ✅ 단일 제품 이미지 가져오기
 export const fetchProductImage = async (

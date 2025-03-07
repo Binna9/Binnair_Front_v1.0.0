@@ -1,12 +1,26 @@
 import apiClient from '@/utils/apiClient';
 import {
   BookmarkResponse,
+  CartResponse,
   CartTotal,
   CartItemsResponse,
   // QuantityDto, // 만약 별도의 타입으로 분리되어 있다면
 } from '../types/CartBookmarkTypes';
 
 const CartBookmarkService = {
+  addToCart: (productId: string, quantity: number): Promise<CartResponse> => {
+    return apiClient
+      .post<CartResponse>('/carts', { productId, quantity })
+      .then((response) => response.data);
+  },
+
+  // 즐겨찾기 추가
+  addToBookmark: (productId: string): Promise<BookmarkResponse> => {
+    return apiClient
+      .post<BookmarkResponse>('/bookmarks', { productId })
+      .then((response) => response.data);
+  },
+
   // 장바구니 목록 조회 (CartResponse[] 배열 반환)
   getCartItems: (): Promise<{ data: CartItemsResponse }> => {
     return apiClient.get<CartItemsResponse>('/carts');

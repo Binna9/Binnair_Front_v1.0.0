@@ -20,6 +20,14 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    // ✅ accessToken과 user 정보 저장
+    setCredentials: (
+      state,
+      action: PayloadAction<{ accessToken: string; user: AuthState['user'] }>
+    ) => {
+      state.accessToken = action.payload.accessToken;
+      state.user = action.payload.user;
+    },
     loginSuccess: (state, action: PayloadAction<{ accessToken: string }>) => {
       state.accessToken = action.payload.accessToken;
     },
@@ -33,6 +41,7 @@ export const authSlice = createSlice({
   },
 });
 
-export const { loginSuccess, setUser, logout } = authSlice.actions;
+export const { setCredentials, loginSuccess, setUser, logout } =
+  authSlice.actions;
 export const selectAuth = (state: RootState) => state.auth;
 export default authSlice.reducer;

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { fetchBoards } from '@/services/BoardService';
-import { BoardResponse, BoardType } from '@/types/Board';
+import { PagedBoardResponse, BoardType, BoardResponse } from '@/types/Board';
 
 // ✅ 특정 `boardType`을 받아 데이터를 가져오는 커스텀 훅
 export const useBoard = (boardType: BoardType) => {
-  const [boards, setBoards] = useState<BoardResponse[]>([]);
+  const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,12 +25,15 @@ export const useBoard = (boardType: BoardType) => {
     fetchData();
   }, [boardType]);
 
-  // ✅ 최신순 정렬
-  const sortedBoards = [...boards].sort(
-    (a, b) =>
-      new Date(b.createDatetime).getTime() -
-      new Date(a.createDatetime).getTime()
-  );
+  // ✅ 최신순 정렬 (content 배열만 정렬)
+  const sortedBoards: BoardResponse[] =
+    boards?.content
+      ?.slice()
+      .sort(
+        (a, b) =>
+          new Date(b.createDatetime).getTime() -
+          new Date(a.createDatetime).getTime()
+      ) ?? [];
 
   return { boards: sortedBoards, loading, error };
 };
