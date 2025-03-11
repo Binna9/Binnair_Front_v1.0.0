@@ -67,6 +67,17 @@ const CartBookmarkService = {
     );
     return response.data;
   },
+
+  // ✅ **장바구니 제품 옵션 변경 (추가된 부분)**
+  changeProduct: async (
+    cartId: string,
+    productId: string
+  ): Promise<CartResponse> => {
+    const response = await apiClient.put<CartResponse>(
+      `/carts/${cartId}/change-product?productId=${productId}`
+    );
+    return response.data;
+  },
 };
 
 export default CartBookmarkService;

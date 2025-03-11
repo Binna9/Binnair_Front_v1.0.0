@@ -1,6 +1,20 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Sun, Moon, User, LogOut, LogIn, UserPlus } from 'lucide-react';
+import {
+  Search,
+  Sun,
+  Moon,
+  User,
+  LogOut,
+  LogIn,
+  UserPlus,
+  Calendar,
+  ShoppingBag,
+  ShoppingCart,
+  Tag,
+  MessageCircle,
+  HelpCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import HamburgerMenu from './HamburgerMenu';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,7 +65,7 @@ export default function Navbar() {
         />
       )}
 
-      <nav className="fixed top-0 left-0 w-full h-16 bg-gray-800/80 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
+      <nav className="fixed top-0 left-0 w-full h-16 bg-zinc-800/80 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
         <div className="flex items-center space-x-4">
           <span
             className="text-3xl font-bold text-white cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-gray-300"
@@ -75,29 +89,56 @@ export default function Navbar() {
 
         <div className="flex space-x-6 ml-[725px]">
           <HamburgerMenu
-            menuName="이벤트"
-            items={[{ name: '이벤트', id: 'event' }]}
+            menuName="Event"
+            items={[
+              {
+                name: 'Event',
+                id: 'event',
+                icon: <Calendar size={16} />,
+              },
+            ]}
             isOpen={openMenu === '이벤트'}
             onClick={() => handleMenuClick('이벤트')}
             onItemClick={(item) => navigate(`/event?section=${item.id}`)}
           />
           <HamburgerMenu
-            menuName="제품"
-            items={[{ name: '신제품', id: 'new' }]}
+            menuName="Shop"
+            items={[
+              {
+                name: 'Shop',
+                id: 'new',
+                icon: <ShoppingBag size={16} />,
+              },
+            ]}
             isOpen={openMenu === '제품'}
             onClick={() => handleMenuClick('제품')}
             onItemClick={(item) => navigate(`/product?section=${item.id}`)}
           />
           <HamburgerMenu
-            menuName="장바구니"
-            items={[{ name: '장바구니', id: 'cart' }]}
+            menuName="Cart"
+            items={[
+              {
+                name: 'Cart',
+                id: 'cart',
+                icon: <ShoppingCart size={16} />,
+              },
+            ]}
             isOpen={openMenu === '장바구니'}
             onClick={() => handleMenuClick('장바구니')}
             onItemClick={(item) => navigate(`/cart?section=${item.id}`)}
           />
           <HamburgerMenu
-            menuName="고객센터"
-            onClick={() => navigate('/customer')} // ✅ 클릭하면 /customer 이동
+            menuName="Customer Service"
+            items={[
+              {
+                name: 'Service',
+                id: 'cart',
+                icon: <HelpCircle size={16} />,
+              },
+            ]}
+            isOpen={openMenu === '고객센터'}
+            onClick={() => handleMenuClick('고객센터')}
+            onItemClick={(item) => navigate(`/customer`)}
           />
         </div>
 
@@ -115,12 +156,14 @@ export default function Navbar() {
 
               {/* ✅ 사용자명 클릭 시 팝업 열기 */}
               <span
-                className="text-xl font-bold text-white underline decoration-white underline-offset-4 cursor-pointer"
+                className="text-xl font-bold text-white underline decoration-white underline-offset-4 cursor-pointer truncate max-w-[150px] whitespace-nowrap"
                 onClick={() => setIsProfileOpen(true)}
               >
                 {profileUser?.userName || '사용자'}
               </span>
-              <span className="text-sm text-white">님 안녕하세요!</span>
+              <span className="text-sm text-white whitespace-nowrap">
+                님 안녕하세요!
+              </span>
             </div>
           ) : (
             <div className="flex items-center space-x-4">
@@ -128,7 +171,7 @@ export default function Navbar() {
               <Button
                 onClick={() => navigate('/login')}
                 variant="ghost"
-                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[90px]"
               >
                 <LogIn className="text-white w-8 h-8 cursor-pointer" />
                 <span className="text-sm text-gray-300">Log In</span>
@@ -138,7 +181,7 @@ export default function Navbar() {
               <Button
                 onClick={() => navigate('/register')}
                 variant="ghost"
-                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[90px]"
               >
                 <UserPlus className="text-white w-8 h-8 cursor-pointer" />
                 <span className="text-sm text-gray-300">Sign Up</span>
@@ -156,7 +199,7 @@ export default function Navbar() {
             onClick={() => setIsProfileOpen(true)}
           >
             <User className="text-white w-10 h-10 cursor-pointer" />
-            <span className="text-sm text-gray-300">Profile</span>
+            <span className="text-sm text-gray-300">My Page</span>
           </Button>
 
           {/* ✅ 다크모드 버튼 */}

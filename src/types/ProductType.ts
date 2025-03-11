@@ -8,6 +8,8 @@ export interface ProductType {
   stockQuantity: number;
   category: string;
   imageUrl: string;
+  discountRate: number;
+  discountPrice: number;
 }
 
 export type PagedProductResponse = Page<ProductType>;

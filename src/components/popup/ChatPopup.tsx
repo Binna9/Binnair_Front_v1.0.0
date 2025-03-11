@@ -100,8 +100,8 @@ export default function ChatPopUp({
               key={index}
               className={`p-3 rounded-lg max-w-[80%] break-words ${
                 index === 0
-                  ? 'bg-blue-500 text-white self-start'
-                  : 'bg-gray-200 self-end'
+                  ? 'bg-zinc-500 text-white self-start'
+                  : 'bg-zinc-200 self-end'
               }`}
             >
               {msg}
@@ -114,7 +114,7 @@ export default function ChatPopUp({
         <div className="p-3 border-t flex items-center">
           <input
             type="text"
-            className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-400"
             placeholder="메시지를 입력하세요..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -122,7 +122,7 @@ export default function ChatPopUp({
           />
           <button
             onClick={handleSend}
-            className="ml-2 p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition"
+            className="ml-2 p-2 bg-zinc-500 text-white rounded-full hover:bg-zinc-600 transition"
           >
             <Send size={18} />
           </button>

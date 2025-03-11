@@ -5,6 +5,7 @@ export interface CartResponse {
   productName: string;
   productDescription: string;
   quantity: number;
+  option?: string;
   price: number;
 }
 
@@ -42,10 +43,31 @@ export interface BookmarkItem {
   price: number;
 }
 
+export enum OrderStep {
+  CART = 'cart',
+  CHECKOUT = 'checkout',
+  PAYMENT = 'payment',
+  CONFIRMATION = 'confirmation',
+}
+
 export interface CartTotal {
   userId: string;
   quantity: number;
   totalAmount: number;
   discountAmount: number;
   discountedTotal: number;
+}
+
+export interface ShippingInfo {
+  name: string;
+  phone: string;
+  address: string;
+  zipCode: string;
+  memo: string;
+}
+
+export interface ProductOption {
+  productId: string;
+  name: string;
+  price: number;
 }

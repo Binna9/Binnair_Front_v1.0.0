@@ -215,7 +215,7 @@ const AllProduct = () => {
         className="relative gap-2 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 p-5 flex flex-col items-center w-4/5 h-[460px] mt-10"
       >
         {/* 📌 제품별 카테고리 북마크 태그 */}
-        <div className="absolute top-[-8px] left-0 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-green-700">
+        <div className="absolute top-[-8px] left-0 bg-zinc-700 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-zinc-500">
           {product.category}
         </div>
 
@@ -225,7 +225,7 @@ const AllProduct = () => {
           <button
             onClick={() => handleAddBookmark(product.productId)}
             disabled={isBookmarked || isBookmarkLoading}
-            className="absolute top-2 right-2 z-10 text-xl bg-white/80 hover:bg-white p-1.5 rounded-full shadow-md transition-colors"
+            className="absolute top-2 right-2 z-10 text-lg bg-white/80 hover:bg-white p-1.5 rounded-full shadow-md transition-colors"
           >
             {isBookmarked ? (
               <BsStarFill className="text-yellow-400" />
@@ -237,6 +237,20 @@ const AllProduct = () => {
               />
             )}
           </button>
+
+          {/* 할인율 표시 (이미지 하단 왼쪽) - 고급 리본 스타일 */}
+          {product.discountRate > 0 && (
+            <div className="absolute top-2 left-8 w-40 h-40 z-10">
+              <div className="absolute top-0 left-0 transform -translate-x-1/2 translate-y-1/3 rotate-[-45deg] w-48 bg-gradient-to-r from-red-600 to-red-400 text-white font-bold py-1 text-center shadow-lg">
+                <div className="flex justify-center items-center">
+                  <span className="text-xs">OFF</span>
+                  <span className="text-base ml-1">
+                    {product.discountRate}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 제품 이미지 */}
           {productImages[product.productId] ? (
@@ -257,10 +271,23 @@ const AllProduct = () => {
         <p className="text-md text-gray-600 text-center">
           {product.productDescription}
         </p>
-        <p className="text-lg font-bold text-slate-900 mt-1">
-          {product.price.toLocaleString()}원
-        </p>
-
+        {/* 가격 표시 - 할인 적용 시 원래 가격에 취소선 표시 */}
+        <div className="mt-1">
+          {product.discountRate > 0 ? (
+            <div className="flex flex-col items-center">
+              <p className="text-sm font-medium text-gray-500 line-through">
+                {product.price.toLocaleString()}원
+              </p>
+              <p className="text-lg font-bold text-red-600">
+                {product.discountPrice.toLocaleString()}원
+              </p>
+            </div>
+          ) : (
+            <p className="text-lg font-bold text-slate-900">
+              {product.price.toLocaleString()}원
+            </p>
+          )}
+        </div>
         {/* 수량 선택 및 장바구니 추가 버튼 */}
         <div className="flex items-center mt-2 w-full justify-between">
           <div className="flex items-center border rounded-md">
@@ -289,7 +316,7 @@ const AllProduct = () => {
           <button
             onClick={() => handleAddToCart(product.productId)}
             disabled={isCartLoading}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1.5 px-4 rounded-lg shadow-md transition disabled:bg-blue-400 disabled:cursor-not-allowed"
+            className="bg-zinc-500 hover:bg-zinc-600 text-white font-semibold py-1.5 px-4 rounded-lg shadow-md transition disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
             {isCartLoading ? '추가 중...' : 'Add to Cart'}
           </button>
@@ -303,7 +330,7 @@ const AllProduct = () => {
       {/* 📌 전체 카테고리 목록 (페이지 상단) - ProductRadio 컴포넌트 사용 */}
       <div className="w-full max-w-[1400px] bg-white/80 shadow-lg rounded-xl p-4 mb-4 mt-20 relative">
         {/* 북마크 - 카테고리 섹션 */}
-        <div className="absolute -top-3 left-6 bg-slate-600 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-slate-700">
+        <div className="absolute -top-3 left-6 bg-zinc-700 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-900">
           CATEGORY
         </div>
         <ProductRadio
@@ -316,7 +343,7 @@ const AllProduct = () => {
       {/* 📌 제품 리스트 (입체감 있는 배경 추가) */}
       <div className="w-full max-w-[1400px] bg-white/80 shadow-xl rounded-xl p-6 relative mt-5">
         {/* 북마크 - 제품 리스트 섹션 */}
-        <div className="absolute -top-3 left-6 bg-stone-700 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-stone-900">
+        <div className="absolute -top-3 left-6 bg-zinc-700 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-900">
           PRODUCT
         </div>
         {filteredProducts.length > 0 ? (
@@ -343,8 +370,8 @@ const AllProduct = () => {
                 onClick={() => handlePageChange(index)}
                 className={`px-3 py-2 rounded-md ${
                   currentPage === index
-                    ? 'bg-blue-500 text-white font-bold'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-zinc-500 text-white font-bold'
+                    : 'bg-zinc-100 text-gray-700 hover:bg-zinc-200'
                 }`}
               >
                 {index + 1}

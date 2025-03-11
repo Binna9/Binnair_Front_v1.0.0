@@ -9,8 +9,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import MainPage from '@/pages/Main';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
-import EventPage from './pages/Event';
-import CustomerPage from './pages/Customer';
+import EventPage from './pages/EventPage';
+import CartPage from './pages/CartPage';
+import CustomerPage from './pages/CustomerPage';
 import ProductPage from './pages/ProductPage';
 import ForgotPassword from '@/pages/ForgotPassword';
 import AuthWrapper from './components/auth/AuthWrapper';
@@ -59,6 +60,7 @@ function AnimatedRoutes() {
           <Route path="/event" element={<EventPage />} />
           <Route path="/product" element={<ProductPage />} />
           <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>

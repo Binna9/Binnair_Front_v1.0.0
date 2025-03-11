@@ -287,8 +287,8 @@ export default function Board() {
                   }}
                   className={`w-full flex items-center text-left px-4 py-3 rounded-lg transition ${
                     activeSection === section.id
-                      ? 'bg-blue-500 text-white font-semibold'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-zinc-500 text-white font-semibold'
+                      : 'bg-zinc-100 text-gray-700 hover:bg-zinc-200'
                   }`}
                 >
                   {section.icon} {section.title}
@@ -300,7 +300,7 @@ export default function Board() {
           {/* ✅ 글쓰기 버튼 */}
           {!isWriting && (
             <button
-              className="px-4 py-4 bg-white text-gray-900 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition"
+              className="px-4 py-4 bg-white text-gray-900 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-200 transition"
               onClick={() => requireLogin(toggleWriteMode)}
               disabled={loading}
             >
@@ -399,7 +399,7 @@ export default function Board() {
                       toggleWriteMode();
                     }
                   }}
-                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                  className="px-4 py-2 bg-zinc-500 text-white rounded-lg hover:bg-zinc-600 transition"
                   disabled={loading}
                 >
                   취소
@@ -416,7 +416,7 @@ export default function Board() {
                       handlePostSubmit();
                     }
                   }}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  className="px-4 py-2 bg-zinc-300 text-white rounded-lg hover:bg-blue-600 transition"
                   disabled={loading}
                 >
                   {loading ? '처리 중...' : isEditing ? '수정' : '등록'}
@@ -502,7 +502,9 @@ export default function Board() {
                       </p>
                       <p className="text-gray-800 mt-2">{board.content}</p>
                       {board.filePath && (
-                        <p className="text-blue-500 mt-2">📎 첨부파일</p>
+                        <p className="text-zinc-600 hover:text-zinc-800 mt-3">
+                          📎 첨부파일
+                        </p>
                       )}
                     </li>
                   ))}
@@ -517,8 +519,8 @@ export default function Board() {
                       onClick={() => handlePageChange(index)}
                       className={`px-3 py-2 rounded-md ${
                         currentPage === index
-                          ? 'bg-blue-400 text-white font-bold'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          ? 'bg-zinc-500 text-white font-bold'
+                          : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
                       }`}
                     >
                       {index + 1}

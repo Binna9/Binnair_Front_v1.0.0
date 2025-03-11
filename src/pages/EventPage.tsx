@@ -1,5 +1,5 @@
 import MainLayout from '@/layouts/MainLayout';
-import EventProduct from '@/components/product/EventProduct'; // EventProduct 경로에 맞게 수정
+import EventProduct from '@/components/product/EventProduct';
 
 export default function EventPage() {
   return (

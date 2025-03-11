@@ -2,12 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../../assets/css/hamburger.css';
 
+interface MenuItem {
+  name: string;
+  id: string;
+  icon?: React.ReactNode; // Add icon property to each menu item
+}
+
 interface HamburgerMenuProps {
   menuName: string;
-  items?: { name: string; id: string }[];
+  items?: MenuItem[];
   isOpen?: boolean;
   onClick: () => void;
-  onItemClick?: (item: { name: string; id: string }) => void;
+  onItemClick?: (item: MenuItem) => void;
+  icon?: React.ReactNode; // Icon for the main menu
 }
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
@@ -16,9 +23,10 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   isOpen,
   onClick,
   onItemClick,
+  icon,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const closeTimeout = useRef<NodeJS.Timeout | null>(null); // ✅ useRef로 closeTimeout 유지
+  const closeTimeout = useRef<NodeJS.Timeout | null>(null);
   const [closing, setClosing] = useState(false);
 
   // ✅ 배경 클릭 시 부드럽게 닫힘
@@ -27,9 +35,9 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setClosing(true);
         closeTimeout.current = setTimeout(() => {
-          onClick(); // ✅ 애니메이션 후 닫힘 처리
+          onClick();
           setClosing(false);
-        }, 300); // ✅ 0.3초 후 닫힘
+        }, 300);
       }
     };
 
@@ -42,10 +50,10 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       if (closeTimeout.current) {
-        clearTimeout(closeTimeout.current); // ✅ 기존 타이머가 있으면 초기화
+        clearTimeout(closeTimeout.current);
       }
     };
-  }, [isOpen, onClick]); // ✅ 의존성 배열 유지
+  }, [isOpen, onClick]);
 
   // ✅ 새로운 메뉴 선택 시 `closing` 상태 즉시 초기화
   useEffect(() => {
@@ -85,7 +93,11 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           </svg>
         </label>
 
-        <span className="text-white font-medium text-sm">{menuName}</span>
+        <div className="flex items-center">
+          {/* 아이콘 추가 */}
+          {icon && <span className="text-white mr-1">{icon}</span>}
+          <span className="text-white font-medium text-sm">{menuName}</span>
+        </div>
       </div>
 
       {/* 📌 드롭다운 메뉴 (부드럽게 열리고 닫힘) */}
@@ -93,7 +105,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && !closing && (
           <motion.div
             ref={menuRef}
-            className="absolute left-0 top-12 w-48 bg-gray-800/70 border-2 border-white/70 text-white shadow-lg"
+            className="absolute left-0 top-12 w-48 bg-zinc-800/70 border-2 border-white/70 text-white shadow-lg"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}
@@ -102,10 +114,11 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
               {items.map((item) => (
                 <li
                   key={item.id}
-                  onClick={() => onItemClick(item)} // ✅ 클릭 시 onItemClick 실행
-                  className="py-2 px-4 w-4/5 mx-auto transition cursor-pointer hover:bg-white/50 rounded-sm"
+                  onClick={() => onItemClick(item)}
+                  className="py-2 px-4 w-4/5 mx-auto transition cursor-pointer hover:bg-white/50 rounded-sm flex items-center justify-center space-x-2"
                 >
-                  {item.name}
+                  {item.icon && <span>{item.icon}</span>}
+                  <span>{item.name}</span>
                 </li>
               ))}
             </ul>

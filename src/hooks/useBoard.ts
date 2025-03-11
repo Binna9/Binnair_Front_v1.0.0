@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { fetchBoards } from '@/services/BoardService';
 import { PagedBoardResponse, BoardType, BoardResponse } from '@/types/Board';
 
-// ✅ 특정 `boardType`을 받아 데이터를 가져오는 커스텀 훅
 export const useBoard = (boardType: BoardType) => {
   const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);

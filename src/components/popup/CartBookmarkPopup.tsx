@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   XCircleIcon,
   ShoppingCartIcon,
@@ -39,6 +40,8 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
     useState<number>(0);
   const [selectedDiscountedTotal, setSelectedDiscountedTotal] =
     useState<number>(0);
+
+  const navigate = useNavigate();
 
   const items = type === 'cart' ? cartItems : bookmarkItems;
   const isCart = type === 'cart';
@@ -166,7 +169,7 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
           {isCart ? (
-            <ShoppingCartIcon className="w-7 h-7 text-blue-500" />
+            <ShoppingCartIcon className="w-7 h-7 text-zinc-700" />
           ) : (
             <StarIcon className="w-7 h-7 text-yellow-500" />
           )}
@@ -347,19 +350,12 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
         {/* 구매 버튼 (장바구니만) */}
         {isCart && (
           <div className="flex justify-center gap-3 mt-5">
-            {selectedItems.length > 0 && (
-              <button
-                className="w-1/3 py-3 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition text-center"
-                onClick={() => {
-                  console.log('선택된 장바구니 아이템:', selectedItems);
-                  alert(`선택된 아이템 ID: ${selectedItems.join(', ')}`);
-                }}
-              >
-                {selectedItems.length === items.length
-                  ? '전체 구매'
-                  : '선택 구매'}
-              </button>
-            )}
+            <button
+              className="w-1/3 py-3 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition text-center"
+              onClick={() => navigate('/cart')}
+            >
+              구매 페이지 이동
+            </button>
           </div>
         )}
       </motion.div>
