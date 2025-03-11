@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import MainLayout from '@/layouts/MainLayout';
-import OptionsList from '@/components/OptionsList';
-import NoticeBoard from '@/components/NoticeBoard';
-import MachineCard from '@/components/MachineCard';
-import PopularCard from '@/components/PopularCard';
+import OptionsList from '@/components/main/OptionsList';
+import NoticeBoard from '@/components/board/NoticeBoard';
+import MachineCard from '@/components/ui/MachineCard';
+import PopularCard from '@/components/ui/PopularCard';
 
 export default function MainPage() {
   const [isPopularVisible, setIsPopularVisible] = useState(false);

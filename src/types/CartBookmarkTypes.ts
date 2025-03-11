@@ -10,6 +10,8 @@ export interface CartResponse {
 
 export interface CartItemsResponse {
   totalAmount: number;
+  discountAmount: number;
+  discountedTotal: number;
   carts: CartResponse[];
 }
 
@@ -29,7 +31,7 @@ export interface CartItem {
   productDescription: string;
   quantity: number;
   price: number;
-  updateQuantity?: (cartId: string, newQuantity: number) => void;
+  updateQuantity?: (cartId: string, newQuantity: number) => void; // ✅ 단일 cartId로 변경
 }
 
 export interface BookmarkItem {
@@ -44,4 +46,6 @@ export interface CartTotal {
   userId: string;
   quantity: number;
   totalAmount: number;
+  discountAmount: number;
+  discountedTotal: number;
 }

@@ -3,7 +3,7 @@ import { ProductType, PagedProductResponse } from '@/types/ProductType';
 
 export const fetchAllProducts = async (
   page: number = 0,
-  size: number = 10
+  size: number = 9
 ): Promise<PagedProductResponse | null> => {
   try {
     const response = await apiClient.get<PagedProductResponse>(
@@ -97,6 +97,20 @@ export const uploadProductImage = async (
     }
   } catch (error) {
     console.error('❌ 제품 이미지 업로드 실패:', error);
+  }
+
+  return null;
+};
+
+export const fetchCategories = async (): Promise<string[] | null> => {
+  try {
+    const response = await apiClient.get<string[]>('/products/list');
+
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error('❌ 제품 카테고리 조회 실패:', error);
   }
 
   return null;

@@ -4,58 +4,68 @@ import {
   CartResponse,
   CartTotal,
   CartItemsResponse,
-  // QuantityDto, // 만약 별도의 타입으로 분리되어 있다면
 } from '../types/CartBookmarkTypes';
 
 const CartBookmarkService = {
-  addToCart: (productId: string, quantity: number): Promise<CartResponse> => {
-    return apiClient
-      .post<CartResponse>('/carts', { productId, quantity })
-      .then((response) => response.data);
+  // 장바구니 추가
+  addToCart: async (
+    productId: string,
+    quantity: number
+  ): Promise<CartResponse> => {
+    const response = await apiClient.post<CartResponse>('/carts', {
+      productId,
+      quantity,
+    });
+    return response.data;
   },
 
   // 즐겨찾기 추가
-  addToBookmark: (productId: string): Promise<BookmarkResponse> => {
-    return apiClient
-      .post<BookmarkResponse>('/bookmarks', { productId })
-      .then((response) => response.data);
+  addToBookmark: async (productId: string): Promise<BookmarkResponse> => {
+    const response = await apiClient.post<BookmarkResponse>('/bookmarks', {
+      productId,
+    });
+    return response.data;
   },
 
-  // 장바구니 목록 조회 (CartResponse[] 배열 반환)
-  getCartItems: (): Promise<{ data: CartItemsResponse }> => {
-    return apiClient.get<CartItemsResponse>('/carts');
+  // 장바구니 목록 조회
+  getCartItems: async (): Promise<{ data: CartItemsResponse }> => {
+    return await apiClient.get<CartItemsResponse>('/carts');
   },
 
-  // 즐겨찾기 목록 조회 (BookmarkResponse[] 배열 반환)
-  getBookmarkItems: (): Promise<{ data: BookmarkResponse[] }> => {
-    return apiClient.get<BookmarkResponse[]>('/bookmarks');
-  },
-
-  // 장바구니 수량 업데이트 후, 변경된 수량과 총액을 포함한 CartTotal 반환
-  updateCartQuantity: (
-    cartId: string,
-    newQuantity: number
-  ): Promise<CartTotal> => {
-    return apiClient
-      .put<CartTotal>(`/carts/${cartId}`, { quantity: newQuantity })
-      .then((response) => response.data);
+  // 즐겨찾기 목록 조회
+  getBookmarkItems: async (): Promise<{ data: BookmarkResponse[] }> => {
+    return await apiClient.get<BookmarkResponse[]>('/bookmarks');
   },
 
   // 장바구니 아이템 삭제
-  deleteCartItem: (cartId: string): Promise<void> => {
-    return apiClient.delete(`/carts/${cartId}`);
+  deleteCartItem: async (cartId: string): Promise<void> => {
+    await apiClient.delete(`/carts/${cartId}`);
   },
 
   // 즐겨찾기 아이템 삭제
-  deleteBookmarkItem: (bookmarkId: string): Promise<void> => {
-    return apiClient.delete(`/bookmarks/${bookmarkId}`);
+  deleteBookmarkItem: async (bookmarkId: string): Promise<void> => {
+    await apiClient.delete(`/bookmarks/${bookmarkId}`);
   },
 
-  // 장바구니 총액 조회
-  getCartTotalAmount: (): Promise<number> => {
-    return apiClient
-      .get<{ totalAmount: number }>('/carts/total')
-      .then((response) => response.data.totalAmount);
+  // ✅ 장바구니 수량 업데이트 (쿼리 스트링 방식)
+  updateCartQuantity: async (
+    cartId: string,
+    newQuantity: number
+  ): Promise<void> => {
+    await apiClient.put(
+      `/carts/update-quantity?cartId=${cartId}&quantity=${newQuantity}`
+    );
+  },
+
+  // ✅ 할인된 총 금액 조회
+  getDiscountedTotal: async (cartIds: string[]): Promise<CartTotal> => {
+    const response = await apiClient.post<CartTotal>(
+      '/carts/discounted-total',
+      {
+        cartIds,
+      }
+    );
+    return response.data;
   },
 };
 

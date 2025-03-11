@@ -5,7 +5,7 @@ import { useState } from 'react';
 import HamburgerMenu from './HamburgerMenu';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import UserProfilePopup from '@/components/UserProfilePopup';
+import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfileImage } from '@/hooks/useProfileImage';
 import { useProfile } from '@/hooks/useProfile';
 

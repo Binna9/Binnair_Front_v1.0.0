@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useAuth } from '@/hooks/useAuth';
-import GoogleLoginButton from '@/components/GoogleLoginButton';
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 
 export default function Login() {
   const [loginId, setLoginId] = useState('');

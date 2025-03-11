@@ -3,14 +3,14 @@ import { fetchAllProducts } from '@/services/ProductService';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { useProductImageBatch } from '@/hooks/useProductImageBatch';
 import { PagedProductResponse } from '@/types/ProductType';
-import ProductRadio from './ProductRadio';
+import { fetchCategories } from '@/services/ProductService';
+import ProductRadio from '../ui/ProductRadio';
 import CartBookmarkService from '@/services/CartBookmarkService';
 
 const AllProduct = () => {
   const [productPage, setProductPage] = useState<PagedProductResponse | null>(
     null
   );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [bookmarkedProducts, setBookmarkedProducts] = useState<Set<string>>(
     new Set()
   );
@@ -21,11 +21,15 @@ const AllProduct = () => {
     };
   }>({});
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const data = await fetchAllProducts();
+        // Pass the current page to fetchAllProducts
+        const data = await fetchAllProducts(currentPage);
         setProductPage(data);
 
         // Initialize quantities for all products
@@ -53,7 +57,26 @@ const AllProduct = () => {
     };
 
     loadProducts();
+  }, [currentPage]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      const fetchedCategories = await fetchCategories();
+      if (fetchedCategories) {
+        setCategories(fetchedCategories);
+      }
+    };
+    loadCategories();
   }, []);
+
+  // 페이지네이션
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // When category changes, we should reset to first page
+    if (page !== currentPage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // 북마크 목록 불러오기
   const loadBookmarks = async () => {
@@ -71,9 +94,6 @@ const AllProduct = () => {
 
   // 제품 리스트 가져오기 (content 값)
   const products = productPage?.content ?? [];
-
-  // 중복 없는 카테고리 목록 생성
-  const categories = Array.from(new Set(products.map((p) => p.category)));
 
   // 선택된 카테고리에 따라 필터링
   const filteredProducts = selectedCategory
@@ -195,7 +215,7 @@ const AllProduct = () => {
         className="relative gap-2 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 p-5 flex flex-col items-center w-4/5 h-[460px] mt-10"
       >
         {/* 📌 제품별 카테고리 북마크 태그 */}
-        <div className="absolute top-0 left-0 bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-blue-300">
+        <div className="absolute top-[-8px] left-0 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-green-700">
           {product.category}
         </div>
 
@@ -314,6 +334,23 @@ const AllProduct = () => {
           <p className="text-center text-gray-300 text-lg w-full">
             선택한 카테고리에 제품이 없습니다.
           </p>
+        )}
+        {productPage && productPage.totalPages > 0 && (
+          <div className="flex justify-center gap-2 mt-16 mb-8">
+            {Array.from({ length: productPage.totalPages }, (_, index) => (
+              <button
+                key={index}
+                onClick={() => handlePageChange(index)}
+                className={`px-3 py-2 rounded-md ${
+                  currentPage === index
+                    ? 'bg-blue-500 text-white font-bold'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+          </div>
         )}
       </div>
     </div>

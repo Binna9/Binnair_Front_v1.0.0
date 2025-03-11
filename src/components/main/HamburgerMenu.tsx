@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import '../assets/css/hamburger.css';
+import '../../assets/css/hamburger.css';
 
 interface HamburgerMenuProps {
   menuName: string;

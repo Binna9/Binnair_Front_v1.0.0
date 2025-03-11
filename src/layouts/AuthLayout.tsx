@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import LoginBackground from '@/components/LoginBackground';
+import LoginBackground from '@/components/auth/LoginBackground';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (

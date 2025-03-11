@@ -13,9 +13,8 @@ import EventPage from './pages/Event';
 import CustomerPage from './pages/Customer';
 import ProductPage from './pages/ProductPage';
 import ForgotPassword from '@/pages/ForgotPassword';
-import AuthWrapper from './components/AuthWrapper';
-import GoogleAuthHandler from './components/GoogleAuthHandler';
-import { CartBookmarkProvider } from './context/CartBookmarkContext';
+import AuthWrapper from './components/auth/AuthWrapper';
+import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import '@/index.css';
@@ -23,13 +22,11 @@ import '@/index.css';
 export default function App() {
   return (
     <Provider store={store}>
-      <CartBookmarkProvider>
-        <Router>
-          {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
-          <AuthWrapper />
-          <AnimatedRoutes />
-        </Router>
-      </CartBookmarkProvider>
+      <Router>
+        {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
+        <AuthWrapper />
+        <AnimatedRoutes />
+      </Router>
     </Provider>
   );
 }

@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { XCircleIcon, CameraIcon } from '@heroicons/react/24/solid';
-import { ProfileUser, ProfileAddress } from '../types/ProfileUser';
-import { useProfileImage } from '../hooks/useProfileImage';
+import { ProfileUser, ProfileAddress } from '@/types/ProfileUser';
+import { useProfileImage } from '@/hooks/useProfileImage';
 import { useEffect } from 'react';
 
 interface UserProfilePopupProps {
