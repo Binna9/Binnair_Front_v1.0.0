@@ -18,21 +18,24 @@ import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
+import { NotificationProvider } from './context/NotificationContext';
 import '@/index.css';
 
 export default function App() {
   return (
     <Provider store={store}>
-      <Router>
-        {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
-        <AuthWrapper />
-        <AnimatedRoutes />
-      </Router>
+      <NotificationProvider>
+        <Router>
+          {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
+          <AuthWrapper />
+          {/* ✅ 페이지 애니메이션 관리 */}
+          <AnimatedRoutes />
+        </Router>
+      </NotificationProvider>
     </Provider>
   );
 }
 
-// ✅ 페이지 애니메이션 관리
 function AnimatedRoutes() {
   const location = useLocation();
   return (

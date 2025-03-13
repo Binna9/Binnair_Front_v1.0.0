@@ -268,10 +268,20 @@ export default function Board() {
         }}
       >
         {/* 왼쪽 메뉴 (탭) */}
-        <div className="w-1/5 border-r p-6 bg-gray-300 rounded-l-lg flex flex-col justify-between">
+        <div
+          className="w-1/5 border-r p-6 rounded-l-lg flex flex-col justify-between"
+          style={{
+            backgroundImage: "url('/img/board_image.jpg')",
+            backgroundBlendMode: 'overlay',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: '35% center',
+          }}
+        >
           <div>
-            <h1 className="text-lg font-bold mb-6 text-gray-700 flex items-center">
-              <Headset className="w-6 h-6 mr-2 text-gray-90" /> 고객센터
+            <h1 className="text-lg font-bold mb-6 text-white flex items-center">
+              <Headset className="w-6 h-6 mr-2 text-white" /> 고객센터
             </h1>
             <div className="flex flex-col space-y-3">
               {sections.map((section) => (
@@ -288,7 +298,7 @@ export default function Board() {
                   className={`w-full flex items-center text-left px-4 py-3 rounded-lg transition ${
                     activeSection === section.id
                       ? 'bg-zinc-500 text-white font-semibold'
-                      : 'bg-zinc-100 text-gray-700 hover:bg-zinc-200'
+                      : 'bg-zinc-50 text-gray-900 hover:bg-zinc-300'
                   }`}
                 >
                   {section.icon} {section.title}

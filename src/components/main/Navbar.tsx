@@ -150,18 +150,22 @@ export default function Navbar() {
               <img
                 src={profileImage || '/default-profile.png'}
                 alt="Profile"
-                className="w-10 h-10 rounded-full border border-white/70 shadow-md cursor-pointer"
+                className="w-10 h-10 rounded-full border border-white/70 shadow-md cursor-pointer  transition-all duration-200 hover:scale-110"
                 onClick={() => setIsProfileOpen(true)}
               />
 
               {/* ✅ 사용자명 클릭 시 팝업 열기 */}
               <span
-                className="text-xl font-bold text-white underline decoration-white underline-offset-4 cursor-pointer truncate max-w-[150px] whitespace-nowrap"
+                className="text-xl font-bold text-white underline decoration-white underline-offset-4 cursor-pointer truncate max-w-[150px] whitespace-nowrap 
+             transition-all duration-200 hover:scale-105"
                 onClick={() => setIsProfileOpen(true)}
               >
-                {profileUser?.userName || '사용자'}
+                {profileUser?.nickName || 'User'}
               </span>
-              <span className="text-sm text-white whitespace-nowrap">
+              <span
+                className="text-sm text-white whitespace-nowrap 
+             transition-all duration-200 hover:scale-105"
+              >
                 님 안녕하세요!
               </span>
             </div>

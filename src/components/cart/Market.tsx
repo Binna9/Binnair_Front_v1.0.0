@@ -26,6 +26,7 @@ import { useProductImageBatch } from '@/hooks/useProductImageBatch';
 import { CartItemsResponse, CartTotal } from '@/types/CartBookmarkTypes';
 import VerticalSidebar from './VerticalSidebar';
 import CartPromotionBox from './CartPromotionBox';
+import PaymentStep from './PaymentStep';
 
 enum OrderStep {
   CART = 'cart',
@@ -218,8 +219,6 @@ export default function Market() {
   const applyDiscount = () => {
     if (discountCode.trim() !== '') {
       setDiscountApplied(true);
-      // In a real app, you would call an API to validate and apply the discount
-      // For now, we'll just simulate a discount
       if (total) {
         setTotal({
           ...total,
@@ -318,7 +317,7 @@ export default function Market() {
             <p>Loading...</p>
           </div>
         ) : cartItems.length === 0 ? (
-          <div className="text-center py-16 bg-gray-50 rounded-lg">
+          <div className="text-center py-16 bg-gray-50 rounded-lg shadow-lg">
             <ShoppingCart size={48} className="mx-auto mb-4 text-gray-400" />
             <p className="text-gray-500">장바구니가 비어 있습니다.</p>
             <button
@@ -822,7 +821,7 @@ export default function Market() {
 
               <button
                 className="w-full py-3 bg-blue-500 text-white rounded-lg shadow-lg hover:bg-blue-600 flex items-center justify-center"
-                onClick={() => setCurrentStep(OrderStep.CONFIRMATION)}
+                onClick={() => setCurrentStep(OrderStep.PAYMENT)}
                 disabled={
                   !shippingInfo.name ||
                   !shippingInfo.phone ||
@@ -840,7 +839,7 @@ export default function Market() {
 
   const renderConfirmation = () => {
     return (
-      <div className="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="w-full mx-auto bg-white rounded-xl shadow-md overflow-hidden">
         {/* 상단 성공 영역 */}
         <div className="bg-gradient-to-r from-green-400 to-blue-500 py-8 px-6 text-center text-white">
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -966,6 +965,15 @@ export default function Market() {
         />
         {currentStep === OrderStep.CART && renderCart()}
         {currentStep === OrderStep.CHECKOUT && renderCheckout()}
+        {currentStep === OrderStep.PAYMENT && (
+          <PaymentStep
+            total={total}
+            calculateShippingCost={calculateShippingCost}
+            discountApplied={discountApplied}
+            onBack={() => setCurrentStep(OrderStep.CHECKOUT)}
+            onComplete={() => setCurrentStep(OrderStep.CONFIRMATION)}
+          />
+        )}
         {currentStep === OrderStep.CONFIRMATION && renderConfirmation()}
         <CartPromotionBox />
       </div>

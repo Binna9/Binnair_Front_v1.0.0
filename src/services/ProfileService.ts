@@ -50,3 +50,32 @@ export const updateUserAddress = async (
 export const deleteUserAddress = async (addressId: string) => {
   await apiClient.delete(`/addresses/${addressId}`);
 };
+
+// ✅ 비밀번호 검증 API
+export const verifyUserPassword = async (currentPassword: string) => {
+  console.log('서버로 전송될 비밀번호:', currentPassword);
+
+  const response = await apiClient.post<boolean>(
+    `/users/verify-password`,
+    { password: currentPassword }, // ✅ JSON 형식으로 변경
+    {
+      headers: {
+        'Content-Type': 'application/json', // ✅ JSON 형식으로 변경
+      },
+    }
+  );
+
+  return response.data; // true or false 반환
+};
+
+// ✅ 비밀번호 변경 API
+export const changeUserPassword = async (passwordChangeDto: {
+  newPassword: string;
+  confirmPassword: string;
+}) => {
+  await apiClient.put(`/users/change-password`, passwordChangeDto, {
+    headers: {
+      'Content-Type': 'application/json', // ✅ JSON 형식 유지
+    },
+  });
+};

@@ -6,6 +6,8 @@ import {
   addUserAddress,
   updateUserAddress,
   deleteUserAddress,
+  verifyUserPassword,
+  changeUserPassword,
 } from '@/services/ProfileService'; // ✅ 서비스 레이어 import
 import { ProfileUser, ProfileAddress } from '../types/ProfileUser';
 
@@ -120,6 +122,44 @@ export const useProfile = (userId: string | null) => {
     }
   };
 
+  // ✅ 비밀번호 검증
+  const verifyPassword = async (currentPassword: string): Promise<boolean> => {
+    try {
+      const isValid = await verifyUserPassword(currentPassword);
+      return isValid;
+    } catch (err) {
+      console.error('❌ 비밀번호 검증 중 오류 발생:', err);
+      setError('❌ 비밀번호 검증 중 오류 발생');
+      return false;
+    }
+  };
+
+  // ✅ 비밀번호 변경
+  const changePassword = async (
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> => {
+    try {
+      // ✅ SHA-256 해싱 적용
+
+      // ✅ 해싱된 비밀번호를 서버에 전송
+      await changeUserPassword({
+        newPassword,
+        confirmPassword,
+      });
+
+      return; // Promise<void> 타입과 일치하도록 명시적으로 반환
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data ||
+        '❌ 비밀번호 변경 중 예상치 못한 오류가 발생했습니다.';
+      console.error(errorMessage);
+      setError(errorMessage); // 오류 메시지를 상태로 저장
+
+      throw err; // 에러를 다시 던져서 호출자에게 전파
+    }
+  };
+
   return {
     user,
     loading,
@@ -129,5 +169,7 @@ export const useProfile = (userId: string | null) => {
     addAddress,
     updateAddress,
     deleteAddress,
+    verifyPassword,
+    changePassword,
   };
 };

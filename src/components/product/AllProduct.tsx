@@ -215,7 +215,7 @@ const AllProduct = () => {
         className="relative gap-2 bg-white rounded-xl shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 p-5 flex flex-col items-center w-4/5 h-[460px] mt-10"
       >
         {/* 📌 제품별 카테고리 북마크 태그 */}
-        <div className="absolute top-[-8px] left-0 bg-zinc-700 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-zinc-500">
+        <div className="absolute top-[-8px] left-0 bg-red-500 text-white text-xs font-semibold px-3 py-1 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[8px] before:border-t-transparent before:border-l-[12px] before:border-l-red-300">
           {product.category}
         </div>
 
@@ -326,11 +326,21 @@ const AllProduct = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center">
+    <div className="min-h-screen flex flex-col items-center mb-5">
       {/* 📌 전체 카테고리 목록 (페이지 상단) - ProductRadio 컴포넌트 사용 */}
-      <div className="w-full max-w-[1400px] bg-white/80 shadow-lg rounded-xl p-4 mb-4 mt-20 relative">
+      <div
+        className="w-full max-w-[1400px] shadow-lg rounded-xl p-4 mb-4 mt-20 relative bg-cover bg-center backdrop-blur-md bg-white/10 border border-white/30"
+        style={{
+          backgroundImage: "url('/img/shoplistimage.jpg')",
+          backgroundBlendMode: 'overlay',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundAttachment: 'fixed',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+        }}
+      >
         {/* 북마크 - 카테고리 섹션 */}
-        <div className="absolute -top-3 left-6 bg-zinc-700 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-900">
+        <div className="absolute -top-3 left-6 bg-zinc-300 text-gray-900 text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-lg before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-200">
           CATEGORY
         </div>
         <ProductRadio
@@ -340,10 +350,21 @@ const AllProduct = () => {
         />
       </div>
 
-      {/* 📌 제품 리스트 (입체감 있는 배경 추가) */}
-      <div className="w-full max-w-[1400px] bg-white/80 shadow-xl rounded-xl p-6 relative mt-5">
+      {/* 📌 제품 리스트 */}
+      <div
+        className="w-full max-w-[1400px] shadow-xl rounded-xl p-6 relative mt-5 backdrop-blur-md bg-white/10 border border-white/30"
+        style={{
+          backgroundImage: "url('/img/shoplistimage.jpg')",
+          backgroundBlendMode: 'overlay',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundAttachment: 'fixed',
+          backgroundSize: 'cover', // ✅ 컨테이너를 꽉 채우도록 확대
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+        }}
+      >
         {/* 북마크 - 제품 리스트 섹션 */}
-        <div className="absolute -top-3 left-6 bg-zinc-700 text-white text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-md before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-900">
+        <div className="absolute -top-3 left-6 bg-zinc-300 text-gary-900 text-sm font-bold px-5 py-2 rounded-lg rounded-bl-none shadow-lg before:content-[''] before:absolute before:bottom-0 before:left-0 before:border-t-[10px] before:border-t-transparent before:border-l-[15px] before:border-l-zinc-200">
           PRODUCT
         </div>
         {filteredProducts.length > 0 ? (
@@ -358,7 +379,7 @@ const AllProduct = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-300 text-lg w-full">
+          <p className="text-center text-white text-lg w-full">
             선택한 카테고리에 제품이 없습니다.
           </p>
         )}
