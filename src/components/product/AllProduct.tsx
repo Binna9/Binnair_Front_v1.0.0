@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchAllProducts } from '@/services/ProductService';
 import { BsStar, BsStarFill } from 'react-icons/bs';
 import { useProductImageBatch } from '@/hooks/useProductImageBatch';
+import { useNotification } from '@/context/NotificationContext';
 import { PagedProductResponse } from '@/types/ProductType';
 import { fetchCategories } from '@/services/ProductService';
 import ProductRadio from '../ui/ProductRadio';
@@ -24,6 +25,7 @@ const AllProduct = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
+  const notification = useNotification();
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -126,8 +128,11 @@ const AllProduct = () => {
     try {
       const quantity = quantities[productId] || 1;
       await CartBookmarkService.addToCart(productId, quantity);
+
+      notification.showAlert('SUCCESS', '장바구니에 추가 되었습니다.');
     } catch (error) {
       console.error('Failed to add to cart:', error);
+      notification.showAlert('FAIL', '장바구니에 추가에 실패하였습니다.');
     } finally {
       // 로딩 상태 해제
       setLoadingStates((prev) => ({

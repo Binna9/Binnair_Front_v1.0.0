@@ -15,6 +15,7 @@ interface HamburgerMenuProps {
   onClick: () => void;
   onItemClick?: (item: MenuItem) => void;
   icon?: React.ReactNode; // Icon for the main menu
+  className?: string;
 }
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
@@ -24,6 +25,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onClick,
   onItemClick,
   icon,
+  className,
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const closeTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -63,7 +65,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div className={`relative ${className || ''}`}>
       {/* 햄버거 버튼 */}
       <div
         className="flex items-center space-x-2 cursor-pointer"

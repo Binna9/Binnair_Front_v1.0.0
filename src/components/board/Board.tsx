@@ -26,6 +26,7 @@ import {
   updateBoard,
   deleteBoard,
 } from '@/services/BoardService';
+import { useNotification } from '@/context/NotificationContext';
 import BoardDetail from './BoardDetail'; // 추가된 상세 페이지 컴포넌트 import
 
 // ✅ 섹션 배열 (아이콘 추가)
@@ -65,6 +66,7 @@ export default function Board() {
   const [file, setFile] = useState<File | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
+  const notification = useNotification();
 
   // 상세 페이지 관련 상태 추가
   const [isViewingDetail, setIsViewingDetail] = useState(false);
@@ -93,17 +95,27 @@ export default function Board() {
     loadBoards();
   }, [activeSection, currentPage]);
 
+  // 페이지 전환
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
+  // 로그인 페이지 전환(비로그인시)
   const requireLogin = (callback: () => void) => {
     if (!accessToken) {
-      alert('로그인 후 이용 가능합니다.');
-      navigate('/login');
+      notification.showAlert('로그인', '로그인 후 이용 가능합니다.', () => {
+        navigate('/login');
+      });
       return;
     }
     callback();
+  };
+
+  // 삭제 컨펌
+  const confirmDelete = (onConfirm: () => void) => {
+    notification.showAlert('DELETE', '삭제하시겠습니까?', () => {
+      onConfirm();
+    });
   };
 
   // ✅ 글쓰기 모드 토글
@@ -138,36 +150,37 @@ export default function Board() {
       setIsViewingDetail(false); // 상세 보기 모드 해제
     } catch (err) {
       console.error('Error fetching board details:', err);
-      alert('게시글 정보를 불러오는 중 오류가 발생했습니다.');
+      notification.showAlert(
+        'ERROR',
+        '게시글 정보를 불러오는 중 오류가 발생했습니다.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   // ✅ 게시글 삭제
-  const handleDelete = async (boardId: string) => {
-    if (!window.confirm('정말 삭제하시겠습니까?')) {
-      return;
-    }
+  const handleDelete = (boardId: string) => {
+    confirmDelete(async () => {
+      try {
+        setLoading(true);
+        await deleteBoard(boardId);
 
-    try {
-      setLoading(true);
-      await deleteBoard(boardId);
+        // 삭제 후 목록 새로고침
+        const updatedBoards = await fetchBoards(activeSection);
+        setBoards(updatedBoards);
 
-      // 삭제 후 목록 새로고침
-      const updatedBoards = await fetchBoards(activeSection);
-      setBoards(updatedBoards);
+        // 상세 페이지 보기 중이었다면 목록 보기로 돌아감
+        setIsViewingDetail(false);
 
-      // 상세 페이지 보기 중이었다면 목록 보기로 돌아감
-      setIsViewingDetail(false);
-
-      alert('게시글이 삭제되었습니다.');
-    } catch (err) {
-      console.error('Error deleting board:', err);
-      alert('게시글 삭제 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
-    }
+        notification.showAlert('SUCCESS', '게시글이 삭제되었습니다.');
+      } catch (err) {
+        console.error('Error deleting board:', err);
+        notification.showAlert('ERROR', '게시글 삭제 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   // ✅ 섹션 선택 변경
@@ -213,11 +226,17 @@ export default function Board() {
       if (isEditing) {
         // 수정 API 호출
         await updateBoard(currentBoardId, boardRequest);
-        alert('게시글이 성공적으로 수정되었습니다.');
+        notification.showAlert(
+          'SUCCESS',
+          '게시글이 성공적으로 수정되었습니다.'
+        );
       } else {
         // 등록 API 호출
         await createBoard(boardRequest);
-        alert('게시글이 성공적으로 등록되었습니다.');
+        notification.showAlert(
+          'SUCCESS',
+          '게시글이 성공적으로 등록되었습니다.'
+        );
       }
 
       // 등록/수정 후 해당 섹션의 게시글 목록 다시 불러오기
@@ -229,7 +248,10 @@ export default function Board() {
       toggleWriteMode();
     } catch (err) {
       console.error(`Error ${isEditing ? 'updating' : 'creating'} board:`, err);
-      alert(`게시글 ${isEditing ? '수정' : '등록'} 중 오류가 발생했습니다.`);
+      notification.showAlert(
+        'ERROR',
+        `게시글 ${isEditing ? '수정' : '등록'} 중 오류가 발생했습니다.`
+      );
     } finally {
       setLoading(false);
     }
@@ -245,7 +267,10 @@ export default function Board() {
       setIsWriting(false);
     } catch (err) {
       console.error('Error fetching board details:', err);
-      alert('게시글 정보를 불러오는 중 오류가 발생했습니다.');
+      notification.showAlert(
+        'ERROR',
+        '게시글 정보를 불러오는 중 오류가 발생했습니다.'
+      );
     } finally {
       setLoading(false);
     }
@@ -404,8 +429,12 @@ export default function Board() {
               <div className="flex justify-between mt-4">
                 {/* 취소 버튼 */}
                 <button
-                  onClick={() => {
-                    if (window.confirm('취소하시겠습니까?')) {
+                  onClick={async () => {
+                    const isConfirmed = await notification.showConfirm(
+                      'CANCEL',
+                      '취소하시겠습니까?'
+                    );
+                    if (isConfirmed) {
                       toggleWriteMode();
                     }
                   }}
@@ -414,19 +443,18 @@ export default function Board() {
                 >
                   취소
                 </button>
-
                 {/* 등록/수정 버튼 */}
                 <button
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `${isEditing ? '수정' : '등록'}하시겠습니까?`
-                      )
-                    ) {
+                  onClick={async () => {
+                    const isConfirmed = await notification.showConfirm(
+                      'UPDATE',
+                      `${isEditing ? '수정' : '등록'}하시겠습니까?`
+                    );
+                    if (isConfirmed) {
                       handlePostSubmit();
                     }
                   }}
-                  className="px-4 py-2 bg-zinc-300 text-white rounded-lg hover:bg-blue-600 transition"
+                  className="px-4 py-2 bg-zinc-300 text-zinc-900 rounded-lg hover:bg-zinc-500 transition"
                   disabled={loading}
                 >
                   {loading ? '처리 중...' : isEditing ? '수정' : '등록'}

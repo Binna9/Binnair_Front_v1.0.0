@@ -8,6 +8,7 @@ import {
   googleLogin,
 } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '@/context/NotificationContext';
 
 export function useAuth() {
   const { accessToken, user } = useSelector(selectAuth); // ✅ Redux에서 accessToken과 user 가져오기
@@ -16,6 +17,7 @@ export function useAuth() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const notification = useNotification();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,10 +42,25 @@ export function useAuth() {
 
       dispatch(loginSuccess({ accessToken })); // ✅ Redux에 accessToken 저장
 
+      notification.showToast(
+        'SUCCESS',
+        '환영합니다! 로그인에 성공하셨습니다.',
+        'success',
+        2000,
+        'top-center'
+      );
+
       navigate('/');
     } catch (error) {
       console.error('❌ 로그인 실패:', error);
-      setError('로그인 실패. 다시 시도하세요.');
+
+      notification.showToast(
+        'FAIL',
+        '아이디 또는 비밀번호를 확인해주세요.',
+        'error',
+        2000,
+        'top-center'
+      );
     }
   };
 
@@ -56,7 +73,13 @@ export function useAuth() {
       navigate('/');
     } catch (error) {
       console.error('❌ Google 로그인 실패:', error);
-      setError('Google 로그인 실패. 다시 시도하세요.');
+      notification.showToast(
+        'FAIL',
+        'Google 로그인 실패. 다시 시도하세요.',
+        'error',
+        2000,
+        'top-center'
+      );
     }
   };
 

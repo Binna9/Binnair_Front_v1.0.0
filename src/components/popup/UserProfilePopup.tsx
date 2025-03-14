@@ -15,6 +15,7 @@ import {
 import { ProfileUser, ProfileAddress } from '@/types/ProfileUser';
 import { useProfileImage } from '@/hooks/useProfileImage';
 import { useProfile } from '@/hooks/useProfile';
+import { useNotification } from '@/context/NotificationContext';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -26,9 +27,10 @@ interface UserProfilePopupProps {
     addressId: string,
     updatedAddress: Partial<ProfileAddress>
   ) => void;
+
   logout: () => void;
-  verifyPassword: (currentPassword: string) => Promise<boolean>; // 추가
-  changePassword: (
+  verifyPassword?: (currentPassword: string) => Promise<boolean>; // 추가
+  changePassword?: (
     newPassword: string,
     confirmPassword: string
   ) => Promise<void>;
@@ -52,6 +54,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [addressForm, setAddressForm] = useState<Partial<ProfileAddress>>({});
   const { profileImage, uploadProfileImage: handleProfileImageUpload } =
     useProfileImage(currentUser?.userId || '');
+  const notification = useNotification();
 
   // 비밀번호 변경 관련 상태
   const [passwordChangeStep, setPasswordChangeStep] = useState<
@@ -84,8 +87,22 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
   // 사용자 정보 저장
   const handleSave = async () => {
-    await updateUser(formData);
-    setEditing(false);
+    const isConfirmed = await notification.showConfirm(
+      'SAVE',
+      '저장하시겠습니까?'
+    );
+  
+    if (!isConfirmed) {
+      return; // 사용자가 취소를 누르면 중단
+    }
+  
+    try {
+      await updateUser(formData);
+      setEditing(false);
+      notification.showAlert('SUCCESS', '사용자 정보가 성공적으로 저장되었습니다.');
+    } catch (error) {
+      notification.showAlert('FAIL', '오류가 발생했습니다 관리자에게 문의해주세요.');
+    }
   };
 
   // 프로필 이미지 업로드

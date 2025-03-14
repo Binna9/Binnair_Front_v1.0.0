@@ -140,23 +140,17 @@ export const useProfile = (userId: string | null) => {
     confirmPassword: string
   ): Promise<void> => {
     try {
-      // ✅ SHA-256 해싱 적용
-
-      // ✅ 해싱된 비밀번호를 서버에 전송
       await changeUserPassword({
         newPassword,
         confirmPassword,
       });
-
-      return; // Promise<void> 타입과 일치하도록 명시적으로 반환
     } catch (err: any) {
       const errorMessage =
         err.response?.data ||
         '❌ 비밀번호 변경 중 예상치 못한 오류가 발생했습니다.';
       console.error(errorMessage);
-      setError(errorMessage); // 오류 메시지를 상태로 저장
-
-      throw err; // 에러를 다시 던져서 호출자에게 전파
+      setError(errorMessage);
+      throw err;
     }
   };
 

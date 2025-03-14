@@ -83,7 +83,7 @@ const NoticeBoard = () => {
             visibleNotices.map((notice) => (
               <li
                 key={notice.boardId}
-                className="relative p-4 rounded-lg shadow-md text-gray-900 before:absolute before:inset-0 before:bg-white/70 before:rounded-lg before:-z-10"
+                className="relative p-4 rounded-lg shadow-md text-gray-900 before:absolute before:inset-0 before:bg-white/80 before:rounded-lg before:-z-10"
               >
                 {/* ✅ 개별 공지 닫기 버튼 (각 공지 오른쪽 상단) */}
                 <button

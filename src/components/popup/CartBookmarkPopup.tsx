@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useProductImageBatch } from '@/hooks/useProductImageBatch';
 import { useCartBookmark } from '@/hooks/useCartBookmark';
+import { useNotification } from '@/context/NotificationContext';
 import { CartItem } from '@/types/CartBookmarkTypes';
 
 interface CartBookmarkPopupProps {
@@ -33,6 +34,7 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
     fetchDiscountedTotal,
   } = useCartBookmark(type);
 
+  const notification = useNotification();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState<boolean>(true);
   const [selectedTotalAmount, setSelectedTotalAmount] = useState<number>(0);
@@ -40,12 +42,9 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
     useState<number>(0);
   const [selectedDiscountedTotal, setSelectedDiscountedTotal] =
     useState<number>(0);
-
   const navigate = useNavigate();
-
   const items = type === 'cart' ? cartItems : bookmarkItems;
   const isCart = type === 'cart';
-
   const productIds = items.map((item) => item.productId);
   const productImages = useProductImageBatch(productIds);
 
@@ -111,21 +110,29 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
   // 선택된 항목 삭제
   const deleteSelectedItems = async () => {
     if (selectedItems.length === 0) return;
-    try {
-      for (const itemId of selectedItems) {
-        if (isCart) {
-          await deleteCartItem(itemId);
-        } else {
-          await deleteBookmarkItem(itemId);
+
+    const confirmed = await notification.showConfirm(
+      'DELETE',
+      '삭제하시겠습니까?'
+    );
+
+    if (confirmed) {
+      try {
+        for (const itemId of selectedItems) {
+          if (isCart) {
+            await deleteCartItem(itemId);
+          } else {
+            await deleteBookmarkItem(itemId);
+          }
         }
+        setTimeout(() => {
+          setSelectedItems([]);
+          setSelectAll(false);
+          fetchSelectedDiscountedTotal([]);
+        }, 100);
+      } catch (error) {
+        console.error('❌ 선택된 아이템 삭제 중 오류 발생:', error);
       }
-      setTimeout(() => {
-        setSelectedItems([]);
-        setSelectAll(false);
-        fetchSelectedDiscountedTotal([]);
-      }, 100);
-    } catch (error) {
-      console.error('❌ 선택된 아이템 삭제 중 오류 발생:', error);
     }
   };
 
@@ -289,11 +296,19 @@ const CartBookmarkPopup: React.FC<CartBookmarkPopupProps> = ({
 
                 {/* 삭제 버튼 */}
                 <button
-                  onClick={() =>
-                    isCart
-                      ? deleteCartItem(item.id)
-                      : deleteBookmarkItem(item.id)
-                  }
+                  onClick={async () => {
+                    const isConfirmed = await notification.showConfirm(
+                      'DELETE',
+                      '삭제하시겠습니까?'
+                    );
+                    if (isConfirmed) {
+                      if (isCart) {
+                        await deleteCartItem(item.id);
+                      } else {
+                        await deleteBookmarkItem(item.id);
+                      }
+                    }
+                  }}
                   className="text-red-500 hover:text-red-700 ml-4"
                 >
                   삭제

@@ -75,7 +75,7 @@ export default function Navbar() {
           </span>
 
           {/*Search */}
-          <div className="absolute left-[400px] w-96 transition-transform duration-200 hover:scale-105">
+          <div className="absolute left-[300px] w-96 transition-transform duration-200 hover:scale-105 min-w-[200px]">
             <Search className="absolute left-3 top-1.5 text-white w-6 h-6" />
             <Input
               type="text"
@@ -87,7 +87,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="flex space-x-6 ml-[725px]">
+        <div className="flex space-x-6 ml-[600px]">
           <HamburgerMenu
             menuName="Event"
             items={[
@@ -100,6 +100,7 @@ export default function Navbar() {
             isOpen={openMenu === '이벤트'}
             onClick={() => handleMenuClick('이벤트')}
             onItemClick={(item) => navigate(`/event?section=${item.id}`)}
+            className="min-w-[90px]"
           />
           <HamburgerMenu
             menuName="Shop"
@@ -113,6 +114,7 @@ export default function Navbar() {
             isOpen={openMenu === '제품'}
             onClick={() => handleMenuClick('제품')}
             onItemClick={(item) => navigate(`/product?section=${item.id}`)}
+            className="min-w-[90px]" // Add minimum width here
           />
           <HamburgerMenu
             menuName="Cart"
@@ -126,6 +128,7 @@ export default function Navbar() {
             isOpen={openMenu === '장바구니'}
             onClick={() => handleMenuClick('장바구니')}
             onItemClick={(item) => navigate(`/cart?section=${item.id}`)}
+            className="min-w-[90px]" // Add minimum width here
           />
           <HamburgerMenu
             menuName="Customer Service"
@@ -139,13 +142,13 @@ export default function Navbar() {
             isOpen={openMenu === '고객센터'}
             onClick={() => handleMenuClick('고객센터')}
             onItemClick={(item) => navigate(`/customer`)}
+            className="min-w-[90px]" // Add minimum width here
           />
         </div>
-
         {/* ✅ 로그인 여부에 따른 UI 변경 */}
-        <div className="flex space-x-4 ml-8 items-center">
+        <div className="flex space-x-4 ml-8 items-center min-w-[200px]">
           {user ? (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 min-w-[180px]">
               {/* ✅ 프로필 이미지 클릭 시 팝업 열기 */}
               <img
                 src={profileImage || '/default-profile.png'}
@@ -170,12 +173,12 @@ export default function Navbar() {
               </span>
             </div>
           ) : (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 min-w-[200px]">
               {/* ✅ 로그인 버튼 */}
               <Button
                 onClick={() => navigate('/login')}
                 variant="ghost"
-                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[90px]"
+                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
               >
                 <LogIn className="text-white w-8 h-8 cursor-pointer" />
                 <span className="text-sm text-gray-300">Log In</span>
@@ -185,7 +188,7 @@ export default function Navbar() {
               <Button
                 onClick={() => navigate('/register')}
                 variant="ghost"
-                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[90px]"
+                className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
               >
                 <UserPlus className="text-white w-8 h-8 cursor-pointer" />
                 <span className="text-sm text-gray-300">Sign Up</span>
@@ -195,11 +198,11 @@ export default function Navbar() {
         </div>
 
         {/* ✅ 우측 설정 버튼들 */}
-        <div className="flex items-center space-x-4 ml-6">
+        <div className="flex items-center space-x-4 ml-6 min-w-[200px]">
           {/* ✅ 프로필 버튼 */}
           <Button
             variant="ghost"
-            className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+            className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
             onClick={() => setIsProfileOpen(true)}
           >
             <User className="text-white w-10 h-10 cursor-pointer" />
@@ -209,7 +212,7 @@ export default function Navbar() {
           {/* ✅ 다크모드 버튼 */}
           <Button
             variant="ghost"
-            className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+            className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
             onClick={toggleDarkMode}
           >
             {darkMode ? (
@@ -229,7 +232,7 @@ export default function Navbar() {
           {user && (
             <Button
               variant="ghost"
-              className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5"
+              className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[110px]"
               onClick={handleLogout}
             >
               <LogOut className="text-white w-10 h-10 cursor-pointer" />
