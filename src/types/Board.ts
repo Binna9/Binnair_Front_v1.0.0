@@ -1,4 +1,5 @@
 import { Page } from './page';
+import { CommentResponse } from './Comment';
 
 // ✅ 게시판 타입 (백엔드 ENUM과 일치)
 export type BoardType = 'NOTICE' | 'FAQ' | 'FREE' | 'SUGGESTION';
@@ -14,6 +15,7 @@ export interface BoardResponse {
   filePath?: string; // 첨부 파일 경로 (옵션)
   createDatetime: string; // 생성 날짜 (ISO 문자열)
   modifyDatetime: string; // 수정 날짜 (ISO 문자열)
+  comments: CommentResponse[]; // 댓글 리스트
 }
 export interface BoardRequest {
   boardType: BoardType; // 게시판 타입

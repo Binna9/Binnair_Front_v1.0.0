@@ -11,8 +11,6 @@ import {
   Calendar,
   ShoppingBag,
   ShoppingCart,
-  Tag,
-  MessageCircle,
   HelpCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -22,6 +20,8 @@ import { useNavigate } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfileImage } from '@/hooks/useProfileImage';
 import { useProfile } from '@/hooks/useProfile';
+import { useSelector } from 'react-redux';
+import { selectProfileImage } from '@/hooks/useProfileImage';
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
@@ -34,17 +34,10 @@ export default function Navbar() {
     updateAddress,
   } = useProfile(user?.userId || '');
 
-  const { profileImage, uploadProfileImage } = useProfileImage(
-    user?.userId || null
-  );
-
+  const profileImage = useSelector(selectProfileImage);
+  const { uploadProfileImage, setProfileImage } = useProfileImage();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.documentElement.classList.toggle('dark');
-  };
 
   const handleMenuClick = (menuName: string) => {
     setOpenMenu((prevMenu) => (prevMenu === menuName ? null : menuName));
@@ -62,6 +55,7 @@ export default function Navbar() {
           uploadProfileImage={uploadProfileImage}
           updateAddress={updateAddress}
           logout={handleLogout}
+          setProfileImage={setProfileImage}
         />
       )}
 
@@ -213,7 +207,6 @@ export default function Navbar() {
           <Button
             variant="ghost"
             className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
-            onClick={toggleDarkMode}
           >
             {darkMode ? (
               <>

@@ -13,9 +13,9 @@ import {
   LockIcon,
 } from 'lucide-react';
 import { ProfileUser, ProfileAddress } from '@/types/ProfileUser';
-import { useProfileImage } from '@/hooks/useProfileImage';
 import { useProfile } from '@/hooks/useProfile';
 import { useNotification } from '@/context/NotificationContext';
+import { useProfileImage } from '@/hooks/useProfileImage';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -29,6 +29,7 @@ interface UserProfilePopupProps {
   ) => void;
 
   logout: () => void;
+  setProfileImage: React.Dispatch<React.SetStateAction<string>>;
   verifyPassword?: (currentPassword: string) => Promise<boolean>; // 추가
   changePassword?: (
     newPassword: string,
@@ -41,7 +42,6 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   user,
   closePopup,
   updateUser,
-  uploadProfileImage,
   updateAddress,
   logout,
 }) => {
@@ -52,8 +52,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [currentUser, setCurrentUser] = useState<ProfileUser | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressForm, setAddressForm] = useState<Partial<ProfileAddress>>({});
-  const { profileImage, uploadProfileImage: handleProfileImageUpload } =
-    useProfileImage(currentUser?.userId || '');
+  const { profileImage, uploadProfileImage } = useProfileImage();
   const notification = useNotification();
 
   // 비밀번호 변경 관련 상태
@@ -91,25 +90,68 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       'SAVE',
       '저장하시겠습니까?'
     );
-  
+
     if (!isConfirmed) {
       return; // 사용자가 취소를 누르면 중단
     }
-  
+
     try {
       await updateUser(formData);
       setEditing(false);
-      notification.showAlert('SUCCESS', '사용자 정보가 성공적으로 저장되었습니다.');
+      notification.showAlert(
+        'SUCCESS',
+        '사용자 정보가 성공적으로 저장되었습니다.'
+      );
     } catch (error) {
-      notification.showAlert('FAIL', '오류가 발생했습니다 관리자에게 문의해주세요.');
+      notification.showAlert(
+        'FAIL',
+        '오류가 발생했습니다 관리자에게 문의해주세요.'
+      );
     }
   };
 
-  // 프로필 이미지 업로드
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      uploadProfileImage(e.target.files[0]);
+  // ✅ 프로필 이미지 변경 핸들러
+  const handleProfileImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
+
+      const confirmed = await notification.showConfirm(
+        '프로필 이미지 변경',
+        '선택한 이미지로 프로필을 변경하시겠습니까?'
+      );
+
+      if (confirmed) {
+        try {
+          await uploadProfileImage(file);
+          notification.showToast(
+            '성공',
+            '프로필 이미지가 성공적으로 변경되었습니다.',
+            'success'
+          );
+        } catch (error) {
+          notification.showToast(
+            '오류',
+            '이미지 업로드 중 문제가 발생했습니다.',
+            'error'
+          );
+        }
+      }
     }
+  };
+
+  const handleCancelEdit = async () => {
+    const isConfirmed = await notification.showConfirm(
+      'CANCEL',
+      '사용자 정보 수정을 취소하시겠습니까?'
+    );
+
+    if (!isConfirmed) {
+      return; // 사용자가 취소를 선택하면 아무 동작도 하지 않음
+    }
+
+    setEditing(false);
   };
 
   // 배송지 정보 변경
@@ -196,14 +238,26 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       setNewPassword('');
       setConfirmPassword('');
       setPasswordError('');
-      alert('비밀번호가 성공적으로 변경되었습니다.');
+      notification.showAlert(
+        'SUCCESS',
+        '비밀번호가 성공적으로 변경되었습니다.'
+      );
     } catch (err) {
       console.error('비밀번호 변경 중 오류 발생:', err);
       setPasswordError('❌ 비밀번호 변경 중 오류가 발생했습니다.');
     }
   };
   // 비밀번호 변경 취소
-  const cancelPasswordChange = () => {
+  const cancelPasswordChange = async () => {
+    const isConfirmed = await notification.showConfirm(
+      'CANCEL',
+      '비밀번호 변경을 취소하시겠습니까?'
+    );
+
+    if (!isConfirmed) {
+      return; // 사용자가 취소를 선택하면 아무 동작도 하지 않음
+    }
+
     setPasswordChangeStep(null);
     setCurrentPassword('');
     setNewPassword('');
@@ -230,10 +284,11 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   id="profile-upload"
                   type="file"
                   className="hidden"
-                  onChange={handleImageUpload}
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
                 />
                 <img
-                  src={profileImage || '/default-profile.png'}
+                  src={profileImage || '/default-profile.png'} // ✅ 프로필 이미지 표시
                   alt="Profile"
                   className="w-20 h-20 rounded-full border-2 border-gray-400 shadow-lg object-cover 
                              transition-all duration-300 group-hover:border-blue-400 
@@ -339,7 +394,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white border-b border-white pb-4 flex items-center">
                 <UserIcon className="w-6 h-6 mr-2 inline" />
-                MY PROFILE
+                My Profile
                 {!passwordChangeStep && (
                   <PencilIcon
                     className="w-7 h-7 ml-5 text-gray-300 cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-110 hover:text-blue-400"
@@ -368,6 +423,11 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                         type={showCurrentPassword ? 'text' : 'password'}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !isVerifying) {
+                            handleVerifyPassword();
+                          }
+                        }}
                         className="w-full bg-gray-700 border border-gray-500 p-3 rounded-lg text-white focus:outline-none focus:border-blue-500"
                         placeholder="현재 비밀번호 입력"
                       />
@@ -562,7 +622,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           저장
                         </button>
                         <button
-                          onClick={() => setEditing(false)}
+                          onClick={handleCancelEdit}
                           className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition"
                         >
                           취소

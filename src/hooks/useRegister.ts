@@ -38,6 +38,7 @@ export const useRegister = () => {
     }
   };
 
+  // 회원가입 처리
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreeTerms) {

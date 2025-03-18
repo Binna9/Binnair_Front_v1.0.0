@@ -76,6 +76,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     null
   );
   const [isOpen, setIsOpen] = useState(false);
+
   const [toasts, setToasts] = useState<
     Array<NotificationData & { id: string }>
   >([]);

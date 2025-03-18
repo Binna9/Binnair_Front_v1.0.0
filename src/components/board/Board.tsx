@@ -348,7 +348,7 @@ export default function Board() {
         <div className="w-4/5 p-8">
           {isWriting ? (
             // ✅ 글쓰기/수정 모드일 때 (폼)
-            <div className="bg-gray-100 p-6 rounded-lg shadow-md">
+            <div className="bg-zinc-50 p-6 rounded-lg shadow-lg border">
               <h2 className="text-xl font-bold mb-6">
                 {isEditing ? '게시글 수정' : '새 게시글 작성'}
               </h2>
@@ -464,7 +464,7 @@ export default function Board() {
           ) : isViewingDetail && currentBoard ? (
             // ✅ 상세 페이지 표시
             <BoardDetail
-              board={currentBoard}
+              boardId={currentBoard.boardId}
               onBack={handleBackToList}
               requireLogin={requireLogin}
               handleEdit={handleEdit}

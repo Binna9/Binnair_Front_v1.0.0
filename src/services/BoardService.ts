@@ -5,6 +5,11 @@ import {
   BoardRequest,
   PagedBoardResponse,
 } from '@/types/Board';
+import {
+  CommentRequest,
+  CommentResponse,
+  CommentUpdateRequest,
+} from '@/types/Comment';
 
 // ✅ 게시글 목록 조회
 export const fetchBoards = async (
@@ -30,9 +35,14 @@ export const fetchBoards = async (
 // ✅ 게시글 개별 조회
 export const fetchBoardById = async (
   boardId: string
-): Promise<BoardResponse> => {
-  const response = await apiClient.get<BoardResponse>(`/boards/${boardId}`);
-  return response.data;
+): Promise<BoardResponse | null> => {
+  try {
+    const response = await apiClient.get<BoardResponse>(`/boards/${boardId}`);
+    return response.data;
+  } catch (error) {
+    console.error('❌ 게시글 조회 실패:', error);
+    return null;
+  }
 };
 
 // ✅ 게시글 생성 (파일 포함)
@@ -82,4 +92,36 @@ export const updateBoard = async (
 // ✅ 게시글 삭제
 export const deleteBoard = async (boardId: string) => {
   await apiClient.delete(`/boards/${boardId}`);
+};
+
+// ✅ 댓글 생성
+export const createComment = async (commentRequest: CommentRequest) => {
+  try {
+    await apiClient.post('/comments', commentRequest);
+  } catch (error) {
+    console.error('❌ 댓글 작성 실패:', error);
+  }
+};
+
+// ✅ 댓글 수정
+export const updateComment = async (
+  commentId: string,
+  CommentUpdateRequest: CommentUpdateRequest
+) => {
+  try {
+    await apiClient.put(`/comments/${commentId}`, CommentUpdateRequest, {
+      headers: { 'Content-Type': 'application/json' }, // 문자열을 전송할 경우 필요
+    });
+  } catch (error) {
+    console.error('❌ 댓글 수정 실패:', error);
+  }
+};
+
+// ✅ 댓글 삭제
+export const deleteComment = async (commentId: string) => {
+  try {
+    await apiClient.delete(`/comments/${commentId}`);
+  } catch (error) {
+    console.error('❌ 댓글 삭제 실패:', error);
+  }
 };

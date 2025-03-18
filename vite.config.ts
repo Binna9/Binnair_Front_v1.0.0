@@ -70,6 +70,12 @@ export default defineConfig(({ mode }) => {
           secure: false,
           rewrite: (path) => path.replace(/^\/boards/, '/boards'),
         },
+        '/comments': {
+          target: env.VITE_API_BASE_URL,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/comments/, '/comments'),
+        },
       },
     },
     resolve: {

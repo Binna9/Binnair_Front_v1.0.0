@@ -1,20 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux'; // useDispatch 추가
 import { selectAuth } from '@/store/authSlice';
 import axios from 'axios';
+import { createSlice } from '@reduxjs/toolkit'; // createSlice 추가
 
-export function useProfileImage(userId: string | null) {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+export const profileSlice = createSlice({
+  name: 'profile',
+  initialState: {
+    profileImage: null,
+  },
+  reducers: {
+    setProfileImage: (state, action) => {
+      state.profileImage = action.payload;
+    },
+  },
+});
+
+export const { setProfileImage } = profileSlice.actions;
+export const selectProfileImage = (state) => state.profile.profileImage;
+
+export function useProfileImage() {
+  const dispatch = useDispatch();
+  const profileImage = useSelector(selectProfileImage);
   const { accessToken } = useSelector(selectAuth);
 
+  // 사용자 이미지 반환
   useEffect(() => {
-    if (!userId) {
-      console.log('❌ No userId provided, skipping profile image fetch.');
-      return;
-    }
-
-    console.log(`🔄 Fetching profile image for userId: ${userId}`);
-
     const fetchProfileImage = async () => {
       if (!accessToken) {
         console.error('❌ No token found, skipping profile image fetch.');
@@ -22,10 +33,10 @@ export function useProfileImage(userId: string | null) {
       }
 
       try {
-        const response = await fetch(`/users/${userId}/image`, {
+        const response = await fetch(`/users/image`, {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${accessToken}`, // ✅ Redux에서 가져온 토큰 사용
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
@@ -38,45 +49,52 @@ export function useProfileImage(userId: string | null) {
         const imageUrl = URL.createObjectURL(blob);
 
         console.log('✅ Profile image URL fetched:', imageUrl);
-        setProfileImage(imageUrl);
+        dispatch(setProfileImage(imageUrl));
       } catch (error) {
         console.error('❌ Error fetching profile image:', error);
       }
     };
 
     fetchProfileImage();
-  }, [userId, accessToken]);
+  }, [accessToken, dispatch]);
 
-  // ✅ 프로필 이미지 업로드 기능 추가
-  const uploadProfileImage = async (file: File) => {
+  // 사용자 이미지 업로드 기능
+  const uploadProfileImage = async (file: File): Promise<string> => {
     if (!accessToken) {
       console.error('❌ No token found, skipping profile image upload.');
-      return;
+      return '';
     }
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const response = await axios.put(
-        `/users/${userId}/profile-image`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await axios.put(`/users/image-upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.status === 200) {
         const imageUrl = URL.createObjectURL(file);
-        setProfileImage(imageUrl);
+        dispatch(setProfileImage(imageUrl));
+        return imageUrl;
       }
+      return '';
     } catch (error) {
       console.error('❌ 프로필 이미지 업로드 실패:', error);
+      return '';
     }
   };
 
-  return { profileImage, uploadProfileImage };
+  const updateProfileImage = (url: string) => {
+    dispatch(setProfileImage(url));
+  };
+
+  return {
+    profileImage,
+    uploadProfileImage,
+    setProfileImage: updateProfileImage,
+  };
 }

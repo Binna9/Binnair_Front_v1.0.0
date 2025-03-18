@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '@/store/authSlice'; // ✅ 변경된 경로
+import authReducer from '@/store/authSlice';
+import { profileSlice } from '@/hooks/useProfileImage';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    profile: profileSlice.reducer,
   },
 });
 
