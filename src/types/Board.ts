@@ -10,6 +10,7 @@ export interface BoardResponse {
   content: string; // 게시글 내용
   views: number; // 조회 수
   likes: number; // 좋아요 수
+  unlikes: number;
   writerId: string; // 작성자 ID
   writerName: string; // 작성자 이름
   filePath?: string; // 첨부 파일 경로 (옵션)
@@ -22,6 +23,11 @@ export interface BoardRequest {
   title: string; // 게시글 제목
   content: string; // 게시글 내용
   file?: File; // 파일 업로드 (옵션)
+}
+
+export interface BoardView {
+  boardId: string; // 게시글 ID
+  views: number; // 게시글 조회 수
 }
 
 export type PagedBoardResponse = Page<BoardResponse>;

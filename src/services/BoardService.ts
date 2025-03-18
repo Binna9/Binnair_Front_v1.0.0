@@ -3,6 +3,7 @@ import {
   BoardType,
   BoardResponse,
   BoardRequest,
+  BoardView,
   PagedBoardResponse,
 } from '@/types/Board';
 import {
@@ -10,6 +11,7 @@ import {
   CommentResponse,
   CommentUpdateRequest,
 } from '@/types/Comment';
+import { Asterisk } from 'lucide-react';
 
 // ✅ 게시글 목록 조회
 export const fetchBoards = async (
@@ -89,6 +91,18 @@ export const updateBoard = async (
   });
 };
 
+// 조회수 증가
+export const updateViewBoard = async (boardView: BoardView) => {
+  try {
+    await apiClient.put(`/boards/views`, boardView, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('❌ 조회수 증가 실패:', error);
+    throw error;
+  }
+};
+
 // ✅ 게시글 삭제
 export const deleteBoard = async (boardId: string) => {
   await apiClient.delete(`/boards/${boardId}`);
@@ -123,5 +137,24 @@ export const deleteComment = async (commentId: string) => {
     await apiClient.delete(`/comments/${commentId}`);
   } catch (error) {
     console.error('❌ 댓글 삭제 실패:', error);
+  }
+};
+
+export const toggleLike = async (boardId: string) => {
+  try {
+    await apiClient.post(`/likes/${boardId}/like`);
+  } catch (error) {
+    console.error('❌ 게시글 좋아요 실패:', error);
+    throw error;
+  }
+};
+
+// ✅ 게시글 싫어요 추가
+export const toggleUnlike = async (boardId: string) => {
+  try {
+    await apiClient.post(`/likes/${boardId}/unlike`);
+  } catch (error) {
+    console.error('❌ 게시글 싫어요 실패:', error);
+    throw error;
   }
 };

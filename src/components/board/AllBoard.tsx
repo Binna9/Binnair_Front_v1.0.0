@@ -11,6 +11,8 @@ import {
   XCircle,
   Edit,
   Trash2,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react';
 import { RootState } from '@/store/store';
 import {
@@ -25,6 +27,9 @@ import {
   createBoard,
   updateBoard,
   deleteBoard,
+  updateViewBoard,
+  toggleLike,
+  toggleUnlike,
 } from '@/services/BoardService';
 import { useNotification } from '@/context/NotificationContext';
 import BoardDetail from './BoardDetail'; // 추가된 상세 페이지 컴포넌트 import
@@ -78,22 +83,22 @@ export default function Board() {
 
   // ✅ 게시글 목록 불러오기
   useEffect(() => {
-    const loadBoards = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchBoards(activeSection, currentPage);
-        setBoards(data);
-      } catch (err) {
-        console.error('Error fetching boards:', err);
-        setError('게시글을 불러오는 중 오류가 발생했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadBoards();
   }, [activeSection, currentPage]);
+
+  const loadBoards = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchBoards(activeSection, currentPage);
+      setBoards(data);
+    } catch (err) {
+      console.error('Error fetching boards:', err);
+      setError('게시글을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 페이지 전환
   const handlePageChange = (page: number) => {
@@ -262,7 +267,8 @@ export default function Board() {
     try {
       setLoading(true);
       const boardDetail = await fetchBoardById(boardId);
-      setCurrentBoard(boardDetail);
+      await updateViewBoard({ boardId, views: boardDetail.views + 1 });
+      setCurrentBoard({ ...boardDetail, views: boardDetail.views + 1 });
       setIsViewingDetail(true);
       setIsWriting(false);
     } catch (err) {
@@ -276,10 +282,41 @@ export default function Board() {
     }
   };
 
+  // 좋아요 토글 핸들러
+  const handleToggleLike = async (boardId: string) => {
+    try {
+      setLoading(true);
+      await toggleLike(boardId);
+      // 게시글 목록 다시 로드하여 좋아요 상태 업데이트
+      await loadBoards();
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      notification.showAlert('ERROR', '좋아요 처리 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 싫어요 토글 핸들러
+  const handleToggleUnlike = async (boardId: string) => {
+    try {
+      setLoading(true);
+      await toggleUnlike(boardId);
+      // 게시글 목록 다시 로드하여 싫어요 상태 업데이트
+      await loadBoards();
+    } catch (err) {
+      console.error('Error toggling unlike:', err);
+      notification.showAlert('ERROR', '싫어요 처리 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ✅ 상세 페이지에서 목록으로 돌아가기
   const handleBackToList = () => {
     setIsViewingDetail(false);
     setCurrentBoard(null);
+    loadBoards();
   };
 
   return (
@@ -469,6 +506,8 @@ export default function Board() {
               requireLogin={requireLogin}
               handleEdit={handleEdit}
               handleDelete={handleDelete}
+              toggleLike={toggleLike}
+              toggleUnlike={toggleUnlike}
             />
           ) : (
             // ✅ 게시글 목록
@@ -491,7 +530,6 @@ export default function Board() {
                         >
                           {board.title}
                         </h2>
-
                         {/* 수정/삭제 버튼 및 추가 정보 */}
                         <div className="flex items-center space-x-4 text-gray-600 text-sm">
                           {/* 작성자, 조회수, 좋아요 */}
@@ -501,10 +539,38 @@ export default function Board() {
                           <span>
                             {' • '}조회수 : {board.views}
                           </span>
-                          <span>
-                            {' • '}좋아요 : {board.likes}
-                          </span>
-
+                          <button
+                            onClick={() =>
+                              requireLogin(() =>
+                                handleToggleLike(board.boardId)
+                              )
+                            }
+                            className="flex items-center space-x-1 hover:text-blue-400 transition"
+                            title="좋아요"
+                          >
+                            <ThumbsUp
+                              className={`w-5 h-5 ${
+                                board.likes ? 'text-blue-400 fill-blue-400' : ''
+                              }`}
+                            />
+                            <span>{board.likes}</span>
+                          </button>
+                          <button
+                            onClick={() =>
+                              requireLogin(() =>
+                                handleToggleUnlike(board.boardId)
+                              )
+                            }
+                            className="flex items-center space-x-1 hover:text-red-400 transition"
+                            title="싫어요"
+                          >
+                            <ThumbsDown
+                              className={`w-5 h-5 ${
+                                board.unlikes ? 'text-red-400 fill-red-400' : ''
+                              }`}
+                            />
+                            <span>{board.unlikes}</span>
+                          </button>
                           {/* 수정/삭제 버튼 */}
                           <button
                             onClick={() =>

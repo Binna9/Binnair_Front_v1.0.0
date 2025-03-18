@@ -7,6 +7,8 @@ import {
   Edit,
   Trash2,
   Send,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react';
 import { BoardResponse } from '@/types/Board';
 import {
@@ -31,6 +33,8 @@ type BoardDetailProps = {
   requireLogin: (callback: () => void) => void;
   handleEdit: (boardId: string) => void;
   handleDelete: (boardId: string) => void;
+  toggleLike: (boardId: string) => Promise<void>; // 추가
+  toggleUnlike: (boardId: string) => Promise<void>; // 추가
 };
 
 // 게시판 타입별 아이콘 매핑
@@ -47,6 +51,8 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
   requireLogin,
   handleEdit,
   handleDelete,
+  toggleLike,
+  toggleUnlike,
 }) => {
   // 게시글 상태 관리
   const [board, setBoard] = useState<BoardResponse | null>(null);
@@ -77,6 +83,39 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleLike = async () => {
+    requireLogin(async () => {
+      try {
+        setLoading(true);
+        await toggleLike(boardId);
+        // 게시글 정보 다시 로드하여 좋아요 상태 업데이트
+        await loadBoard();
+      } catch (err) {
+        console.error('좋아요 처리 중 오류:', err);
+        notification.showAlert('FAIL', '좋아요 처리 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    });
+  };
+
+  // 싫어요 토글 핸들러 추가
+  const handleToggleUnlike = async () => {
+    requireLogin(async () => {
+      try {
+        setLoading(true);
+        await toggleUnlike(boardId);
+        // 게시글 정보 다시 로드하여 싫어요 상태 업데이트
+        await loadBoard();
+      } catch (err) {
+        console.error('싫어요 처리 중 오류:', err);
+        notification.showAlert('FAIL', '싫어요 처리 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    });
   };
 
   // 컴포넌트 마운트 시 게시글 로드
@@ -264,22 +303,22 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
               <textarea
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
-                className="w-full p-2 border rounded-lg resize-none"
+                className="w-full p-2 border rounded-lg shadow-md resize-none"
                 rows={2}
               />
               <div className="flex justify-end mt-2 space-x-2">
                 <button
                   onClick={cancelEditing}
-                  className="px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                  className="px-3 py-1 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition shadow-md"
                 >
-                  취소
+                  CANCEL
                 </button>
                 <button
                   onClick={() => submitEdit(comment.commentId)}
-                  className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition shadow-md"
                   disabled={!editedContent.trim()}
                 >
-                  수정
+                  ADD
                 </button>
               </div>
             </div>
@@ -420,10 +459,37 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center text-gray-600 text-sm">
-            <span>조회수: {board.views}</span>
-            <span className="mx-2">•</span>
-            <span>좋아요: {board.likes}</span>
+          <div className="flex items-center space-x-4 text-gray-600 text-sm">
+            <span>
+              {' • '}작성자 : {board.writerName}
+            </span>
+            <span>
+              {' • '}조회수 : {board.views}
+            </span>
+            <button
+              onClick={() => requireLogin(() => handleToggleLike())}
+              className="flex items-center space-x-1 hover:text-blue-500 transition"
+              title="좋아요"
+            >
+              <ThumbsUp
+                className={`w-5 h-5 ${
+                  board.likes ? 'text-blue-400 fill-blue-400' : ''
+                }`}
+              />
+              <span>{board.likes}</span>
+            </button>
+            <button
+              onClick={() => requireLogin(() => handleToggleUnlike())}
+              className="flex items-center space-x-1 hover:text-red-500 transition"
+              title="싫어요"
+            >
+              <ThumbsDown
+                className={`w-5 h-5 ${
+                  board.unlikes ? 'text-red-400 fill-red-400' : ''
+                }`}
+              />
+              <span>{board.unlikes}</span>
+            </button>
           </div>
         </div>
 
