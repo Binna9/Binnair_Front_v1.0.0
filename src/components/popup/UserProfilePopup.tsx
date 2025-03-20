@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { XCircleIcon, CameraIcon } from '@heroicons/react/24/solid';
+import { XCircleIcon, CameraIcon, TrashIcon } from '@heroicons/react/24/solid';
 import {
   PencilIcon,
   UserIcon,
@@ -11,6 +11,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   LockIcon,
+  CheckIcon,
 } from 'lucide-react';
 import { ProfileUser, ProfileAddress } from '@/types/ProfileUser';
 import { useProfile } from '@/hooks/useProfile';
@@ -27,7 +28,6 @@ interface UserProfilePopupProps {
     addressId: string,
     updatedAddress: Partial<ProfileAddress>
   ) => void;
-
   logout: () => void;
   setProfileImage: React.Dispatch<React.SetStateAction<string>>;
   verifyPassword?: (currentPassword: string) => Promise<boolean>; // 추가
@@ -45,7 +45,14 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   updateAddress,
   logout,
 }) => {
-  const { verifyPassword, changePassword } = useProfile(user.userId);
+  const {
+    verifyPassword,
+    changePassword,
+    addAddress,
+    deleteAddress,
+    setDefaultAddress,
+    refreshUserAddresses,
+  } = useProfile(user.userId);
   const [activeTab, setActiveTab] = useState('profile');
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<ProfileUser>>({ ...user });
@@ -67,6 +74,16 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [newAddressForm, setNewAddressForm] = useState<Partial<ProfileAddress>>(
+    {
+      receiver: '',
+      phoneNumber: '',
+      postalCode: '',
+      address: '',
+      isDefault: false,
+    }
+  );
 
   // user 정보가 변경될 때 현재 사용자 정보 업데이트
   useEffect(() => {
@@ -78,6 +95,15 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   }, [isOpen, user]);
 
   if (!isOpen) return null;
+
+  // ✅ 배송지가 변경될 때 currentUser 상태 업데이트
+  useEffect(() => {
+    if (user?.addresses) {
+      setCurrentUser((prevUser) =>
+        prevUser ? { ...prevUser, addresses: [...user.addresses] } : null
+      );
+    }
+  }, [user?.addresses]);
 
   // 사용자 정보 수정
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,9 +190,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
     setEditingAddressId(address.addressId);
     setAddressForm({
       receiver: address.receiver,
-      phone: address.phone,
-      postalCode1: address.postalCode1,
-      address1: address.address1,
+      phoneNumber: address.phoneNumber,
+      postalCode: address.postalCode,
+      address: address.address,
     });
   };
 
@@ -174,7 +200,103 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const handleSaveAddress = async () => {
     if (editingAddressId) {
       await updateAddress(editingAddressId, addressForm);
+
+      // ✅ 최신 배송지 정보 가져오기
+      const updatedAddresses = await refreshUserAddresses();
+
+      setCurrentUser((prevUser) =>
+        prevUser ? { ...prevUser, addresses: updatedAddresses } : null
+      );
+
       setEditingAddressId(null);
+    }
+  };
+
+  // 새 배송지 추가 핸들러
+  const handleAddNewAddress = async () => {
+    if (
+      !newAddressForm.receiver ||
+      !newAddressForm.phoneNumber ||
+      !newAddressForm.address ||
+      !newAddressForm.postalCode
+    ) {
+      notification.showAlert('FAIL', '필수 정보를 모두 입력해주세요.');
+      return;
+    }
+
+    try {
+      await addAddress(newAddressForm as ProfileAddress);
+      const updatedAddresses = await refreshUserAddresses(); // 최신 배송지 정보 가져오기
+
+      setCurrentUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              addresses: updatedAddresses,
+            }
+          : null
+      );
+
+      setIsAddingAddress(false);
+      setNewAddressForm({
+        receiver: '',
+        phoneNumber: '',
+        postalCode: '',
+        address: '',
+        isDefault: false,
+      });
+      notification.showAlert('SUCCESS', '배송지가 성공적으로 추가되었습니다.');
+    } catch (error) {
+      notification.showAlert('FAIL', '배송지 추가에 실패했습니다.');
+    }
+  };
+
+  // 배송지 삭제 핸들러
+  const handleDeleteAddress = async (addressId: string) => {
+    const isConfirmed = await notification.showConfirm(
+      'DELETE',
+      '이 배송지를 삭제하시겠습니까?'
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      await deleteAddress(addressId);
+      const updatedAddresses = await refreshUserAddresses(); // 최신 배송지 정보 가져오기
+
+      setCurrentUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              addresses: updatedAddresses,
+            }
+          : null
+      );
+
+      notification.showAlert('SUCCESS', '배송지가 성공적으로 삭제되었습니다.');
+    } catch (error) {
+      notification.showAlert('FAIL', '배송지 삭제에 실패했습니다.');
+    }
+  };
+
+  // 기본 배송지 설정 핸들러
+  const handleSetDefaultAddress = async (addressId: string) => {
+    try {
+      await setDefaultAddress(addressId);
+      const updatedAddresses = await refreshUserAddresses(); // 최신 배송지 정보 가져오기
+
+      setCurrentUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              addresses: updatedAddresses,
+            }
+          : null
+      );
+
+      notification.showAlert('SUCCESS', '기본 배송지가 변경되었습니다.');
+    } catch (error) {
+      notification.showAlert('FAIL', '기본 배송지 설정에 실패했습니다.');
     }
   };
 
@@ -720,16 +842,19 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
               </h2>
 
               <div className="space-y-4">
+                {/* 기존 배송지 목록 */}
                 {(user?.addresses ?? []).map((address) => (
                   <div
                     key={address.addressId}
-                    className="bg-white rounded-lg p-4 border border-gray-300"
+                    className={`bg-white rounded-lg p-4 border ${
+                      address.isDefault ? 'border-blue-500' : 'border-gray-300'
+                    }`}
                   >
                     {editingAddressId === address.addressId ? (
                       <div className="space-y-3">
-                        {/* 배송지 관리 탭 - 수정된 편집 폼 */}
+                        {/* 배송지 편집 폼 */}
                         <div className="space-y-1">
-                          <label className="block text-gray-300 text-sm">
+                          <label className="block text-gray-700 text-sm">
                             수령인
                           </label>
                           <input
@@ -742,42 +867,63 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                         </div>
 
                         <div className="space-y-1">
-                          <label className="block text-gray-300 text-sm">
+                          <label className="block text-gray-700 text-sm">
                             전화번호
                           </label>
                           <input
                             type="text"
-                            name="phone"
-                            value={addressForm.phone || ''}
+                            name="phoneNumber"
+                            value={addressForm.phoneNumber || ''}
                             onChange={handleAddressChange}
                             className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400 hover:bg-gray-100"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <label className="block text-gray-300 text-sm">
+                          <label className="block text-gray-700 text-sm">
                             우편번호
                           </label>
                           <input
                             type="text"
                             name="postalCode"
-                            value={addressForm.postalCode1 || ''}
+                            value={addressForm.postalCode || ''}
                             onChange={handleAddressChange}
                             className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400 hover:bg-gray-100"
                           />
                         </div>
 
                         <div className="space-y-1">
-                          <label className="block text-gray-300 text-sm">
+                          <label className="block text-gray-700 text-sm">
                             주소
                           </label>
                           <input
                             type="text"
-                            name="address1"
-                            value={addressForm.address1 || ''}
+                            name="address"
+                            value={addressForm.address || ''}
                             onChange={handleAddressChange}
                             className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400 hover:bg-gray-100"
                           />
+                        </div>
+
+                        <div className="flex items-center space-x-2 py-1">
+                          <input
+                            type="checkbox"
+                            id={`default-${address.addressId}`}
+                            checked={addressForm.isDefault || false}
+                            onChange={(e) =>
+                              setAddressForm({
+                                ...addressForm,
+                                isDefault: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 text-blue-600"
+                          />
+                          <label
+                            htmlFor={`default-${address.addressId}`}
+                            className="text-gray-700 text-sm"
+                          >
+                            기본 배송지로 설정
+                          </label>
                         </div>
 
                         <div className="flex space-x-3 pt-2">
@@ -799,20 +945,53 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       <div>
                         <div className="flex justify-between">
                           <div>
-                            <p className="font-medium text-lg text-black">
-                              {address.receiver}
-                            </p>
-                            <p className="text-gray-600">{address.phone}</p>
+                            <div className="flex items-center">
+                              <p className="font-medium text-lg text-black">
+                                {address.receiver}
+                              </p>
+                              {address.isDefault && (
+                                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                  기본
+                                </span>
+                              )}
+                            </div>
                             <p className="text-gray-600">
-                              {address.address1} ({address.postalCode1})
+                              {address.phoneNumber}
+                            </p>
+                            <p className="text-gray-600">
+                              {address.address}{' '}
+                              {address.postalCode && `(${address.postalCode})`}
                             </p>
                           </div>
-                          <div>
+                          <div className="flex flex-col space-y-2">
                             <button
                               onClick={() => handleEditAddress(address)}
-                              className="text-blue-600 hover:text-blue-800"
+                              className="text-blue-600 hover:text-blue-800 flex items-center"
                             >
+                              <PencilIcon className="w-4 h-4 mr-1" />
                               편집
+                            </button>
+
+                            {!address.isDefault && (
+                              <button
+                                onClick={() =>
+                                  handleSetDefaultAddress(address.addressId)
+                                }
+                                className="text-green-600 hover:text-green-800 flex items-center"
+                              >
+                                <CheckIcon className="w-4 h-4 mr-1" />
+                                기본으로 설정
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() =>
+                                handleDeleteAddress(address.addressId)
+                              }
+                              className="text-red-600 hover:text-red-800 flex items-center"
+                            >
+                              <TrashIcon className="w-4 h-4 mr-1" />
+                              삭제
                             </button>
                           </div>
                         </div>
@@ -821,9 +1000,134 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   </div>
                 ))}
 
-                <button className="w-full border border-dashed border-gray-400 p-3 rounded-lg text-gray-600 hover:text-black hover:border-blue-400 transition bg-white">
-                  + 새 배송지 추가
-                </button>
+                {/* 새 배송지 추가 폼 */}
+                {isAddingAddress ? (
+                  <div className="bg-white rounded-lg p-4 border border-blue-300 space-y-3">
+                    <h3 className="font-medium text-black border-b border-gray-200 pb-2">
+                      새 배송지 추가
+                    </h3>
+
+                    <div className="space-y-1">
+                      <label className="block text-gray-700 text-sm">
+                        수령인 *
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddressForm.receiver || ''}
+                        onChange={(e) =>
+                          setNewAddressForm({
+                            ...newAddressForm,
+                            receiver: e.target.value,
+                          })
+                        }
+                        className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-gray-700 text-sm">
+                        전화번호 *
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddressForm.phoneNumber || ''}
+                        onChange={(e) =>
+                          setNewAddressForm({
+                            ...newAddressForm,
+                            phoneNumber: e.target.value,
+                          })
+                        }
+                        className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-gray-700 text-sm">
+                        우편번호
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddressForm.postalCode || ''}
+                        onChange={(e) =>
+                          setNewAddressForm({
+                            ...newAddressForm,
+                            postalCode: e.target.value,
+                          })
+                        }
+                        className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-gray-700 text-sm">
+                        주소 *
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddressForm.address || ''}
+                        onChange={(e) =>
+                          setNewAddressForm({
+                            ...newAddressForm,
+                            address: e.target.value,
+                          })
+                        }
+                        className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black focus:outline-none focus:border-blue-400"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2 py-1">
+                      <input
+                        type="checkbox"
+                        id="new-default-address"
+                        checked={newAddressForm.isDefault || false}
+                        onChange={(e) =>
+                          setNewAddressForm({
+                            ...newAddressForm,
+                            isDefault: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <label
+                        htmlFor="new-default-address"
+                        className="text-gray-700 text-sm"
+                      >
+                        기본 배송지로 설정
+                      </label>
+                    </div>
+
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        onClick={handleAddNewAddress}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition"
+                      >
+                        추가하기
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAddingAddress(false);
+                          setNewAddressForm({
+                            receiver: '',
+                            phoneNumber: '',
+                            postalCode: '',
+                            address: '',
+                            isDefault: false,
+                          });
+                        }}
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsAddingAddress(true)}
+                    className="w-full border border-dashed border-gray-400 p-3 rounded-lg text-gray-600 hover:text-black hover:border-blue-400 transition bg-white"
+                  >
+                    + 새 배송지 추가
+                  </button>
+                )}
               </div>
             </div>
           )}

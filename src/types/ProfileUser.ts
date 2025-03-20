@@ -12,12 +12,8 @@ export interface ProfileUser {
 export interface ProfileAddress {
   addressId: string;
   receiver: string;
-  phone: string;
-  postalCode1: string;
-  postalCode2: string;
-  postalCode3: string;
-  address1: string;
-  address2?: string;
-  address3?: string;
+  phoneNumber: string;
+  postalCode: string;
+  address: string;
   isDefault: boolean;
 }

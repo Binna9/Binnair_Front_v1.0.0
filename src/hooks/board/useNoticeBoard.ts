@@ -3,7 +3,7 @@ import { fetchBoards } from '@/services/BoardService';
 import { PagedBoardResponse, BoardType, BoardResponse } from '@/types/Board';
 import { useNotification } from '@/context/NotificationContext';
 
-export const useBoard = (boardType: BoardType) => {
+export const useNoticeBoard = (boardType: BoardType) => {
   const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

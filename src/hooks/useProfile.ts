@@ -4,8 +4,8 @@ import {
   updateUserProfile,
   deleteUserProfile,
   addUserAddress,
-  updateUserAddress,
   deleteUserAddress,
+  updateDefaultAddress,
   verifyUserPassword,
   changeUserPassword,
 } from '@/services/ProfileService'; // ✅ 서비스 레이어 import
@@ -77,31 +77,6 @@ export const useProfile = (userId: string | null) => {
     }
   };
 
-  // ✅ 배송지 수정
-  const updateAddress = async (
-    addressId: string,
-    updatedAddress: Partial<ProfileAddress>
-  ) => {
-    try {
-      await updateUserAddress(addressId, updatedAddress);
-      setUser((prevUser) =>
-        prevUser
-          ? {
-              ...prevUser,
-              addresses: prevUser.addresses.map((addr) =>
-                addr.addressId === addressId
-                  ? { ...addr, ...updatedAddress }
-                  : addr
-              ),
-            }
-          : null
-      );
-    } catch (err) {
-      console.error('❌ 배송지 정보를 업데이트하는 중 오류 발생:', err);
-      setError('❌ 배송지 정보를 업데이트하는 중 오류 발생');
-    }
-  };
-
   // ✅ 배송지 삭제
   const deleteAddress = async (addressId: string) => {
     try {
@@ -119,6 +94,29 @@ export const useProfile = (userId: string | null) => {
     } catch (err) {
       console.error('❌ 배송지 삭제 중 오류 발생:', err);
       setError('❌ 배송지 삭제 중 오류 발생');
+    }
+  };
+
+  // ✅ 기본 배송지 변경 (새 기능 추가)
+  const setDefaultAddress = async (addressId: string) => {
+    try {
+      await updateDefaultAddress(addressId);
+
+      setUser((prevUser) =>
+        prevUser
+          ? {
+              ...prevUser,
+              addresses: prevUser.addresses.map((addr) =>
+                addr.addressId === addressId
+                  ? { ...addr, isDefault: true }
+                  : { ...addr, isDefault: false }
+              ),
+            }
+          : null
+      );
+    } catch (err) {
+      console.error('❌ 기본 배송지 변경 중 오류 발생:', err);
+      setError('❌ 기본 배송지 변경 중 오류 발생');
     }
   };
 
@@ -154,6 +152,34 @@ export const useProfile = (userId: string | null) => {
     }
   };
 
+  // ✅ 사용자 정보 새로고침 함수 추가
+  const refreshUserAddresses = async (): Promise<
+    ProfileAddress[] | undefined
+  > => {
+    try {
+      if (!userId) return undefined;
+
+      const userData = await getUserProfile(userId);
+
+      // 상태 업데이트
+      setUser((prevUser) =>
+        prevUser
+          ? {
+              ...prevUser,
+              addresses: [...userData.addresses], // ✅ 깊은 복사 적용 (새로운 배열 할당)
+            }
+          : prevUser
+      );
+
+      console.log('✅ 배송지 정보가 갱신되었습니다:', userData.addresses);
+      return userData.addresses; // 배송지 배열 반환
+    } catch (err) {
+      console.error('❌ 배송지 정보를 새로고침하는 중 오류 발생:', err);
+      setError('❌ 배송지 정보를 새로고침하는 중 오류 발생');
+      return undefined;
+    }
+  };
+
   return {
     user,
     loading,
@@ -161,9 +187,10 @@ export const useProfile = (userId: string | null) => {
     updateUser,
     deleteUser,
     addAddress,
-    updateAddress,
     deleteAddress,
     verifyPassword,
     changePassword,
+    setDefaultAddress,
+    refreshUserAddresses,
   };
 };

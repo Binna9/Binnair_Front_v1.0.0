@@ -82,6 +82,12 @@ export default defineConfig(({ mode }) => {
           secure: false,
           rewrite: (path) => path.replace(/^\/likes/, '/likes'),
         },
+        '/files': {
+          target: env.VITE_API_BASE_URL,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/files/, '/files'),
+        },
       },
     },
     resolve: {

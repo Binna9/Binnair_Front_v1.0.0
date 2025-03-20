@@ -85,6 +85,7 @@ export default function Market() {
 
   const productImages = useProductImageBatch(productIds);
 
+  // 제품 옵션 핸들러
   const fetchProductOptions = async (productId: string) => {
     return [
       { productId: productId, name: '기본 옵션', price: 0 },

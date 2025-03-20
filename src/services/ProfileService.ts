@@ -37,13 +37,9 @@ export const addUserAddress = async (newAddress: ProfileAddress) => {
   return response.data;
 };
 
-// ✅ 배송지 수정
-export const updateUserAddress = async (
-  addressId: string,
-  updatedAddress: Partial<ProfileAddress>
-) => {
-  await apiClient.put(`/addresses/${addressId}`, updatedAddress);
-  return updatedAddress;
+// ✅ 기본 배송지 변경 API (새롭게 추가)
+export const updateDefaultAddress = async (addressId: string) => {
+  await apiClient.put(`/addresses/${addressId}/default`);
 };
 
 // ✅ 배송지 삭제
