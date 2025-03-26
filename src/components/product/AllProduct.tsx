@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { fetchAllProducts } from '@/services/ProductService';
 import { BsStar, BsStarFill } from 'react-icons/bs';
-import { useProductImageBatch } from '@/hooks/useProductImageBatch';
+import { useProductImageBatch } from '@/hooks/product/useProductImageBatch';
 import { useNotification } from '@/context/NotificationContext';
-import { PagedProductResponse } from '@/types/ProductType';
+import { PagedProductResponse } from '@/types/ProductTypes';
 import { fetchCategories } from '@/services/ProductService';
 import ProductRadio from '../ui/ProductRadio';
 import CartBookmarkService from '@/services/CartBookmarkService';

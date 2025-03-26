@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import AuthLayout from '@/layouts/AuthLayout';
 import axios from 'axios';
 
-export default function ForgotPassword() {
+export default function PasswordChangePage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);

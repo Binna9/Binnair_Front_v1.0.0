@@ -1,18 +1,26 @@
-import { useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setCredentials, logout } from '@/store/authSlice';
 import axios from 'axios';
 
-const AuthWrapper = () => {
+interface AuthWrapperProps {
+  children: ReactNode;
+}
+
+const AuthWrapper = ({ children }: AuthWrapperProps) => {
   const dispatch = useDispatch();
+  const [isAuthLoaded, setIsAuthLoaded] = useState(false);
 
   useEffect(() => {
     const refreshAccessToken = async () => {
       try {
-        console.log('🔄 새로고침 후 accessToken 갱신 시도...');
-        const res = await axios.post('/auth/refresh', {
-          withCredentials: true,
-        });
+        const res = await axios.post(
+          '/auth/refresh',
+          {},
+          {
+            withCredentials: true,
+          }
+        );
 
         dispatch(
           setCredentials({
@@ -20,18 +28,22 @@ const AuthWrapper = () => {
             user: res.data.user,
           })
         );
-
-        console.log('✅ accessToken 갱신 완료:', res.data.accessToken);
       } catch (error) {
-        console.error('🔴 새로고침 후 토큰 갱신 실패:', error);
         dispatch(logout());
+      } finally {
+        setIsAuthLoaded(true);
       }
     };
 
     refreshAccessToken();
   }, [dispatch]);
 
-  return null;
+  // ✅ 토큰 갱신 완료 전에는 로딩 상태를 보여줌
+  if (!isAuthLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  return <>{children}</>;
 };
 
 export default AuthWrapper;

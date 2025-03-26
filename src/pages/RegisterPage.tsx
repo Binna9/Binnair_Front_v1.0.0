@@ -2,10 +2,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useRegister } from '@/hooks/useRegister';
+import { useRegister } from '@/hooks/user/useRegister';
 import AuthLayout from '@/layouts/AuthLayout';
 
-export default function Register() {
+export default function RegisterPage() {
   const {
     loginId,
     setLoginId,
@@ -22,10 +22,9 @@ export default function Register() {
     phoneNumber,
     setPhoneNumber,
     profilePreview,
-    profileImage,
-    handleImageUpload,
     agreeTerms,
     setAgreeTerms,
+    handleImageUpload,
     handleRegister,
   } = useRegister();
 
@@ -41,7 +40,7 @@ export default function Register() {
             <div className="flex flex-col items-center relative">
               <label htmlFor="profileUpload" className="cursor-pointer">
                 <div className="mt-20 w-32 h-32 rounded-full shadow-inner border-4 border-gray-300 flex items-center justify-center bg-gradient-to-t from-gray-300 to-gray-100 hover:from-gray-400 hover:to-gray-200 transition-all relative">
-                  {profileImage ? (
+                  {profilePreview ? (
                     <img
                       src={profilePreview}
                       alt="Profile Preview"
@@ -58,7 +57,7 @@ export default function Register() {
                 type="file"
                 id="profileUpload"
                 accept="image/*"
-                onChange={handleImageUpload} // ✅ 여기서 handleImageUpload 호출
+                onChange={handleImageUpload}
                 className="hidden"
               />
             </div>

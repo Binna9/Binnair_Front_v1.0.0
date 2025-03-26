@@ -1,154 +1,126 @@
 import apiClient from '@/utils/apiClient';
 import {
-  BoardType,
   BoardResponse,
   BoardRequest,
-  BoardView,
+  BoardViewRequest,
   PagedBoardResponse,
-} from '@/types/Board';
-import { CommentRequest, CommentUpdateRequest } from '@/types/Comment';
+} from '@/types/BoardTypes';
+import { BoardType } from '@/types/BoardEnum';
 
-// ✅ 게시글 목록 조회
-export const fetchBoards = async (
-  boardType: BoardType,
-  page: number = 0,
-  size: number = 8
-): Promise<PagedBoardResponse | null> => {
-  try {
-    const response = await apiClient.get<PagedBoardResponse>(
-      `/boards?boardType=${boardType}&page=${page}&size=${size}`
-    );
+interface PageRequest {
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}
 
-    if (response.status === 200) {
-      return response.data;
+export const boardService = {
+  // 게시글 목록 조회
+  getAllBoards: async (
+    boardType: BoardType, // ✅ boardType 인자 추가
+    pageRequest: PageRequest = {
+      page: 0,
+      size: 9,
+      sort: 'createDatetime',
+      direction: 'DESC',
     }
-  } catch (error) {
-    console.error('❌ 게시글 조회 실패:', error);
-  }
+  ): Promise<PagedBoardResponse | null> => {
+    try {
+      const { page, size, sort, direction } = pageRequest;
+      const response = await apiClient.get<PagedBoardResponse>('/boards', {
+        params: {
+          boardType,
+          page,
+          size,
+          sort: `${sort},${direction}`, // ✅ 정렬 파라미터 형식 수정
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ 게시글 조회 실패:', error);
+      return null;
+    }
+  },
 
-  return null;
-};
+  // ✅ 게시글 개별 조회
+  getBoardById: async (boardId: string): Promise<BoardResponse | null> => {
+    try {
+      const response = await apiClient.get<BoardResponse>(`/boards/${boardId}`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ 게시글 조회 실패:', error);
+      return null;
+    }
+  },
 
-// ✅ 게시글 개별 조회
-export const fetchBoardById = async (
-  boardId: string
-): Promise<BoardResponse | null> => {
-  try {
-    const response = await apiClient.get<BoardResponse>(`/boards/${boardId}`);
-    return response.data;
-  } catch (error) {
-    console.error('❌ 게시글 조회 실패:', error);
-    return null;
-  }
-};
+  // ✅ 게시글 생성 (파일 포함)
+  createBoard: async (boardData: BoardRequest, files: File[] = []) => {
+    try {
+      // ✅ FormData 객체 생성
+      const formData = new FormData();
 
-// ✅ 게시글 생성 (파일 포함)
-export const createBoard = async ({
-  boardType,
-  title,
-  content,
-  file,
-}: BoardRequest) => {
-  const formData = new FormData();
+      // ✅ 회원가입 데이터를 FormData에 추가
+      Object.keys(boardData).forEach((key) => {
+        formData.append(key, (boardData as any)[key]);
+      });
 
-  formData.append('boardType', boardType);
-  formData.append('title', title);
-  formData.append('content', content);
+      // ✅ 파일 추가
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
 
-  if (file) {
-    formData.append('file', file);
-  }
+      // ✅ 전송
+      const response = await apiClient.post('/boards', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
 
-  await apiClient.post('/boards', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-};
+  // ✅ 게시글 수정 (파일 포함)
+  updateBoard: async (
+    boardId: string,
+    boardRequest: BoardRequest
+  ): Promise<void> => {
+    await apiClient.put(`/boards/${boardId}`, boardRequest);
+  },
 
-// ✅ 게시글 수정 (파일 포함)
-export const updateBoard = async (
-  boardId: string,
-  boardRequest: BoardRequest
-) => {
-  const formData = new FormData();
+  // ✅ 게시글 삭제
+  deleteBoard: async (boardId: string) => {
+    await apiClient.delete(`/boards/${boardId}`);
+  },
 
-  formData.append('boardType', boardRequest.boardType);
-  formData.append('title', boardRequest.title);
-  formData.append('content', boardRequest.content);
+  // ✅ 게시글 좋아요 추가
+  toggleLike: async (boardId: string) => {
+    try {
+      await apiClient.post(`/likes/${boardId}/like`);
+    } catch (error) {
+      console.error('❌ 게시글 좋아요 실패:', error);
+      throw error;
+    }
+  },
 
-  if (boardRequest.file) {
-    formData.append('file', boardRequest.file);
-  }
+  // ✅ 게시글 싫어요 추가
+  toggleUnlike: async (boardId: string) => {
+    try {
+      await apiClient.post(`/likes/${boardId}/unlike`);
+    } catch (error) {
+      console.error('❌ 게시글 싫어요 실패:', error);
+      throw error;
+    }
+  },
 
-  await apiClient.put(`/boards/${boardId}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-};
-
-// ✅ 게시글 삭제
-export const deleteBoard = async (boardId: string) => {
-  await apiClient.delete(`/boards/${boardId}`);
-};
-
-// ✅ 댓글 생성
-export const createComment = async (commentRequest: CommentRequest) => {
-  try {
-    await apiClient.post('/comments', commentRequest);
-  } catch (error) {
-    console.error('❌ 댓글 작성 실패:', error);
-  }
-};
-
-// ✅ 댓글 수정
-export const updateComment = async (
-  commentId: string,
-  CommentUpdateRequest: CommentUpdateRequest
-) => {
-  try {
-    await apiClient.put(`/comments/${commentId}`, CommentUpdateRequest, {
-      headers: { 'Content-Type': 'application/json' }, // 문자열을 전송할 경우 필요
-    });
-  } catch (error) {
-    console.error('❌ 댓글 수정 실패:', error);
-  }
-};
-
-// ✅ 댓글 삭제
-export const deleteComment = async (commentId: string) => {
-  try {
-    await apiClient.delete(`/comments/${commentId}`);
-  } catch (error) {
-    console.error('❌ 댓글 삭제 실패:', error);
-  }
-};
-
-// ✅ 게시글 좋아요 추가
-export const toggleLike = async (boardId: string) => {
-  try {
-    await apiClient.post(`/likes/${boardId}/like`);
-  } catch (error) {
-    console.error('❌ 게시글 좋아요 실패:', error);
-    throw error;
-  }
-};
-
-// ✅ 게시글 싫어요 추가
-export const toggleUnlike = async (boardId: string) => {
-  try {
-    await apiClient.post(`/likes/${boardId}/unlike`);
-  } catch (error) {
-    console.error('❌ 게시글 싫어요 실패:', error);
-    throw error;
-  }
-};
-
-// 조회수 증가
-export const updateViewBoard = async (boardView: BoardView) => {
-  try {
-    await apiClient.put(`/boards/views`, boardView, {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('❌ 조회수 증가 실패:', error);
-    throw error;
-  }
+  // 조회수 증가
+  updateViewBoard: async (boardView: BoardViewRequest) => {
+    try {
+      await apiClient.put(`/boards/views`, boardView, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('❌ 조회수 증가 실패:', error);
+      throw error;
+    }
+  },
 };

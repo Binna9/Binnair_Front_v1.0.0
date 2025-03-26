@@ -1,5 +1,5 @@
 import apiClient from '../utils/apiClient';
-import { ProductType, PagedProductResponse } from '@/types/ProductType';
+import { ProductType, PagedProductResponse } from '@/types/ProductTypes';
 
 export const fetchAllProducts = async (
   page: number = 0,

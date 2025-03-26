@@ -5,88 +5,49 @@ import * as path from 'path';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
+  const createProxy = (prefixes) => {
+    return prefixes.reduce((acc, prefix) => {
+      acc[`/${prefix}`] = {
+        target: env.VITE_API_BASE_URL,
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) =>
+          path.replace(new RegExp(`^/${prefix}`), `/${prefix}`),
+      };
+      return acc;
+    }, {});
+  };
+
   return {
     plugins: [react()],
     server: {
       hmr: true,
       port: 5173,
       proxy: {
-        '/api': {
+        ...createProxy([
+          'api',
+          'auth',
+          'registers',
+          'users',
+          'products',
+          'carts',
+          'bookmarks',
+          'addresses',
+          'boards',
+          'comments',
+          'likes',
+          'files',
+        ]),
+        // 구글 로그인
+        '/auth/google': {
           target: env.VITE_API_BASE_URL,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ''), // ✅ /api 제거하고 백엔드에 전달
-        },
-        '/auth': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path,
           bypass: (req) => {
-            if (req.method === 'GET' && req.url?.startsWith('/auth/google')) {
-              return req.url; // 클라이언트로 전달
+            if (req.method === 'GET') {
+              return req.url;
             }
           },
-        },
-        '/registers': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/registers/, '/registers'),
-        },
-        '/users': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/users/, '/users'),
-        },
-        '/products': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/products/, '/products'),
-        },
-        '/carts': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/carts/, '/carts'),
-        },
-        '/bookmarks': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/bookmarks/, '/bookmarks'),
-        },
-        '/addresses': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/addresses/, '/addresses'),
-        },
-        '/boards': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/boards/, '/boards'),
-        },
-        '/comments': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/comments/, '/comments'),
-        },
-        '/likes': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/likes/, '/likes'),
-        },
-        '/files': {
-          target: env.VITE_API_BASE_URL,
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path.replace(/^\/files/, '/files'),
         },
       },
     },

@@ -22,7 +22,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import CartBookmarkService from '@/services/CartBookmarkService';
-import { useProductImageBatch } from '@/hooks/useProductImageBatch';
+import { useProductImageBatch } from '@/hooks/product/useProductImageBatch';
 import { CartItemsResponse, CartTotal } from '@/types/CartBookmarkTypes';
 import VerticalSidebar from './VerticalSidebar';
 import CartPromotionBox from './CartPromotionBox';

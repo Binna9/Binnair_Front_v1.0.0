@@ -1,12 +1,9 @@
+import { fileService } from './../../services/FileService';
+import { commentService } from './../../services/CommentService';
+import { boardService } from './../../services/BoardService';
 import { useState, useEffect } from 'react';
-import { BoardResponse } from '@/types/Board';
-import { CommentResponse } from '@/types/Comment';
-import {
-  fetchBoardById,
-  createComment,
-  updateComment,
-  deleteComment,
-} from '@/services/BoardService';
+import { BoardResponse } from '@/types/BoardTypes';
+import { CommentResponse } from '@/types/CommentTypes';
 import { useNotification } from '@/context/NotificationContext';
 
 export const useBoardDetail = (
@@ -34,7 +31,7 @@ export const useBoardDetail = (
   const loadBoard = async () => {
     setLoading(true);
     try {
-      const boardData = await fetchBoardById(boardId);
+      const boardData = await boardService.getBoardById(boardId);
       if (boardData) {
         setBoard(boardData);
         setError(null);
@@ -95,7 +92,7 @@ export const useBoardDetail = (
 
     requireLogin(async () => {
       try {
-        await createComment({
+        await commentService.createComment({
           boardId: board.boardId,
           parentId: parentCommentId,
           content: newComment,
@@ -137,7 +134,9 @@ export const useBoardDetail = (
       if (!confirmed) return;
 
       try {
-        await updateComment(commentId, { content: editedContent });
+        await commentService.updateComment(commentId, {
+          content: editedContent,
+        });
 
         // 댓글 수정 후 게시글 정보 새로고침
         loadBoard();
@@ -160,7 +159,7 @@ export const useBoardDetail = (
       if (!confirmed) return;
 
       try {
-        await deleteComment(commentId);
+        await commentService.deleteComment(commentId);
 
         // 댓글 삭제 후 게시글 정보 새로고침
         loadBoard();
@@ -183,7 +182,7 @@ export const useBoardDetail = (
 
     requireLogin(async () => {
       try {
-        await createComment({
+        await commentService.createComment({
           boardId: board.boardId,
           parentId: parentId,
           content: commentText,
@@ -227,6 +226,32 @@ export const useBoardDetail = (
     });
   };
 
+  // 파일 크기를 읽기 쉬운 형식으로 변환하는 함수
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // 파일 삭제 함수
+  const handleFileDelete = async (fileId: string) => {
+    try {
+      await fileService.removeFile(fileId);
+      notification.showAlert('SUCCESS', '파일이 삭제되었습니다.');
+      // 파일 삭제 후 새로고침 또는 데이터 갱신
+      setBoard((prev) => ({
+        ...prev,
+        files: prev.files.filter((file) => file.fileId !== fileId),
+      }));
+    } catch (error) {
+      console.error('파일 삭제 오류:', error);
+    }
+  };
+
   return {
     board,
     loading,
@@ -249,5 +274,7 @@ export const useBoardDetail = (
     handleEditWithConfirm,
     handleDeleteWithConfirm,
     loadBoard,
+    formatFileSize,
+    handleFileDelete,
   };
 };

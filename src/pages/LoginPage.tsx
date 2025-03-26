@@ -7,16 +7,16 @@ import { SiNaver } from 'react-icons/si';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 
-export default function Login() {
+export default function LoginPage() {
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(false);
   const navigate = useNavigate();
 
-  const { handleLogin, error } = useAuth();
+  const { handleLogin } = useAuth();
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +68,6 @@ export default function Login() {
               Stay Signed In
             </label>
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
           <Button type="submit" className="w-full py-3 font-sans">
             로그인
           </Button>

@@ -8,7 +8,7 @@ const Card = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('card card-3d card-login', className)} // ✅ 전역 스타일 적용
+    className={cn('card card-3d card-login', className)}
     {...props}
   />
 ));

@@ -9,7 +9,7 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from 'lucide-react';
-import { CommentResponse } from '@/types/Comment';
+import { CommentResponse } from '@/types/CommentTypes';
 import { useBoardDetail } from '@/hooks/board/useBoardDetail';
 
 type BoardDetailProps = {
@@ -60,6 +60,8 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
     handleReplySubmit,
     handleEditWithConfirm,
     handleDeleteWithConfirm,
+    formatFileSize,
+    handleFileDelete,
   } = useBoardDetail(
     boardId,
     toggleLike,
@@ -306,22 +308,38 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
         <div className="min-h-[200px] mb-6 whitespace-pre-wrap">
           {board.content}
         </div>
-
-        {/* 첨부파일 */}
-        {board.filePath && (
-          <div className="mt-4 p-3 bg-zinc-100 rounded-lg shadow-lg border">
-            <p className="font-medium">📎 첨부파일</p>
-            <a
-              href={board.filePath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              {board.filePath.split('/').pop()}
-            </a>
-          </div>
-        )}
       </div>
+      {/* 첨부파일 목록 */}
+      {board.files && board.files.length > 0 && (
+        <div className="mt-5 p-3 bg-zinc-50 rounded-lg shadow-lg border">
+          <p className="font-medium mb-2">📎 첨부파일</p>
+          {board.files.map((file, index) => (
+            <div
+              key={file.fileId}
+              className="flex justify-between items-center p-2 bg-white rounded-md shadow-md mb-1"
+            >
+              <a
+                href={`/download/${file.filePath}`} // ✅ 파일 다운로드 경로
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                {file.originalFileName} ({formatFileSize(file.fileSize)}){' '}
+                {/* 파일 이름과 사이즈 */}
+              </a>
+              <button
+                onClick={() =>
+                  requireLogin(() => handleFileDelete(file.fileId))
+                } // ✅ 삭제 버튼
+                className="text-red-500 hover:text-red-700 transition ml-2"
+                title="파일 삭제"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 댓글 섹션 */}
       <div className="mt-8">

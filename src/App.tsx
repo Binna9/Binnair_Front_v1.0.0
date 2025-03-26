@@ -4,41 +4,44 @@ import {
   Route,
   useLocation,
 } from 'react-router-dom';
-
 import { AnimatePresence, motion } from 'framer-motion';
-import MainPage from '@/pages/Main';
-import Login from '@/pages/Login';
-import Register from '@/pages/Register';
+import MainPage from '@/pages/MainPage';
+import Login from '@/pages/LoginPage';
+import Register from '@/pages/RegisterPage';
 import EventPage from './pages/EventPage';
 import CartPage from './pages/CartPage';
-import CustomerPage from './pages/CustomerPage';
+import BoardPage from './pages/BoardPage';
 import ProductPage from './pages/ProductPage';
-import ForgotPassword from '@/pages/ForgotPassword';
+import ForgotPassword from '@/pages/PasswordChangePage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import { NotificationProvider } from './context/NotificationContext';
+import { useNotification } from './context/NotificationContext';
+import { setupNotificationInterceptor } from './utils/apiClient';
+import { useEffect } from 'react';
 import '@/index.css';
 
-export default function App() {
-  return (
-    <Provider store={store}>
-      <NotificationProvider>
-        <Router>
-          {/* ✅ 새로고침 시 accessToken 자동 갱신 실행 */}
-          <AuthWrapper />
-          {/* ✅ 페이지 애니메이션 관리 */}
-          <AnimatedRoutes />
-        </Router>
-      </NotificationProvider>
-    </Provider>
-  );
+function NotificationInterceptorSetup({ children }) {
+  const { showToast } = useNotification();
+
+  useEffect(() => {
+    const cleanupInterceptor = setupNotificationInterceptor(showToast);
+
+    return () => {
+      cleanupInterceptor();
+    };
+  }, [showToast]);
+
+  return <>{children}</>;
 }
 
-function AnimatedRoutes() {
+function AppRoutes() {
   const location = useLocation();
+
   return (
+    // 화면 랜더링 전환
     <AnimatePresence>
       <motion.div
         key={location.pathname}
@@ -62,11 +65,27 @@ function AnimatedRoutes() {
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
           <Route path="/event" element={<EventPage />} />
           <Route path="/product" element={<ProductPage />} />
-          <Route path="/customer" element={<CustomerPage />} />
+          <Route path="/board" element={<BoardPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <NotificationProvider>
+        <Router>
+          <NotificationInterceptorSetup>
+            <AuthWrapper>
+              <AppRoutes />
+            </AuthWrapper>
+          </NotificationInterceptorSetup>
+        </Router>
+      </NotificationProvider>
+    </Provider>
   );
 }

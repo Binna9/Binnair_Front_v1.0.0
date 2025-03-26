@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { fetchBoards } from '@/services/BoardService';
-import { PagedBoardResponse, BoardType, BoardResponse } from '@/types/Board';
+import { boardService } from '@/services/BoardService';
+import { PagedBoardResponse, BoardResponse } from '@/types/BoardTypes';
+import { BoardType } from '@/types/BoardEnum';
 import { useNotification } from '@/context/NotificationContext';
 
 export const useNoticeBoard = (boardType: BoardType) => {
@@ -13,7 +14,7 @@ export const useNoticeBoard = (boardType: BoardType) => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await fetchBoards(boardType);
+        const data = await boardService.getAllBoards(boardType);
         setBoards(data);
       } catch (error) {
         console.error(`❌ ${boardType} 데이터를 불러오는 중 오류 발생:`, error);

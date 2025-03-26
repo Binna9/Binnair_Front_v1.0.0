@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '@/store/authSlice';
-import { profileSlice } from '@/hooks/useProfileImage';
+import { profileSlice } from '@/hooks/user/useUserImage';
 
 export const store = configureStore({
   reducer: {

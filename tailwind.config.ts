@@ -18,7 +18,6 @@ export default {
         heading: ['Noto Sans KR', 'Poppins', 'sans-serif'], // ✅ 제목 폰트도 한글 지원
         body: ['Noto Sans KR', 'Roboto', 'sans-serif'], // ✅ 본문 폰트 한글 적용
       },
-
       keyframes: {
         'bg-move': {
           '0%': { backgroundPosition: '50% 0%' },

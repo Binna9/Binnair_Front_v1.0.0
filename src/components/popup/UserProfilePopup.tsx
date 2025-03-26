@@ -14,9 +14,9 @@ import {
   CheckIcon,
 } from 'lucide-react';
 import { ProfileUser, ProfileAddress } from '@/types/ProfileUser';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/hooks/user/useUserProfile';
 import { useNotification } from '@/context/NotificationContext';
-import { useProfileImage } from '@/hooks/useProfileImage';
+import { useProfileImage } from '@/hooks/user/useUserImage';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -88,7 +88,6 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   // user 정보가 변경될 때 현재 사용자 정보 업데이트
   useEffect(() => {
     if (isOpen && user) {
-      console.log('✅ UserProfilePopup: user 업데이트됨', user);
       setCurrentUser(user);
       setFormData({ ...user });
     }
@@ -96,7 +95,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
   if (!isOpen) return null;
 
-  // ✅ 배송지가 변경될 때 currentUser 상태 업데이트
+  // 배송지가 변경될 때 currentUser 상태 업데이트
   useEffect(() => {
     if (user?.addresses) {
       setCurrentUser((prevUser) =>

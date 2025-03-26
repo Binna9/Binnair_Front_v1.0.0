@@ -6,7 +6,7 @@ import {
   ShoppingCartIcon,
   StarIcon,
 } from '@heroicons/react/24/solid';
-import { useProductImageBatch } from '@/hooks/useProductImageBatch';
+import { useProductImageBatch } from '@/hooks/product/useProductImageBatch';
 import { useCartBookmark } from '@/hooks/useCartBookmark';
 import { useNotification } from '@/context/NotificationContext';
 import { CartItem } from '@/types/CartBookmarkTypes';

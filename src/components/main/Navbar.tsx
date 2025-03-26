@@ -14,17 +14,15 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import HamburgerMenu from './HamburgerMenu';
-import { useAuth } from '@/hooks/useAuth';
+import HamburgerMenu from '../ui/HamburgerMenu';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
-import { useProfileImage } from '@/hooks/useProfileImage';
-import { useProfile } from '@/hooks/useProfile';
+import { useProfile } from '@/hooks/user/useUserProfile';
+import { getUserImage }
 import { useSelector } from 'react-redux';
-import { selectProfileImage } from '@/hooks/useProfileImage';
 
 export default function Navbar() {
-  const [darkMode, setDarkMode] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { user, handleLogout } = useAuth();
 
@@ -135,7 +133,7 @@ export default function Navbar() {
             ]}
             isOpen={openMenu === '고객센터'}
             onClick={() => handleMenuClick('고객센터')}
-            onItemClick={(item) => navigate(`/customer`)}
+            onItemClick={(item) => navigate(`/board`)}
             className="min-w-[90px]" // Add minimum width here
           />
         </div>
@@ -145,7 +143,7 @@ export default function Navbar() {
             <div className="flex items-center space-x-3 min-w-[180px]">
               {/* ✅ 프로필 이미지 클릭 시 팝업 열기 */}
               <img
-                src={profileImage || '/default-profile.png'}
+                src={profileImage}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border border-white/70 shadow-md cursor-pointer  transition-all duration-200 hover:scale-110"
                 onClick={() => setIsProfileOpen(true)}

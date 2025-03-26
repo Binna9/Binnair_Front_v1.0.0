@@ -1,38 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginSuccess, logout, setUser, selectAuth } from '@/store/authSlice';
-import {
-  fetchUser,
-  loginUser,
-  logoutUser,
-  googleLogin,
-} from '@/services/authService';
+import { loginUser, logoutUser, googleLogin } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '@/context/NotificationContext';
+import userService from '@/services/UserService';
 
 export function useAuth() {
   const { accessToken, user } = useSelector(selectAuth); // ✅ Redux에서 accessToken과 user 가져오기
-
-  useEffect(() => {}, [accessToken, user]);
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const notification = useNotification();
-  const [error, setError] = useState<string | null>(null);
+
+  const loadUser = async () => {
+    if (!accessToken) return;
+
+    try {
+      const data = await userService.fetchUser();
+      dispatch(setUser(data)); // ✅ Redux에 사용자 정보 저장
+      console.log(data);
+    } catch {
+      dispatch(logout()); // 만료된 경우 로그아웃 처리
+    }
+  };
 
   useEffect(() => {
-    const loadUser = async () => {
-      if (!accessToken) return; // ✅ accessToken이 없으면 실행하지 않음
-
-      try {
-        const data = await fetchUser();
-
-        dispatch(setUser(data)); // ✅ Redux에 사용자 정보 저장
-      } catch {
-        dispatch(logout()); // 만료된 경우 로그아웃 처리
-      }
-    };
-
     loadUser();
   }, [accessToken, dispatch]);
 
@@ -46,21 +38,13 @@ export function useAuth() {
         'SUCCESS',
         '환영합니다! 로그인에 성공하셨습니다.',
         'success',
-        2000,
+        5000,
         'top-center'
       );
 
       navigate('/');
     } catch (error) {
       console.error('❌ 로그인 실패:', error);
-
-      notification.showToast(
-        'FAIL',
-        '아이디 또는 비밀번호를 확인해주세요.',
-        'error',
-        2000,
-        'top-center'
-      );
     }
   };
 
@@ -72,23 +56,20 @@ export function useAuth() {
 
       navigate('/');
     } catch (error) {
-      console.error('❌ Google 로그인 실패:', error);
-      notification.showToast(
-        'FAIL',
-        'Google 로그인 실패. 다시 시도하세요.',
-        'error',
-        2000,
-        'top-center'
-      );
+      console.error('❌ 로그인 실패:', error);
     }
   };
 
   const handleLogout = async () => {
-    await logoutUser();
-
-    dispatch(logout()); // ✅ Redux에서 accessToken 및 user 초기화
-
-    navigate('/auth/login');
+    const isConfirmed = await notification.showConfirm(
+      'LOGOUT',
+      '로그아웃하시겠습니까?'
+    );
+    if (isConfirmed) {
+      await logoutUser();
+      dispatch(logout()); // ✅ Redux에서 accessToken 및 user 초기화
+      navigate('/auth/login');
+    }
   };
 
   return {
@@ -97,6 +78,5 @@ export function useAuth() {
     handleLogin,
     handleGoogleLogin,
     handleLogout,
-    error,
   };
 }

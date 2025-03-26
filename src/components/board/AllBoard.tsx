@@ -12,26 +12,30 @@ import {
   ThumbsUp,
   ThumbsDown,
 } from 'lucide-react';
-import { BoardType } from '@/types/Board';
+import { BoardType } from '@/types/BoardEnum';
 import { useAllBoard } from '@/hooks/board/useAllBoard'; // Import the custom hook
 import { useNotification } from '@/context/NotificationContext';
 import BoardDetail from './BoardDetail';
 
 // ✅ 섹션 배열 (아이콘 추가)
 const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
-  { id: 'NOTICE', title: '공지사항', icon: <Bell className="w-5 h-5 mr-2" /> },
   {
-    id: 'FAQ',
+    id: BoardType.NOTICE,
+    title: '공지사항',
+    icon: <Bell className="w-5 h-5 mr-2" />,
+  },
+  {
+    id: BoardType.FAQ,
     title: '자주 묻는 질문',
     icon: <HelpCircle className="w-5 h-5 mr-2" />,
   },
   {
-    id: 'FREE',
+    id: BoardType.FREE,
     title: '자유게시판',
     icon: <MessageSquare className="w-5 h-5 mr-2" />,
   },
   {
-    id: 'SUGGESTION',
+    id: BoardType.SUGGESTION,
     title: '문의하기',
     icon: <Mail className="w-5 h-5 mr-2" />,
   },
@@ -362,11 +366,6 @@ export default function Board() {
                         )}
                       </p>
                       <p className="text-gray-800 mt-2">{board.content}</p>
-                      {board.filePath && (
-                        <p className="text-zinc-600 hover:text-zinc-800 mt-3">
-                          📎 첨부파일
-                        </p>
-                      )}
                     </li>
                   ))}
                 </ul>

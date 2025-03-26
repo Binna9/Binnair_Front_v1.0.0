@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNoticeBoard } from '@/hooks/board/useNoticeBoard';
 import { XCircleIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
+import { BoardType } from '@/types/BoardEnum';
 
 const NoticeBoard = () => {
-  const { boards: notices, loading, error } = useNoticeBoard('NOTICE'); // ✅ 공지사항 데이터 가져오기
+  const { boards: notices, loading, error } = useNoticeBoard(BoardType.NOTICE);
   const [hiddenNotices, setHiddenNotices] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState<boolean>(true); // ✅ 공지판 표시 여부
   const [isScrolled, setIsScrolled] = useState(false);

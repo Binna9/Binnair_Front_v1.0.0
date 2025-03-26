@@ -3,29 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import {
-  BoardType,
   BoardRequest,
   BoardResponse,
   PagedBoardResponse,
-} from '@/types/Board';
-import {
-  fetchBoards,
-  fetchBoardById,
-  createBoard,
-  updateBoard,
-  deleteBoard,
-  updateViewBoard,
-  toggleLike,
-  toggleUnlike,
-} from '@/services/BoardService';
+  BoardViewRequest,
+} from '@/types/BoardTypes';
+import { BoardType } from '@/types/BoardEnum';
 import { useNotification } from '@/context/NotificationContext';
+import { boardService } from '@/services/BoardService';
 
 export function useAllBoard() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
   const navigate = useNavigate();
   const notification = useNotification();
 
-  const [activeSection, setActiveSection] = useState<BoardType>('NOTICE');
+  const [activeSection, setActiveSection] = useState<BoardType>(
+    BoardType.NOTICE
+  );
   const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +28,9 @@ export function useAllBoard() {
   const [currentBoardId, setCurrentBoardId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [selectedSection, setSelectedSection] = useState<BoardType>('NOTICE');
+  const [selectedSection, setSelectedSection] = useState<BoardType>(
+    BoardType.NOTICE
+  );
   const [file, setFile] = useState<File | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
@@ -54,7 +50,12 @@ export function useAllBoard() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchBoards(activeSection, currentPage);
+      const data = await boardService.getAllBoards(activeSection, {
+        page: currentPage,
+        size: 9,
+        sort: 'createDatetime',
+        direction: 'DESC',
+      });
       setBoards(data);
     } catch (err) {
       console.error('Error fetching boards:', err);
@@ -62,6 +63,49 @@ export function useAllBoard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 게시글 상세 정보 가져오기
+  const fetchBoardById = async (boardId: string): Promise<BoardResponse> => {
+    const response = await boardService.getBoardById(boardId);
+    if (!response) {
+      throw new Error('게시글을 찾을 수 없습니다.');
+    }
+    return response;
+  };
+
+  // 게시글 목록 가져오기
+  const fetchBoards = async (
+    boardType: BoardType
+  ): Promise<PagedBoardResponse | null> => {
+    return await boardService.getAllBoards(boardType, {
+      page: currentPage,
+      size: 9,
+      sort: 'createDatetime',
+      direction: 'DESC',
+    });
+  };
+
+  // 게시글 삭제
+  const deleteBoard = async (boardId: string): Promise<void> => {
+    await boardService.deleteBoard(boardId);
+  };
+
+  // 좋아요 토글
+  const toggleLike = async (boardId: string): Promise<void> => {
+    await boardService.toggleLike(boardId);
+  };
+
+  // 싫어요 토글
+  const toggleUnlike = async (boardId: string): Promise<void> => {
+    await boardService.toggleUnlike(boardId);
+  };
+
+  // 조회수 업데이트
+  const updateViewBoard = async (
+    boardView: BoardViewRequest
+  ): Promise<void> => {
+    await boardService.updateViewBoard(boardView);
   };
 
   // 페이지 전환
@@ -189,19 +233,18 @@ export function useAllBoard() {
         boardType: selectedSection,
         title,
         content,
-        file,
       };
 
       if (isEditing) {
         // 수정 API 호출
-        await updateBoard(currentBoardId, boardRequest);
+        await boardService.updateBoard(currentBoardId, boardRequest);
         notification.showAlert(
           'SUCCESS',
           '게시글이 성공적으로 수정되었습니다.'
         );
       } else {
         // 등록 API 호출
-        await createBoard(boardRequest);
+        await boardService.createBoard(boardRequest, files);
         notification.showAlert(
           'SUCCESS',
           '게시글이 성공적으로 등록되었습니다.'
