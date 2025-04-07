@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginSuccess, logout, setUser, selectAuth } from '@/store/authSlice';
 import { loginUser, logoutUser, googleLogin } from '@/services/authService';
@@ -12,21 +12,21 @@ export function useAuth() {
   const navigate = useNavigate();
   const notification = useNotification();
 
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     if (!accessToken) return;
 
     try {
       const data = await userService.fetchUser();
-      dispatch(setUser(data)); // ✅ Redux에 사용자 정보 저장
+      dispatch(setUser(data));
       console.log(data);
     } catch {
-      dispatch(logout()); // 만료된 경우 로그아웃 처리
+      dispatch(logout());
     }
-  };
+  }, [accessToken, dispatch]);
 
   useEffect(() => {
     loadUser();
-  }, [accessToken, dispatch]);
+  }, [loadUser]);
 
   const handleLogin = async (loginId: string, loginPassword: string) => {
     try {

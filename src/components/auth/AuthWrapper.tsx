@@ -30,6 +30,7 @@ const AuthWrapper = ({ children }: AuthWrapperProps) => {
         );
       } catch (error) {
         dispatch(logout());
+        console.error('❌ [AuthWrapper] 토큰 갱신 실패:', error);
       } finally {
         setIsAuthLoaded(true);
       }

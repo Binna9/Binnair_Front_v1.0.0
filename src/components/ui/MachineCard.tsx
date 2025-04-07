@@ -1,5 +1,5 @@
 import React from 'react';
-import { Machine } from '@/types/Machine'; // ✅ 인터페이스 import
+import { Machine } from '@/types/MachineCardTypes';
 
 const MachineCard: React.FC<Machine & { className?: string }> = ({
   title,

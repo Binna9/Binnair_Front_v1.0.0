@@ -8,10 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import MainPage from '@/pages/MainPage';
 import Login from '@/pages/LoginPage';
 import Register from '@/pages/RegisterPage';
-import EventPage from './pages/EventPage';
-import CartPage from './pages/CartPage';
 import BoardPage from './pages/BoardPage';
-import ProductPage from './pages/ProductPage';
 import ForgotPassword from '@/pages/PasswordChangePage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
@@ -63,10 +60,10 @@ function AppRoutes() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
-          <Route path="/event" element={<EventPage />} />
-          <Route path="/product" element={<ProductPage />} />
+          {/* <Route path="/event" element={<EventPage />} /> */}
+          {/* <Route path="/product" element={<ProductPage />} /> */}
           <Route path="/board" element={<BoardPage />} />
-          <Route path="/cart" element={<CartPage />} />
+          {/* <Route path="/cart" element={<CartPage />} /> */}
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>
