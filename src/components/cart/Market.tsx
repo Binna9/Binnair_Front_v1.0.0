@@ -24,9 +24,9 @@ import {
 import CartBookmarkService from '@/services/CartBookmarkService';
 import { useProductImageBatch } from '@/hooks/product/useProductImageBatch';
 import { CartItemsResponse, CartTotal } from '@/types/CartBookmarkTypes';
-import VerticalSidebar from './VerticalSidebar';
-import CartPromotionBox from './CartPromotionBox';
-import PaymentStep from './PaymentStep';
+import VerticalSidebar from '../ui/VerticalSidebar';
+import CartPromotionBox from '../ui/CartPromotionBox';
+import PaymentStep from '../ui/PaymentStep';
 
 enum OrderStep {
   CART = 'cart',

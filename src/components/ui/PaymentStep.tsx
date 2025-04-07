@@ -8,7 +8,7 @@ import {
   Check,
   ArrowLeft,
 } from 'lucide-react';
-import PaymentCard from '../ui/PaymentCard';
+import PaymentCard from './PaymentCard';
 
 const PaymentStep = ({
   total,
