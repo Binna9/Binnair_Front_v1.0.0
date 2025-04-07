@@ -19,21 +19,21 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfile } from '@/hooks/user/useUserProfile';
-import { getUserImage }
-import { useSelector } from 'react-redux';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { user, handleLogout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const {
     user: profileUser,
     updateUser,
     updateAddress,
+    uploadProfileImage,
+    setProfileImage,
   } = useProfile(user?.userId || '');
 
-  const profileImage = useSelector(selectProfileImage);
-  const { uploadProfileImage, setProfileImage } = useProfileImage();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -106,7 +106,7 @@ export default function Navbar() {
             isOpen={openMenu === '제품'}
             onClick={() => handleMenuClick('제품')}
             onItemClick={(item) => navigate(`/product?section=${item.id}`)}
-            className="min-w-[90px]" // Add minimum width here
+            className="min-w-[90px]"
           />
           <HamburgerMenu
             menuName="Cart"
@@ -120,7 +120,7 @@ export default function Navbar() {
             isOpen={openMenu === '장바구니'}
             onClick={() => handleMenuClick('장바구니')}
             onItemClick={(item) => navigate(`/cart?section=${item.id}`)}
-            className="min-w-[90px]" // Add minimum width here
+            className="min-w-[90px]"
           />
           <HamburgerMenu
             menuName="Customer Service"
@@ -134,7 +134,7 @@ export default function Navbar() {
             isOpen={openMenu === '고객센터'}
             onClick={() => handleMenuClick('고객센터')}
             onItemClick={(item) => navigate(`/board`)}
-            className="min-w-[90px]" // Add minimum width here
+            className="min-w-[90px]"
           />
         </div>
         {/* ✅ 로그인 여부에 따른 UI 변경 */}
@@ -143,7 +143,7 @@ export default function Navbar() {
             <div className="flex items-center space-x-3 min-w-[180px]">
               {/* ✅ 프로필 이미지 클릭 시 팝업 열기 */}
               <img
-                src={profileImage}
+                src={profileUser?.imageUrl || '/default-profile.png'}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border border-white/70 shadow-md cursor-pointer  transition-all duration-200 hover:scale-110"
                 onClick={() => setIsProfileOpen(true)}
@@ -205,8 +205,9 @@ export default function Navbar() {
           <Button
             variant="ghost"
             className="p-4 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 min-w-[100px]"
+            onClick={toggleTheme}
           >
-            {darkMode ? (
+            {theme === 'dark' ? (
               <>
                 <Moon className="text-white w-10 h-10 cursor-pointer" />
                 <span className="text-sm text-gray-300">Dark Mode</span>

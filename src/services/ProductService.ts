@@ -1,3 +1,19 @@
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080';
+
+export class ProductService {
+  static async getProductImage(productId: string) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/products/${productId}/image`);
+      return response;
+    } catch (error) {
+      console.error('❌ 상품 이미지 가져오는 중 오류 발생:', error);
+      throw error;
+    }
+  }
+}
+
 // import apiClient from '../utils/apiClient';
 // import { ProductType, PagedProductResponse } from '@/types/ProductTypes';
 

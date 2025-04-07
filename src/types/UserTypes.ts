@@ -7,6 +7,7 @@ export interface UserResponse {
   email?: string; // 사용자 이메일
   nickName?: string; // 사용자 별명
   phoneNumber?: string; // 사용자 핸드폰 번호
+  imageUrl?: string; // 프로필 이미지 URL
 }
 
 export interface UserRequest {

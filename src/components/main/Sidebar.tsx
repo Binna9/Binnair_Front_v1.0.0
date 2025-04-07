@@ -1,24 +1,22 @@
 import { useState } from 'react';
 import {
-  ShoppingCartIcon,
   StarIcon,
-  ChatBubbleLeftRightIcon,
-  QuestionMarkCircleIcon,
   Cog6ToothIcon,
+  WalletIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/solid';
-import CartBookmarkPopup from '../popup/CartBookmarkPopup';
+import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopUp from '../popup/ChatPopup';
 
 const Sidebar = () => {
   const [selected, setSelected] = useState<
-    'cart' | 'bookmark' | 'messages' | 'help' | 'settings' | null
+    'bookmark' | 'settings' | 'wallet' | 'messages' | null
   >(null);
 
   const menuItems = [
-    { id: 'cart', icon: ShoppingCartIcon, label: '장바구니' },
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
+    { id: 'wallet', icon: WalletIcon, label: '지갑' },
     { id: 'messages', icon: ChatBubbleLeftRightIcon, label: '메시지' },
-    { id: 'help', icon: QuestionMarkCircleIcon, label: '도움말' },
     { id: 'settings', icon: Cog6ToothIcon, label: '설정' },
   ];
 
@@ -37,12 +35,7 @@ const Sidebar = () => {
               setSelected(
                 selected === item.id
                   ? null
-                  : (item.id as
-                      | 'cart'
-                      | 'bookmark'
-                      | 'messages'
-                      | 'help'
-                      | 'settings')
+                  : (item.id as 'bookmark' | 'settings' | 'wallet' | 'messages')
               );
             }}
             className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-300 ${
@@ -56,30 +49,40 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* 장바구니 팝업 - 수정된 props */}
-      {selected === 'cart' && (
-        <CartBookmarkPopup
-          isOpen={selected === 'cart'}
-          type="cart"
-          closePopup={() => setSelected(null)}
-        />
-      )}
-
-      {/* 즐겨찾기 팝업 - 수정된 props */}
+      {/* 즐겨찾기 팝업 */}
       {selected === 'bookmark' && (
-        <CartBookmarkPopup
+        <BookmarkPopup
           isOpen={selected === 'bookmark'}
-          type="bookmark"
           closePopup={() => setSelected(null)}
         />
       )}
 
-      {/* ChatPopUp */}
+      {/* 채팅 팝업 */}
       {selected === 'messages' && (
         <ChatPopUp
           isOpen={selected === 'messages'}
           closePopup={() => setSelected(null)}
         />
+      )}
+
+      {/* TODO: 지갑 팝업 */}
+      {selected === 'wallet' && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-[600px] max-w-full p-6">
+            <h2 className="text-xl font-semibold mb-4">지갑</h2>
+            <p>지갑 기능은 준비 중입니다.</p>
+          </div>
+        </div>
+      )}
+
+      {/* TODO: 설정 팝업 */}
+      {selected === 'settings' && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-[600px] max-w-full p-6">
+            <h2 className="text-xl font-semibold mb-4">설정</h2>
+            <p>설정 기능은 준비 중입니다.</p>
+          </div>
+        </div>
       )}
     </>
   );

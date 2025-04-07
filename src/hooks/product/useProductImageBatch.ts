@@ -1,35 +1,27 @@
-// import { useState, useEffect } from 'react';
-// import { fetchProductImagesBatch } from '@/services/ProductService';
+import { useState, useEffect } from 'react';
+import { ProductService } from '@/services/ProductService';
 
-// export function useProductImageBatch(productIds: string[]) {
-//   const [productImages, setProductImages] = useState<
-//     Record<string, string | null>
-//   >({});
+export const useProductImageBatch = (productIds: string[]) => {
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
 
-//   useEffect(() => {
-//     if (productIds.length === 0) return;
+  useEffect(() => {
+    const fetchProductImages = async () => {
+      try {
+        const images: Record<string, string> = {};
+        for (const productId of productIds) {
+          const response = await ProductService.getProductImage(productId);
+          images[productId] = response.data.imageUrl;
+        }
+        setProductImages(images);
+      } catch (error) {
+        console.error('❌ 상품 이미지 가져오는 중 오류 발생:', error);
+      }
+    };
 
-//     let isMounted = true;
+    if (productIds.length > 0) {
+      fetchProductImages();
+    }
+  }, [productIds]);
 
-//     const loadImages = async () => {
-//       const images = await fetchProductImagesBatch(productIds);
-
-//       if (isMounted) {
-//         setProductImages((prevImages) => {
-//           const isDifferent = Object.keys(images).some(
-//             (key) => images[key] !== prevImages[key]
-//           );
-//           return isDifferent ? images : prevImages;
-//         });
-//       }
-//     };
-
-//     loadImages();
-
-//     return () => {
-//       isMounted = false;
-//     };
-//   }, [JSON.stringify(productIds)]);
-
-//   return productImages;
-// }
+  return productImages;
+};

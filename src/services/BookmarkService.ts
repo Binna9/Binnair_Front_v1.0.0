@@ -1,5 +1,5 @@
+import { BookmarkResponse, BookmarkRequest, PagedBookmarkResponse } from '@/types/BookmarkTypes';
 import apiClient from '@/utils/apiClient';
-import { BookmarkRequest, PagedBookmarkResponse } from '@/types/BookmarkTypes';
 
 interface PageRequest {
   page?: number;
@@ -8,37 +8,52 @@ interface PageRequest {
   direction?: 'ASC' | 'DESC';
 }
 
-export const BookmarkService = {
-  // 즐겨찾기 전제 조회
+export const bookmarkService = {
+  // 북마크 목록 조회
   getAllBookmarks: async (
-    pageRequest: PageRequest = {}
-  ): Promise<PagedBookmarkResponse> => {
-    const {
-      page = 0,
-      size = 9,
-      sort = 'createDatetime',
-      direction = 'DESC',
-    } = pageRequest;
-
-    const response = await apiClient.get('/bookmarks', {
-      params: {
-        page,
-        size,
-        sort,
-        direction,
-      },
-    });
-
-    return response.data;
+    pageRequest: PageRequest = {
+      page: 0,
+      size: 9,
+      sort: 'createDatetime',
+      direction: 'DESC',
+    }
+  ): Promise<PagedBookmarkResponse | null> => {
+    try {
+      const { page, size, sort, direction } = pageRequest;
+      const response = await apiClient.get<PagedBookmarkResponse>('/bookmarks', {
+        params: {
+          page,
+          size,
+          sort: `${sort},${direction}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ 북마크 목록 조회 실패:', error);
+      return null;
+    }
   },
 
-  // 즐겨찾기 생성
-  createBookmark: async (bookmarkRequest: BookmarkRequest): Promise<void> => {
-    await apiClient.post('/bookmarks', bookmarkRequest);
+  // 북마크 추가
+  addToBookmark: async (productId: string): Promise<void> => {
+    try {
+      const request: BookmarkRequest = { productId };
+      await apiClient.post('/bookmarks', request);
+    } catch (error) {
+      console.error('❌ 북마크 추가 실패:', error);
+      throw error;
+    }
   },
 
-  // 즐겨찾기 삭제
-  deleteBookmark: async (bookmarkId: string): Promise<void> => {
-    await apiClient.delete(`/bookmarks/${bookmarkId}`);
+  // 북마크 삭제
+  deleteBookmarkItem: async (bookmarkId: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/bookmarks/${bookmarkId}`);
+    } catch (error) {
+      console.error('❌ 북마크 삭제 실패:', error);
+      throw error;
+    }
   },
 };
+
+export default bookmarkService;
