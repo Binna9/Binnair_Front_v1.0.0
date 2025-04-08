@@ -98,7 +98,9 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         <div className="flex items-center">
           {/* 아이콘 추가 */}
           {icon && <span className="text-white mr-1">{icon}</span>}
-          <span className="text-white font-medium text-sm">{menuName}</span>
+          <span className="text-white font-medium text-sm whitespace-nowrap">
+            {menuName}
+          </span>
         </div>
       </div>
 
@@ -107,17 +109,17 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && !closing && (
           <motion.div
             ref={menuRef}
-            className="absolute left-0 top-12 w-48 bg-zinc-800/70 border-2 border-white/70 text-white shadow-lg"
+            className="absolute left-0 top-14 w-56 bg-zinc-800/70 border-2 border-white/70 text-white shadow-lg rounded-xl overflow-hidden"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}
           >
-            <ul className="py-2 text-center space-y-2">
+            <ul className="py-2 text-center space-y-1">
               {items.map((item) => (
                 <li
                   key={item.id}
                   onClick={() => onItemClick(item)}
-                  className="py-2 px-4 w-4/5 mx-auto transition cursor-pointer hover:bg-white/50 rounded-sm flex items-center justify-center space-x-2"
+                  className="py-1.5 px-3 w-11/12 mx-auto transition cursor-pointer hover:bg-white/50 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap"
                 >
                   {item.icon && <span>{item.icon}</span>}
                   <span>{item.name}</span>

@@ -55,28 +55,30 @@ export const boardService = {
 
   // ✅ 게시글 생성 (파일 포함)
   createBoard: async (boardData: BoardRequest, files: File[] = []) => {
-    try {
-      // ✅ FormData 객체 생성
-      const formData = new FormData();
+    // ✅ FormData 객체 생성
+    const formData = new FormData();
 
-      // ✅ 회원가입 데이터를 FormData에 추가
-      Object.keys(boardData).forEach((key) => {
-        formData.append(key, (boardData as any)[key]);
-      });
+    // ✅ 회원가입 데이터를 FormData에 추가
+    Object.keys(boardData).forEach((key) => {
+      const typedKey = key as keyof BoardRequest;
+      const value = boardData[typedKey];
 
-      // ✅ 파일 추가
-      files.forEach((file) => {
-        formData.append('files', file);
-      });
+      // 값이 null 또는 undefined가 아닌 경우만 추가
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value)); // 숫자, boolean 등을 문자열로 변환
+      }
+    });
 
-      // ✅ 전송
-      const response = await apiClient.post('/boards', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
+    // ✅ 파일 추가
+    files.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    // ✅ 전송
+    const response = await apiClient.post('/boards', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
   },
 
   // ✅ 게시글 수정 (파일 포함)

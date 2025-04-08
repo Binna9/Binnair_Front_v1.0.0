@@ -1,5 +1,5 @@
 import { X, Send } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 export default function ChatPopUp({
   isOpen,
@@ -45,11 +45,14 @@ export default function ChatPopUp({
     setOffset({ x: e.clientX - position.x, y: e.clientY - position.y });
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
-    if (dragging) {
-      setPosition({ x: e.clientX - offset.x, y: e.clientY - offset.y });
-    }
-  };
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (dragging) {
+        setPosition({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+      }
+    },
+    [dragging, offset.x, offset.y]
+  );
 
   const handleMouseUp = () => {
     setDragging(false);
@@ -62,13 +65,13 @@ export default function ChatPopUp({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragging]);
+  }, [handleMouseMove]);
 
   return (
     <>
       {/* ChatPopUp 본체 (사이드바를 가리지 않고 살짝 오른쪽으로 띄우기) */}
       <div
-        className={`fixed bg-white shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 ${
+        className={`fixed bg-zinc-50 shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 ${
           isOpen
             ? 'opacity-100 scale-100'
             : 'opacity-0 scale-90 pointer-events-none'

@@ -103,7 +103,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
           <StarIcon className="w-7 h-7 text-yellow-500" />
-          <h2 className="text-xl font-semibold">즐겨찾기</h2>
+          <h2 className="text-xl font-semibold">Bookmark</h2>
         </div>
 
         {/* 전체 선택 / 삭제 */}

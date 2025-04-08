@@ -14,6 +14,8 @@ import { UserResponse } from '@/types/UserTypes';
 import { useProfile } from '@/hooks/user/useUserProfile';
 import { useNotification } from '@/context/NotificationContext';
 import { useUserImage } from '@/hooks/user/useUserImage';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -42,7 +44,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<UserResponse>>({ ...user });
   const [, setCurrentUser] = useState<UserResponse | null>(null);
-  const { profileImage, uploadProfileImage } = useUserImage();
+  const { profileImage, uploadProfileImage, refreshImage } = useUserImage();
+  const userImageUrl = useSelector(
+    (state: RootState) => state.auth.userImageUrl
+  );
   const notification = useNotification();
 
   // 비밀번호 변경 관련 상태
@@ -114,6 +119,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       if (confirmed) {
         try {
           await uploadProfileImage(file);
+          await refreshImage(); // 이미지 새로고침
           notification.showToast(
             '성공',
             '프로필 이미지가 성공적으로 변경되었습니다.',
@@ -243,7 +249,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   onChange={handleProfileImageUpload}
                 />
                 <img
-                  src={profileImage || '/default-profile.png'}
+                  src={userImageUrl || profileImage || '/default-profile.png'}
                   alt="Profile"
                   className="w-20 h-20 rounded-full border-2 border-gray-400 shadow-lg object-cover 
                              transition-all duration-300 group-hover:border-blue-400 

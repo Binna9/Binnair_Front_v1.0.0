@@ -95,7 +95,7 @@ export default function Board() {
             backgroundColor: 'rgba(255, 255, 255, 0.1)',
             backgroundSize: 'cover',
             backgroundRepeat: 'no-repeat',
-            backgroundPosition: '35% center',
+            backgroundPosition: '0% 80%',
           }}
         >
           <div>

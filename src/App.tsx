@@ -10,6 +10,7 @@ import Login from '@/pages/LoginPage';
 import Register from '@/pages/RegisterPage';
 import BoardPage from './pages/BoardPage';
 import ForgotPassword from '@/pages/PasswordChangePage';
+import AiMonitorPage from './pages/AiMonitorPage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
@@ -64,6 +65,7 @@ function AppRoutes() {
           {/* <Route path="/event" element={<EventPage />} /> */}
           {/* <Route path="/product" element={<ProductPage />} /> */}
           <Route path="/board" element={<BoardPage />} />
+          <Route path="/ai-monitor" element={<AiMonitorPage />} />
           {/* <Route path="/cart" element={<CartPage />} /> */}
           <Route path="*" element={<Login />} />
         </Routes>

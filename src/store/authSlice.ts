@@ -11,11 +11,13 @@ interface AuthState {
     nickName?: string; // 사용자 별명
     phoneNumber?: string; // 사용자 핸드폰 번호
   } | null;
+  userImageUrl: string | null;
 }
 
 const initialState: AuthState = {
   accessToken: null,
   user: null,
+  userImageUrl: null,
 };
 
 export const authSlice = createSlice({
@@ -36,14 +38,18 @@ export const authSlice = createSlice({
     setUser: (state, action: PayloadAction<AuthState['user']>) => {
       state.user = action.payload;
     },
+    setUserImage: (state, action: PayloadAction<string | null>) => {
+      state.userImageUrl = action.payload;
+    },
     logout: (state) => {
       state.accessToken = null;
       state.user = null;
+      state.userImageUrl = null;
     },
   },
 });
 
-export const { setCredentials, loginSuccess, setUser, logout } =
+export const { setCredentials, loginSuccess, setUser, setUserImage, logout } =
   authSlice.actions;
 export const selectAuth = (state: RootState) => state.auth;
 export default authSlice.reducer;
