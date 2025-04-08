@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -31,7 +31,7 @@ export function useAllBoard() {
   const [selectedSection, setSelectedSection] = useState<BoardType>(
     BoardType.NOTICE
   );
-  const [file, setFile] = useState<File | undefined>(undefined);
+  const [, setFile] = useState<File | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isViewingDetail, setIsViewingDetail] = useState(false);
@@ -41,12 +41,7 @@ export function useAllBoard() {
     setCurrentPage(0); // ✅ activeSection 변경 시 페이지를 0으로 초기화
   }, [activeSection]);
 
-  // ✅ 게시글 목록 불러오기
-  useEffect(() => {
-    loadBoards();
-  }, [activeSection, currentPage]);
-
-  const loadBoards = async () => {
+  const loadBoards = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +58,12 @@ export function useAllBoard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSection, currentPage]); // 의존성 지정
+
+  // ✅ 게시글 목록 불러오기
+  useEffect(() => {
+    loadBoards();
+  }, [loadBoards]);
 
   // 게시글 상세 정보 가져오기
   const fetchBoardById = async (boardId: string): Promise<BoardResponse> => {

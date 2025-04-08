@@ -24,7 +24,10 @@ interface UserProfilePopupProps {
   logout: () => void;
   setProfileImage: React.Dispatch<React.SetStateAction<string>>;
   verifyPassword?: (currentPassword: string) => Promise<boolean>;
-  changePassword?: (newPassword: string, confirmPassword: string) => Promise<void>;
+  changePassword?: (
+    newPassword: string,
+    confirmPassword: string
+  ) => Promise<void>;
 }
 
 const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
@@ -38,12 +41,14 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [activeTab, setActiveTab] = useState('profile');
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<UserResponse>>({ ...user });
-  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+  const [, setCurrentUser] = useState<UserResponse | null>(null);
   const { profileImage, uploadProfileImage } = useUserImage();
   const notification = useNotification();
 
   // 비밀번호 변경 관련 상태
-  const [passwordChangeStep, setPasswordChangeStep] = useState<'verification' | 'change' | null>(null);
+  const [passwordChangeStep, setPasswordChangeStep] = useState<
+    'verification' | 'change' | null
+  >(null);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,7 +64,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       setCurrentUser(user);
       setFormData({ ...user });
     }
-  }, [isOpen, user]);
+  }, [isOpen, user, setCurrentUser]);
 
   if (!isOpen) return null;
 
@@ -70,7 +75,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
   // 사용자 정보 저장
   const handleSave = async () => {
-    const isConfirmed = await notification.showConfirm('SAVE', '저장하시겠습니까?');
+    const isConfirmed = await notification.showConfirm(
+      'SAVE',
+      '저장하시겠습니까?'
+    );
 
     if (!isConfirmed) {
       return;
@@ -79,14 +87,22 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
     try {
       await updateUser(formData);
       setEditing(false);
-      notification.showAlert('SUCCESS', '사용자 정보가 성공적으로 저장되었습니다.');
-    } catch (error) {
-      notification.showAlert('FAIL', '오류가 발생했습니다 관리자에게 문의해주세요.');
+      notification.showAlert(
+        'SUCCESS',
+        '사용자 정보가 성공적으로 저장되었습니다.'
+      );
+    } catch {
+      notification.showAlert(
+        'FAIL',
+        '오류가 발생했습니다 관리자에게 문의해주세요.'
+      );
     }
   };
 
   // 프로필 이미지 변경 핸들러
-  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (event.target.files && event.target.files.length > 0) {
       const file = event.target.files[0];
 
@@ -98,16 +114,27 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       if (confirmed) {
         try {
           await uploadProfileImage(file);
-          notification.showToast('성공', '프로필 이미지가 성공적으로 변경되었습니다.', 'success');
-        } catch (error) {
-          notification.showToast('오류', '이미지 업로드 중 문제가 발생했습니다.', 'error');
+          notification.showToast(
+            '성공',
+            '프로필 이미지가 성공적으로 변경되었습니다.',
+            'success'
+          );
+        } catch {
+          notification.showToast(
+            '오류',
+            '이미지 업로드 중 문제가 발생했습니다.',
+            'error'
+          );
         }
       }
     }
   };
 
   const handleCancelEdit = async () => {
-    const isConfirmed = await notification.showConfirm('CANCEL', '사용자 정보 수정을 취소하시겠습니까?');
+    const isConfirmed = await notification.showConfirm(
+      'CANCEL',
+      '사용자 정보 수정을 취소하시겠습니까?'
+    );
 
     if (!isConfirmed) {
       return;
@@ -127,7 +154,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       } else {
         setPasswordError('❌ 비밀번호가 일치하지 않습니다.');
       }
-    } catch (err) {
+    } catch {
       setPasswordError('❌ 비밀번호 검증 중 오류가 발생했습니다.');
     } finally {
       setIsVerifying(false);
@@ -165,7 +192,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       setNewPassword('');
       setConfirmPassword('');
       setPasswordError('');
-      notification.showAlert('SUCCESS', '비밀번호가 성공적으로 변경되었습니다.');
+      notification.showAlert(
+        'SUCCESS',
+        '비밀번호가 성공적으로 변경되었습니다.'
+      );
     } catch (err) {
       console.error('비밀번호 변경 중 오류 발생:', err);
       setPasswordError('❌ 비밀번호 변경 중 오류가 발생했습니다.');
@@ -174,7 +204,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
   // 비밀번호 변경 취소
   const cancelPasswordChange = async () => {
-    const isConfirmed = await notification.showConfirm('CANCEL', '비밀번호 변경을 취소하시겠습니까?');
+    const isConfirmed = await notification.showConfirm(
+      'CANCEL',
+      '비밀번호 변경을 취소하시겠습니까?'
+    );
 
     if (!isConfirmed) {
       return;
@@ -319,10 +352,14 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                     <LockIcon className="w-5 h-5 mr-2" />
                     비밀번호 확인
                   </h3>
-                  <p className="text-gray-300">계속하려면 현재 비밀번호를 입력해주세요.</p>
+                  <p className="text-gray-300">
+                    계속하려면 현재 비밀번호를 입력해주세요.
+                  </p>
 
                   <div className="space-y-2">
-                    <label className="block text-gray-300 text-sm">현재 비밀번호</label>
+                    <label className="block text-gray-300 text-sm">
+                      현재 비밀번호
+                    </label>
                     <div className="relative">
                       <input
                         type={showCurrentPassword ? 'text' : 'password'}
@@ -339,7 +376,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       <button
                         type="button"
                         className="absolute right-3 top-3 text-gray-400 hover:text-white"
-                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        onClick={() =>
+                          setShowCurrentPassword(!showCurrentPassword)
+                        }
                       >
                         {showCurrentPassword ? (
                           <EyeOffIcon className="w-5 h-5" />
@@ -351,7 +390,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   </div>
 
                   {passwordError && (
-                    <div className="text-red-400 text-sm py-1">{passwordError}</div>
+                    <div className="text-red-400 text-sm py-1">
+                      {passwordError}
+                    </div>
                   )}
 
                   <div className="flex space-x-4 pt-2">
@@ -381,7 +422,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
                   <div className="space-y-3">
                     <div className="space-y-2">
-                      <label className="block text-gray-300 text-sm">새 비밀번호</label>
+                      <label className="block text-gray-300 text-sm">
+                        새 비밀번호
+                      </label>
                       <div className="relative">
                         <input
                           type={showNewPassword ? 'text' : 'password'}
@@ -405,7 +448,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-gray-300 text-sm">새 비밀번호 확인</label>
+                      <label className="block text-gray-300 text-sm">
+                        새 비밀번호 확인
+                      </label>
                       <div className="relative">
                         <input
                           type={showConfirmPassword ? 'text' : 'password'}
@@ -417,7 +462,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                         <button
                           type="button"
                           className="absolute right-3 top-3 text-gray-400 hover:text-white"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
                         >
                           {showConfirmPassword ? (
                             <EyeOffIcon className="w-5 h-5" />
@@ -429,7 +476,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                     </div>
 
                     {passwordError && (
-                      <div className="text-red-400 text-sm py-1">{passwordError}</div>
+                      <div className="text-red-400 text-sm py-1">
+                        {passwordError}
+                      </div>
                     )}
 
                     <div className="flex space-x-4 pt-2">
@@ -456,7 +505,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   {editing ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">Name</label>
+                        <label className="block text-gray-300 text-sm">
+                          Name
+                        </label>
                         <input
                           type="text"
                           name="username"
@@ -467,7 +518,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">닉네임</label>
+                        <label className="block text-gray-300 text-sm">
+                          닉네임
+                        </label>
                         <input
                           type="text"
                           name="nickName"
@@ -478,7 +531,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">이메일</label>
+                        <label className="block text-gray-300 text-sm">
+                          이메일
+                        </label>
                         <input
                           type="email"
                           name="email"
@@ -489,7 +544,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">전화번호</label>
+                        <label className="block text-gray-300 text-sm">
+                          전화번호
+                        </label>
                         <input
                           type="text"
                           name="phoneNumber"
@@ -518,20 +575,30 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                     <div className="space-y-6">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">Name</p>
+                          <p className="text-gray-300 font-bold text-md">
+                            Name
+                          </p>
                           <p className="text-xl font-bold">{user.username}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">NickName</p>
+                          <p className="text-gray-300 font-bold text-md">
+                            NickName
+                          </p>
                           <p className="text-xl font-bold">{user.nickName}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">@Email</p>
+                          <p className="text-gray-300 font-bold text-md">
+                            @Email
+                          </p>
                           <p className="text-xl font-bold">{user.email}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">PhoneNumber</p>
-                          <p className="text-xl font-bold">{user.phoneNumber}</p>
+                          <p className="text-gray-300 font-bold text-md">
+                            PhoneNumber
+                          </p>
+                          <p className="text-xl font-bold">
+                            {user.phoneNumber}
+                          </p>
                         </div>
                       </div>
                       <button

@@ -60,6 +60,8 @@ export default defineConfig(({ mode }) => {
         '@styles': path.resolve(__dirname, 'src/styles'),
         '@utils': path.resolve(__dirname, 'src/utils'),
         '@lib': path.resolve(__dirname, 'src/lib'),
+        '@context': path.resolve(__dirname, 'src/context'),
+        '@hooks': path.resolve(__dirname, 'src/hooks'),
       },
     },
   };

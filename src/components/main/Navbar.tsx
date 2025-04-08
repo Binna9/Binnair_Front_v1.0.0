@@ -8,10 +8,11 @@ import {
   LogOut,
   LogIn,
   UserPlus,
-  Calendar,
-  ShoppingBag,
-  ShoppingCart,
   HelpCircle,
+  Activity,
+  MonitorPlay,
+  History,
+  BarChart2,
 } from 'lucide-react';
 import { useState } from 'react';
 import HamburgerMenu from '../ui/HamburgerMenu';
@@ -19,20 +20,15 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useNavigate } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfile } from '@/hooks/user/useUserProfile';
-import { useTheme } from '@/context/ThemeContext';
+import { UserUpdateRequest } from '@/types/UserTypes';
+import { useTheme } from '@/hooks/theme/useTheme';
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { user, handleLogout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const {
-    user: profileUser,
-    updateUser,
-    updateAddress,
-    uploadProfileImage,
-    setProfileImage,
-  } = useProfile(user?.userId || '');
+  const { user: profileUser, updateUser } = useProfile(user?.userId || '');
 
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -49,11 +45,18 @@ export default function Navbar() {
           isOpen={isProfileOpen}
           user={profileUser}
           closePopup={() => setIsProfileOpen(false)}
-          updateUser={updateUser}
-          uploadProfileImage={uploadProfileImage}
-          updateAddress={updateAddress}
+          updateUser={(updatedUser) => {
+            const userUpdateRequest: UserUpdateRequest = {
+              username: updatedUser.username || profileUser.username,
+              email: updatedUser.email,
+              nickName: updatedUser.nickName,
+              phoneNumber: updatedUser.phoneNumber,
+            };
+            updateUser(user?.userId || '', userUpdateRequest);
+          }}
+          uploadProfileImage={() => {}}
           logout={handleLogout}
-          setProfileImage={setProfileImage}
+          setProfileImage={() => {}}
         />
       )}
 
@@ -81,62 +84,77 @@ export default function Navbar() {
 
         <div className="flex space-x-6 ml-[600px]">
           <HamburgerMenu
-            menuName="Event"
+            menuName="Trade Arena"
             items={[
               {
-                name: 'Event',
-                id: 'event',
-                icon: <Calendar size={16} />,
+                name: '실시간 트레이딩 제어',
+                id: 'trade-arena',
+                icon: <Activity size={16} />,
               },
             ]}
-            isOpen={openMenu === '이벤트'}
-            onClick={() => handleMenuClick('이벤트')}
-            onItemClick={(item) => navigate(`/event?section=${item.id}`)}
-            className="min-w-[90px]"
+            isOpen={openMenu === '트레이드아레나'}
+            onClick={() => handleMenuClick('트레이드아레나')}
+            onItemClick={(item) => navigate(`/trade-arena`)}
+            className="min-w-[120px]"
           />
           <HamburgerMenu
-            menuName="Shop"
+            menuName="AI Monitor"
             items={[
               {
-                name: 'Shop',
-                id: 'new',
-                icon: <ShoppingBag size={16} />,
+                name: '모델 학습/예측 상태',
+                id: 'ai-monitor',
+                icon: <MonitorPlay size={16} />,
               },
             ]}
-            isOpen={openMenu === '제품'}
-            onClick={() => handleMenuClick('제품')}
-            onItemClick={(item) => navigate(`/product?section=${item.id}`)}
-            className="min-w-[90px]"
+            isOpen={openMenu === 'AI 모니터링'}
+            onClick={() => handleMenuClick('AI 모니터링')}
+            onItemClick={(item) => navigate(`/ai-monitor`)}
+            className="min-w-[120px]"
           />
           <HamburgerMenu
-            menuName="Cart"
+            menuName="Trade History"
             items={[
               {
-                name: 'Cart',
-                id: 'cart',
-                icon: <ShoppingCart size={16} />,
+                name: '트레이딩 내역/기록',
+                id: 'trade-history',
+                icon: <History size={16} />,
               },
             ]}
-            isOpen={openMenu === '장바구니'}
-            onClick={() => handleMenuClick('장바구니')}
-            onItemClick={(item) => navigate(`/cart?section=${item.id}`)}
-            className="min-w-[90px]"
+            isOpen={openMenu === '트레이드 히스토리'}
+            onClick={() => handleMenuClick('트레이드 히스토리')}
+            onItemClick={(item) => navigate(`/trade-history`)}
+            className="min-w-[120px]"
+          />
+          <HamburgerMenu
+            menuName="Dashboard"
+            items={[
+              {
+                name: '대시보드',
+                id: 'dashboard',
+                icon: <BarChart2 size={16} />,
+              },
+            ]}
+            isOpen={openMenu === '대시보드'}
+            onClick={() => handleMenuClick('대시보드')}
+            onItemClick={(item) => navigate(`/dashboard`)}
+            className="min-w-[120px]"
           />
           <HamburgerMenu
             menuName="Customer Service"
             items={[
               {
-                name: 'Service',
-                id: 'cart',
+                name: '고객센터',
+                id: 'service',
                 icon: <HelpCircle size={16} />,
               },
             ]}
             isOpen={openMenu === '고객센터'}
             onClick={() => handleMenuClick('고객센터')}
             onItemClick={(item) => navigate(`/board`)}
-            className="min-w-[90px]"
+            className="min-w-[120px]"
           />
         </div>
+
         {/* ✅ 로그인 여부에 따른 UI 변경 */}
         <div className="flex space-x-4 ml-8 items-center min-w-[200px]">
           {user ? (

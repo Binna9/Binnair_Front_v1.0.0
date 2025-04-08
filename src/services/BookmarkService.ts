@@ -1,4 +1,4 @@
-import { BookmarkResponse, BookmarkRequest, PagedBookmarkResponse } from '@/types/BookmarkTypes';
+import { BookmarkRequest, PagedBookmarkResponse } from '@/types/BookmarkTypes';
 import apiClient from '@/utils/apiClient';
 
 interface PageRequest {
@@ -20,13 +20,16 @@ export const bookmarkService = {
   ): Promise<PagedBookmarkResponse | null> => {
     try {
       const { page, size, sort, direction } = pageRequest;
-      const response = await apiClient.get<PagedBookmarkResponse>('/bookmarks', {
-        params: {
-          page,
-          size,
-          sort: `${sort},${direction}`,
-        },
-      });
+      const response = await apiClient.get<PagedBookmarkResponse>(
+        '/bookmarks',
+        {
+          params: {
+            page,
+            size,
+            sort: `${sort},${direction}`,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('❌ 북마크 목록 조회 실패:', error);

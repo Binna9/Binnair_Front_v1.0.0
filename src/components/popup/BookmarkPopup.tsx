@@ -1,13 +1,8 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  XCircleIcon,
-  StarIcon,
-} from '@heroicons/react/24/solid';
+import { XCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import { useBookmark } from '@/hooks/bookmark/useBookmark';
 import { useNotification } from '@/context/NotificationContext';
-import { BookmarkResponse } from '@/types/BookmarkTypes';
 
 interface BookmarkPopupProps {
   isOpen: boolean;
@@ -18,15 +13,11 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
   isOpen,
   closePopup,
 }) => {
-  const {
-    bookmarkItems,
-    deleteBookmarkItem,
-  } = useBookmark();
+  const { bookmarkItems, deleteBookmarkItem } = useBookmark();
 
   const notification = useNotification();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState<boolean>(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen && bookmarkItems.length > 0) {
@@ -36,7 +27,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
         setSelectAll(true);
       }
     }
-  }, [isOpen, bookmarkItems.length]);
+  }, [isOpen, bookmarkItems, selectedItems.length]);
 
   useEffect(() => {
     if (selectAll) {
@@ -45,7 +36,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
     } else {
       setSelectedItems([]);
     }
-  }, [selectAll, bookmarkItems.length]);
+  }, [selectAll, bookmarkItems, selectedItems.length]);
 
   // 개별 항목 선택 토글
   const toggleItemSelection = (itemId: string) => {
@@ -86,7 +77,9 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
   // 전체 선택 / 해제
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
-    setSelectedItems(selectAll ? [] : bookmarkItems.map((item) => item.bookmarkId));
+    setSelectedItems(
+      selectAll ? [] : bookmarkItems.map((item) => item.bookmarkId)
+    );
   };
 
   if (!isOpen) return null;
@@ -203,4 +196,3 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
 };
 
 export default BookmarkPopup;
-

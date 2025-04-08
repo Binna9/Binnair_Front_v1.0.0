@@ -18,6 +18,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import { useNotification } from './context/NotificationContext';
 import { setupNotificationInterceptor } from './utils/apiClient';
 import { useEffect } from 'react';
+import { ThemeProvider } from './context/Theme/ThemeProvider';
 import '@/index.css';
 
 function NotificationInterceptorSetup({ children }) {
@@ -74,15 +75,17 @@ function AppRoutes() {
 export default function App() {
   return (
     <Provider store={store}>
-      <NotificationProvider>
-        <Router>
-          <NotificationInterceptorSetup>
-            <AuthWrapper>
-              <AppRoutes />
-            </AuthWrapper>
-          </NotificationInterceptorSetup>
-        </Router>
-      </NotificationProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <Router>
+            <NotificationInterceptorSetup>
+              <AuthWrapper>
+                <AppRoutes />
+              </AuthWrapper>
+            </NotificationInterceptorSetup>
+          </Router>
+        </NotificationProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

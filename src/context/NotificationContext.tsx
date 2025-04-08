@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -324,7 +318,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
             .map((toast) => (
               <div
                 key={toast.id}
-                className={`shadow-xl rounded-xl p-5 min-w-[22rem] max-w-md min-h-32 bg-white animate-in fade-in slide-in-from-top-5 duration-300 border border-gray-200`}
+                className={`shadow-xl rounded-xl p-5 min-w-[22rem] max-w-md min-h-32 animate-in fade-in slide-in-from-top-5 duration-300 border ${getStatusClasses(
+                  toast.status || 'default'
+                )}`}
                 role="alert"
               >
                 <div className="flex items-start space-x-3">
@@ -367,7 +363,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     </NotificationContext.Provider>
   );
 };
-
 // 커스텀 훅 생성
 export const useNotification = (): NotificationContextType => {
   const context = useContext(NotificationContext);

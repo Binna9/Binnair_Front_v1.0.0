@@ -30,12 +30,12 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               </li>
               <li>
                 <a href="#" className="hover:underline">
-                  배송 안내
+                  트레이드 안내
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:underline">
-                  반품 & 환불
+                  트레이드 정보
                 </a>
               </li>
               <li>

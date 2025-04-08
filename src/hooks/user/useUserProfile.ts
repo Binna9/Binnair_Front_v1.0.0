@@ -77,10 +77,15 @@ export const useProfile = (userId: string | null) => {
   ): Promise<void> => {
     try {
       await userService.changePassword(userPasswordChangeRequest);
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data ||
-        '❌ 비밀번호 변경 중 예상치 못한 오류가 발생했습니다.';
+    } catch (err: unknown) {
+      let errorMessage = '❌ 비밀번호 변경 중 예상치 못한 오류가 발생했습니다.';
+
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const axiosError = err as { response?: { data?: string } };
+        if (axiosError.response?.data) {
+          errorMessage = axiosError.response.data;
+        }
+      }
       console.error(errorMessage);
       setError(errorMessage);
       throw err;

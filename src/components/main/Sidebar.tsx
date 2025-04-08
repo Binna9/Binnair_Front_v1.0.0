@@ -48,23 +48,6 @@ const Sidebar = () => {
           </button>
         ))}
       </div>
-
-      {/* 즐겨찾기 팝업 */}
-      {selected === 'bookmark' && (
-        <BookmarkPopup
-          isOpen={selected === 'bookmark'}
-          closePopup={() => setSelected(null)}
-        />
-      )}
-
-      {/* 채팅 팝업 */}
-      {selected === 'messages' && (
-        <ChatPopUp
-          isOpen={selected === 'messages'}
-          closePopup={() => setSelected(null)}
-        />
-      )}
-
       {/* TODO: 지갑 팝업 */}
       {selected === 'wallet' && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
@@ -74,7 +57,20 @@ const Sidebar = () => {
           </div>
         </div>
       )}
-
+      {/* 즐겨찾기 팝업 */}
+      {selected === 'bookmark' && (
+        <BookmarkPopup
+          isOpen={selected === 'bookmark'}
+          closePopup={() => setSelected(null)}
+        />
+      )}
+      {/* 채팅 팝업 */}
+      {selected === 'messages' && (
+        <ChatPopUp
+          isOpen={selected === 'messages'}
+          closePopup={() => setSelected(null)}
+        />
+      )}
       {/* TODO: 설정 팝업 */}
       {selected === 'settings' && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">

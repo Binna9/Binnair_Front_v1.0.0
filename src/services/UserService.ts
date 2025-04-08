@@ -17,31 +17,33 @@ interface PageRequest {
 
 /** Register(회원가입) */
 export const registerUser = async (
-  registerData: RegisterRequest, // 순수 데이터 객체를 받음
-  files: File[] = [] // 파일 배열을 받음
+  registerData: RegisterRequest,
+  files: File[] = []
 ) => {
-  try {
-    // ✅ FormData 객체 생성
-    const formData = new FormData();
+  // ✅ FormData 객체 생성
+  const formData = new FormData();
 
-    // ✅ 회원가입 데이터를 FormData에 추가
-    Object.keys(registerData).forEach((key) => {
-      formData.append(key, (registerData as any)[key]);
-    });
+  // ✅ 회원가입 데이터를 FormData에 추가
+  Object.keys(registerData).forEach((key) => {
+    const typedKey = key as keyof RegisterRequest;
+    const value = registerData[typedKey];
 
-    // ✅ 파일 추가
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
+    if (value !== undefined && value !== null) {
+      formData.append(key, String(value));
+    }
+  });
 
-    // ✅ 전송
-    const response = await apiClient.post('/registers', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  // ✅ 파일 추가
+  files.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  // ✅ 전송
+  const response = await apiClient.post('/registers', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+  return response.data;
 };
 
 // 사용자 서비스 클래스
