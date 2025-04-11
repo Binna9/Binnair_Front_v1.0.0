@@ -19,12 +19,10 @@ import { RootState } from '@/store/store';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
-  user: UserResponse;
   closePopup: () => void;
   updateUser: (updatedUser: Partial<UserResponse>) => void;
-  uploadProfileImage: (file: File) => void;
   logout: () => void;
-  setProfileImage: React.Dispatch<React.SetStateAction<string>>;
+  setProfileImage?: React.Dispatch<React.SetStateAction<string>>;
   verifyPassword?: (currentPassword: string) => Promise<boolean>;
   changePassword?: (
     newPassword: string,
@@ -34,12 +32,12 @@ interface UserProfilePopupProps {
 
 const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   isOpen,
-  user,
   closePopup,
   updateUser,
   logout,
 }) => {
-  const { verifyPassword, changePassword } = useProfile(user.userId);
+  const user = useSelector((state: RootState) => state.auth.user);
+  const { verifyPassword, changePassword } = useProfile(user?.userId || '');
   const [activeTab, setActiveTab] = useState('profile');
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<Partial<UserResponse>>({ ...user });
@@ -69,13 +67,17 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       setCurrentUser(user);
       setFormData({ ...user });
     }
-  }, [isOpen, user, setCurrentUser]);
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
   // 사용자 정보 수정
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // 사용자 정보 저장
@@ -90,13 +92,19 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
     }
 
     try {
-      await updateUser(formData);
+      // username이 비어있는 경우 기존 값을 유지
+      const updatedData = {
+        ...formData,
+        username: formData.username || user.username,
+      };
+      await updateUser(updatedData);
       setEditing(false);
       notification.showAlert(
         'SUCCESS',
         '사용자 정보가 성공적으로 저장되었습니다.'
       );
-    } catch {
+    } catch (error) {
+      console.error('Error updating user:', error);
       notification.showAlert(
         'FAIL',
         '오류가 발생했습니다 관리자에게 문의해주세요.'
@@ -260,7 +268,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                 </div>
               </label>
             </div>
-            <h3 className="text-lg font-bold text-zinc-900">{user.username}</h3>
+            <h3 className="text-lg font-bold text-zinc-900">
+              {formData.username || '-'}
+            </h3>
             <p className="text-sm text-zinc-800">@{user.nickName}</p>
           </div>
 
@@ -277,19 +287,6 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                 >
                   <UserIcon className="w-5 h-5 mr-3" />
                   <span>My Profile</span>
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setActiveTab('orders')}
-                  className={`w-full flex items-center p-3 rounded-lg transition ${
-                    activeTab === 'orders'
-                      ? 'bg-zinc-800 text-white shadow-md'
-                      : 'text-zinc-800 hover:bg-zinc-400 hover:shadow-sm hover:translate-x-1'
-                  }`}
-                >
-                  <ShoppingBagIcon className="w-5 h-5 mr-3" />
-                  <span>주문 목록</span>
                 </button>
               </li>
               <li>

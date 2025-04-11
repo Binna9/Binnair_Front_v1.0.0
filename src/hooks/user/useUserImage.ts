@@ -4,7 +4,7 @@ import { FileRequest } from '@/types/File';
 import { TargetType } from '@/types/TargetEnum';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
-import { setUserImage } from '@/store/authSlice';
+import { setUserImage } from '@/store/slices/authSlice';
 import UserService from '@/services/UserService';
 
 export const useUserImage = () => {
@@ -18,6 +18,11 @@ export const useUserImage = () => {
   const dispatch = useDispatch();
 
   const fetchUserImage = useCallback(async () => {
+    if (!userId) {
+      dispatch(setUserImage(null));
+      return;
+    }
+
     try {
       const imageUrl = await UserService.getUserImage();
       dispatch(setUserImage(imageUrl));
@@ -26,15 +31,20 @@ export const useUserImage = () => {
       console.error('사용자 이미지 로드 실패:', error);
       dispatch(setUserImage(null));
     }
-  }, [dispatch]);
+  }, [dispatch, userId]);
 
   useEffect(() => {
+    if (!userId) {
+      setProfileImage('/default-profile.png');
+      return;
+    }
+
     if (!userImageUrl) {
       fetchUserImage();
     } else {
       setProfileImage(userImageUrl);
     }
-  }, [userImageUrl, fetchUserImage]);
+  }, [userImageUrl, fetchUserImage, userId]);
 
   const uploadProfileImage = async (file: File) => {
     try {

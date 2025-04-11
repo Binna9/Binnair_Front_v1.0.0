@@ -1,15 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import storage from 'redux-persist/lib/storage';
 import { RootState } from '@/store/store';
 
 interface AuthState {
   accessToken: string | null;
   user: {
-    userId: string; // 사용자 ID
-    loginId: string; // 로그인 ID
-    username: string; // 사용자 명
-    email?: string; // 사용자 이메일
-    nickName?: string; // 사용자 별명
-    phoneNumber?: string; // 사용자 핸드폰 번호
+    userId: string;
+    loginId: string;
+    username: string;
+    email?: string;
+    nickName?: string;
+    phoneNumber?: string;
   } | null;
   userImageUrl: string | null;
 }
@@ -24,7 +25,6 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // ✅ accessToken과 user 정보 저장
     setCredentials: (
       state,
       action: PayloadAction<{ accessToken: string; user: AuthState['user'] }>
@@ -45,6 +45,8 @@ export const authSlice = createSlice({
       state.accessToken = null;
       state.user = null;
       state.userImageUrl = null;
+      // localStorage 초기화
+      storage.removeItem('persist:root');
     },
   },
 });

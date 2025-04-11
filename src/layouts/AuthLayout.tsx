@@ -7,6 +7,18 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
         <div className="absolute w-[72vw] h-auto opacity-40 blur-3xl bg-black rounded-full"></div>
         <div className="absolute w-[70vw] h-auto bg-gradient-to-b from-black to-black rounded-full shadow-[0px_20px_50px_rgba(0,0,0,1.0)]"></div>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: "url('/img/MainBackGround.jpg')",
+            backgroundSize: '100% 100%',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: 0.8,
+            backgroundBlendMode: 'soft-light',
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          }}
+        />
       </div>
 
       {/* ✅ 로그인 및 회원가입 콘텐츠 */}

@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setCredentials, logout } from '@/store/authSlice';
+import { setCredentials, logout } from '@/store/slices/authSlice';
 import axios from 'axios';
 
 interface AuthWrapperProps {
@@ -13,6 +13,14 @@ const AuthWrapper = ({ children }: AuthWrapperProps) => {
 
   useEffect(() => {
     const refreshAccessToken = async () => {
+      // 쿠키에서 리프레시 토큰 확인
+      const hasRefreshToken = document.cookie.includes('refreshToken=');
+
+      if (!hasRefreshToken) {
+        setIsAuthLoaded(true);
+        return;
+      }
+
       try {
         const res = await axios.post(
           '/auth/refresh',

@@ -84,7 +84,7 @@
     opacity: 0.7;
 }
   .card-login {
-    @apply bg-white/80 shadow-3xl;
+    @apply bg-white/85 shadow-3xl;
   }
   .card-register {
     z-index: 20;

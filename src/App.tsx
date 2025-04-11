@@ -11,10 +11,14 @@ import Register from '@/pages/RegisterPage';
 import BoardPage from './pages/BoardPage';
 import ForgotPassword from '@/pages/PasswordChangePage';
 import AiMonitorPage from './pages/AiMonitorPage';
+import HistoryPage from './pages/HistoryPage';
+import DashBoardPage from './pages/DashBoardPage';
+import TradePage from './pages/TradePage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
-import { store } from './store/store';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './store/store';
 import { NotificationProvider } from './context/NotificationContext';
 import { useNotification } from './context/NotificationContext';
 import { setupNotificationInterceptor } from './utils/apiClient';
@@ -65,7 +69,10 @@ function AppRoutes() {
           {/* <Route path="/event" element={<EventPage />} /> */}
           {/* <Route path="/product" element={<ProductPage />} /> */}
           <Route path="/board" element={<BoardPage />} />
+          <Route path="/trade" element={<TradePage />} />
           <Route path="/ai-monitor" element={<AiMonitorPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/dashboard" element={<DashBoardPage />} />
           {/* <Route path="/cart" element={<CartPage />} /> */}
           <Route path="*" element={<Login />} />
         </Routes>
@@ -77,17 +84,19 @@ function AppRoutes() {
 export default function App() {
   return (
     <Provider store={store}>
-      <ThemeProvider>
-        <NotificationProvider>
-          <Router>
-            <NotificationInterceptorSetup>
-              <AuthWrapper>
-                <AppRoutes />
-              </AuthWrapper>
-            </NotificationInterceptorSetup>
-          </Router>
-        </NotificationProvider>
-      </ThemeProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <ThemeProvider>
+          <NotificationProvider>
+            <Router>
+              <NotificationInterceptorSetup>
+                <AuthWrapper>
+                  <AppRoutes />
+                </AuthWrapper>
+              </NotificationInterceptorSetup>
+            </Router>
+          </NotificationProvider>
+        </ThemeProvider>
+      </PersistGate>
     </Provider>
   );
 }

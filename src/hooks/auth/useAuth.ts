@@ -1,6 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginSuccess, logout, setUser, selectAuth } from '@/store/authSlice';
+import {
+  loginSuccess,
+  logout,
+  setUser,
+  selectAuth,
+} from '@/store/slices/authSlice';
 import { loginUser, logoutUser, googleLogin } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '@/context/NotificationContext';

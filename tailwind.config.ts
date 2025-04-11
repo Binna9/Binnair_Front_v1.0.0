@@ -10,7 +10,7 @@ export default {
       },
       // login 창
       backgroundImage: {
-        'login-bg': "url('/vid/LoginBackGround.mp4')", // ✅ 절대 경로 사용
+        'auth-bg': "url('/img/AuthBackGround.jpg')", // ✅ auth 배경 이미지 추가
       },
       fontFamily: {
         hamburg: ['Hamburg', 'sans-serif'],

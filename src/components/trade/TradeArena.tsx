@@ -7,7 +7,7 @@ import {
   setLastUrl,
 } from '@/store/slices/iframeSlice';
 
-const AiMonitor: React.FC = () => {
+const TradeArena: React.FC = () => {
   const dispatch = useDispatch();
   const { isLoaded, hasError, lastUrl } = useSelector(
     (state: RootState) => state.iframe
@@ -15,7 +15,7 @@ const AiMonitor: React.FC = () => {
 
   useEffect(() => {
     // 컴포넌트가 마운트될 때 iframe의 URL을 Redux에 저장
-    const currentUrl = 'http://127.0.0.1:8502/?embedded=true';
+    const currentUrl = 'http://127.0.0.1:8501/?embedded=true';
     dispatch(setLastUrl(currentUrl));
   }, [dispatch]);
 
@@ -65,4 +65,4 @@ const AiMonitor: React.FC = () => {
   );
 };
 
-export default AiMonitor;
+export default TradeArena;

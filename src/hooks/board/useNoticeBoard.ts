@@ -3,15 +3,24 @@ import { boardService } from '@/services/BoardService';
 import { PagedBoardResponse, BoardResponse } from '@/types/BoardTypes';
 import { BoardType } from '@/types/BoardEnum';
 import { useNotification } from '@/context/NotificationContext';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 export const useNoticeBoard = (boardType: BoardType) => {
   const [boards, setBoards] = useState<PagedBoardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error] = useState<string | null>(null);
   const notification = useNotification();
+  const { user } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     const fetchData = async () => {
+      // 로그인 상태가 아니면 데이터를 불러오지 않음
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const data = await boardService.getAllBoards(boardType);
@@ -28,7 +37,7 @@ export const useNoticeBoard = (boardType: BoardType) => {
     };
 
     fetchData();
-  }, [boardType, notification]);
+  }, [boardType, notification, user]);
 
   // ✅ 최신순 정렬 (content 배열만 정렬)
   const sortedBoards: BoardResponse[] =

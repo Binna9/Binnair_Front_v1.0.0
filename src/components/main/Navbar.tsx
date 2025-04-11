@@ -37,26 +37,23 @@ export default function Navbar() {
     setOpenMenu((prevMenu) => (prevMenu === menuName ? null : menuName));
   };
 
+  const handleUpdateUser = (updatedUser: UserUpdateRequest) => {
+    updateUser(user?.userId || '', updatedUser);
+  };
+
+  const closeProfilePopup = () => {
+    setIsProfileOpen(false);
+  };
+
   return (
     <>
       {/* ✅ 프로필 팝업 */}
-      {isProfileOpen && profileUser && (
+      {isProfileOpen && (
         <UserProfilePopup
           isOpen={isProfileOpen}
-          user={profileUser}
-          closePopup={() => setIsProfileOpen(false)}
-          updateUser={(updatedUser) => {
-            const userUpdateRequest: UserUpdateRequest = {
-              username: updatedUser.username || profileUser.username,
-              email: updatedUser.email,
-              nickName: updatedUser.nickName,
-              phoneNumber: updatedUser.phoneNumber,
-            };
-            updateUser(user?.userId || '', userUpdateRequest);
-          }}
-          uploadProfileImage={() => {}}
+          closePopup={closeProfilePopup}
+          updateUser={handleUpdateUser}
           logout={handleLogout}
-          setProfileImage={() => {}}
         />
       )}
 
@@ -86,7 +83,7 @@ export default function Navbar() {
         </div>
 
         {/* 메뉴 영역 */}
-        <div className="flex justify-between w-[700px] px-4">
+        <div className="flex justify-between w-[700px] px-4 ml-4">
           <HamburgerMenu
             menuName="Trade Arena"
             items={[
@@ -98,7 +95,7 @@ export default function Navbar() {
             ]}
             isOpen={openMenu === '트레이드아레나'}
             onClick={() => handleMenuClick('트레이드아레나')}
-            onItemClick={() => navigate(`/trade-arena`)}
+            onItemClick={() => navigate(`/trade`)}
             className="w-[100px]"
           />
           <HamburgerMenu
@@ -120,13 +117,13 @@ export default function Navbar() {
             items={[
               {
                 name: '트레이딩 내역 / 기록',
-                id: 'trade-history',
+                id: 'history',
                 icon: <History size={16} />,
               },
             ]}
             isOpen={openMenu === '트레이드 히스토리'}
             onClick={() => handleMenuClick('트레이드 히스토리')}
-            onItemClick={() => navigate(`/trade-history`)}
+            onItemClick={() => navigate(`/history`)}
             className="w-[100px]"
           />
           <HamburgerMenu
@@ -187,22 +184,22 @@ export default function Navbar() {
               </span>
             </div>
           ) : (
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-center w-full">
               {/* ✅ 로그인 버튼 */}
               <Button
                 onClick={() => navigate('/login')}
                 variant="ghost"
-                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[80px]"
+                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
               >
                 <LogIn className="text-white w-6 h-6 cursor-pointer" />
                 <span className="text-sm text-gray-300">Log In</span>
               </Button>
-
+              <div className="w-4" /> {/* 간격용 div */}
               {/* ✅ 회원가입 버튼 */}
               <Button
                 onClick={() => navigate('/register')}
                 variant="ghost"
-                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[80px]"
+                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
               >
                 <UserPlus className="text-white w-6 h-6 cursor-pointer" />
                 <span className="text-sm text-gray-300">Sign Up</span>
@@ -212,11 +209,11 @@ export default function Navbar() {
         </div>
 
         {/* ✅ 우측 설정 버튼들 */}
-        <div className="flex items-center justify-between w-[250px] ml-4">
+        <div className="flex items-center gap-4 w-[250px] ml-4">
           {/* ✅ 프로필 버튼 */}
           <Button
             variant="ghost"
-            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[80px]"
+            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
             onClick={() => setIsProfileOpen(true)}
           >
             <User className="text-white w-6 h-6 cursor-pointer" />
@@ -226,7 +223,7 @@ export default function Navbar() {
           {/* ✅ 다크모드 버튼 */}
           <Button
             variant="ghost"
-            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[80px]"
+            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
             onClick={toggleTheme}
           >
             {theme === 'dark' ? (
@@ -246,7 +243,7 @@ export default function Navbar() {
           {user && (
             <Button
               variant="ghost"
-              className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[80px]"
+              className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
               onClick={handleLogout}
             >
               <LogOut className="text-white w-6 h-6 cursor-pointer" />

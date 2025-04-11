@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { store } from '@/store/store';
-import { setCredentials, logout } from '@/store/authSlice';
+import { setCredentials, logout } from '@/store/slices/authSlice';
 import { useNotification } from '@/context/NotificationContext';
 import { useEffect } from 'react';
 
