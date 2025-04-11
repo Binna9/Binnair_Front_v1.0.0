@@ -1,40 +1,36 @@
 import { useState } from 'react';
+import { TrendingUp, LineChart, Bot, ShieldCheck, Award } from 'lucide-react';
 
 const options = [
   {
-    title: 'Blonkisoaz',
-    subtitle: 'Omuke trughte a otufta',
-    icon: 'fas fa-walking',
-    background:
-      'https://66.media.tumblr.com/6fb397d822f4f9f4596dff2085b18f2e/tumblr_nzsvb4p6xS1qho82wo1_1280.jpg',
+    title: '실시간 시장 인사이트',
+    subtitle: 'AI가 즉각적으로 시장 흐름을 포착합니다',
+    icon: <TrendingUp className="text-blue-600" />,
+    background: '/img/chart1.png',
   },
   {
-    title: 'Oretemauw',
-    subtitle: 'Omuke trughte a otufta',
-    icon: 'fas fa-snowflake',
-    background:
-      'https://66.media.tumblr.com/8b69cdde47aa952e4176b4200052abf4/tumblr_o51p7mFFF21qho82wo1_1280.jpg',
+    title: '자동화된 트레이딩 전략',
+    subtitle: '검증된 알고리즘으로 정밀하게 매매를 수행합니다',
+    icon: <LineChart className="text-green-600" />,
+    background: '/img/chart2.png',
   },
   {
-    title: 'Iteresuselle',
-    subtitle: 'Omuke trughte a otufta',
-    icon: 'fas fa-tree',
-    background:
-      'https://66.media.tumblr.com/5af3f8303456e376ceda1517553ba786/tumblr_o4986gakjh1qho82wo1_1280.jpg',
+    title: 'AI 기반 가격 예측',
+    subtitle: '딥러닝으로 미래 시세를 예측합니다',
+    icon: <Bot className="text-purple-600" />,
+    background: '/img/chart3.png',
   },
   {
-    title: 'Idiefe',
-    subtitle: 'Omuke trughte a otufta',
-    icon: 'fas fa-tint',
-    background:
-      'https://66.media.tumblr.com/5516a22e0cdacaa85311ec3f8fd1e9ef/tumblr_o45jwvdsL11qho82wo1_1280.jpg',
+    title: '리스크 관리 시스템',
+    subtitle: 'AI가 자산 손실을 최소화합니다',
+    icon: <ShieldCheck className="text-red-600" />,
+    background: '/img/chart4.png',
   },
   {
-    title: 'Inatethi',
-    subtitle: 'Omuke trughte a otufta',
-    icon: 'fas fa-sun',
-    background:
-      'https://66.media.tumblr.com/f19901f50b79604839ca761cd6d74748/tumblr_o65rohhkQL1qho82wo1_1280.jpg',
+    title: '성과 분석 리포트',
+    subtitle: '수익률과 전략 성과를 한눈에 확인하세요',
+    icon: <Award className="text-amber-600" />,
+    background: '/img/chart5.png',
   },
 ];
 
@@ -79,11 +75,25 @@ export default function OptionsList() {
               <div className="absolute inset-0 bg-opacity-30 transition-all duration-500"></div>
               <div className="absolute bottom-4 left-4 flex items-center space-x-3">
                 <div className="w-10 h-10 flex items-center justify-center bg-white text-gray-800 rounded-full">
-                  <i className={option.icon}></i>
+                  {option.icon}
                 </div>
-                <div className="text-white">
-                  <div className="text-lg font-bold">{option.title}</div>
-                  <div className="text-sm opacity-80">{option.subtitle}</div>
+                <div
+                  className={`text-white transition-opacity duration-500 ${
+                    activeIndex === index ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <div
+                    className="text-lg font-bold whitespace-nowrap"
+                    style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.6)' }}
+                  >
+                    {option.title}
+                  </div>
+                  <div
+                    className="text-sm whitespace-nowrap"
+                    style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}
+                  >
+                    {option.subtitle}
+                  </div>
                 </div>
               </div>
             </div>

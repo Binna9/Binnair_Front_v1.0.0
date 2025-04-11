@@ -39,13 +39,13 @@ export default function MainPage() {
           <div className="w-full">
             <div className="w-fit mr-auto text-left pl-72 mb-12">
               <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
-                Leafy Haven: Indoor
+                Trading Solution : AI
               </h2>
               <p className="text-lg text-white mb-6 custom-text-shadow">
-                Transform your space into a green sanctuary with our carefully
-                curated selection of indoor plants. <br></br> Each plant is
-                chosen for its unique characteristics and air-purifying
-                qualities.
+                Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션.{' '}
+                <br />
+                실시간 인사이트부터 전략 분석까지, 성공적인 투자를 위한 모든
+                기능을 한 곳에 담았습니다.
               </p>
             </div>
             <OptionsList />

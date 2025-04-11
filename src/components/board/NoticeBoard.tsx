@@ -39,12 +39,12 @@ const NoticeBoard = () => {
 
   return (
     <div
-      className="fixed left-4 top-[56%] transform -translate-y-1/2 w-80 h-[600px] 
+      className="fixed left-4 top-[56%] transform -translate-y-1/2 w-[350px] h-[650px] 
       bg-cover bg-center border border-white/50 transition-all duration-300
       shadow-2xl rounded-2xl p-5 overflow-hidden text-gray-900 z-30"
       style={{
         backgroundImage: "url('/img/noticeboard_image.jpg')",
-        backgroundPosition: '100% center',
+        backgroundPosition: '40% center',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
       }} // ✅ 배경 이미지 추가
     >
@@ -84,7 +84,7 @@ const NoticeBoard = () => {
             visibleNotices.map((notice) => (
               <li
                 key={notice.boardId}
-                className="relative p-4 rounded-lg shadow-md text-gray-900 before:absolute before:inset-0 before:bg-white/80 before:rounded-lg before:-z-10"
+                className="relative p-4 rounded-lg shadow-md text-gray-900 before:absolute before:inset-0 before:bg-white/95 before:rounded-lg before:-z-10"
               >
                 {/* ✅ 개별 공지 닫기 버튼 (각 공지 오른쪽 상단) */}
                 <button

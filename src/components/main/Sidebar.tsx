@@ -1,24 +1,45 @@
 import { useState } from 'react';
 import {
   StarIcon,
-  Cog6ToothIcon,
+  CurrencyDollarIcon,
   WalletIcon,
   ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/solid';
 import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopUp from '../popup/ChatPopup';
+import CoinPricePopup from '../popup/CoinPricePopup';
+import WalletPopup from '../popup/WalletPopup';
 
 const Sidebar = () => {
   const [selected, setSelected] = useState<
-    'bookmark' | 'settings' | 'wallet' | 'messages' | null
-  >(null);
+    ('bookmark' | 'coin' | 'wallet' | 'messages')[]
+  >([]);
 
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
     { id: 'wallet', icon: WalletIcon, label: '지갑' },
     { id: 'messages', icon: ChatBubbleLeftRightIcon, label: '메시지' },
-    { id: 'settings', icon: Cog6ToothIcon, label: '설정' },
+    { id: 'coin', icon: CurrencyDollarIcon, label: '코인' },
   ];
+
+  const togglePopup = (id: 'bookmark' | 'coin' | 'wallet' | 'messages') => {
+    setSelected((prev) => {
+      if (id === 'bookmark' || id === 'wallet') {
+        // 즐겨찾기와 지갑은 단독으로만 열림
+        return prev.includes(id) ? [] : [id];
+      } else {
+        // 나머지는 동시에 열 수 있음
+        if (prev.includes(id)) {
+          return prev.filter((item) => item !== id);
+        } else {
+          return [
+            ...prev.filter((item) => item !== 'bookmark' && item !== 'wallet'),
+            id,
+          ];
+        }
+      }
+    });
+  };
 
   return (
     <>
@@ -32,14 +53,14 @@ const Sidebar = () => {
             key={item.id}
             onClick={(e) => {
               e.stopPropagation();
-              setSelected(
-                selected === item.id
-                  ? null
-                  : (item.id as 'bookmark' | 'settings' | 'wallet' | 'messages')
+              togglePopup(
+                item.id as 'bookmark' | 'coin' | 'wallet' | 'messages'
               );
             }}
             className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-300 ${
-              selected === item.id
+              selected.includes(
+                item.id as 'bookmark' | 'coin' | 'wallet' | 'messages'
+              )
                 ? 'bg-blue-500 text-white shadow-md shadow-blue-300'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
@@ -48,37 +69,33 @@ const Sidebar = () => {
           </button>
         ))}
       </div>
-      {/* TODO: 지갑 팝업 */}
-      {selected === 'wallet' && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-[600px] max-w-full p-6">
-            <h2 className="text-xl font-semibold mb-4">지갑</h2>
-            <p>지갑 기능은 준비 중입니다.</p>
-          </div>
-        </div>
+      {/* 지갑 팝업 */}
+      {selected.includes('wallet') && (
+        <WalletPopup
+          isOpen={selected.includes('wallet')}
+          closePopup={() => togglePopup('wallet')}
+        />
       )}
       {/* 즐겨찾기 팝업 */}
-      {selected === 'bookmark' && (
+      {selected.includes('bookmark') && (
         <BookmarkPopup
-          isOpen={selected === 'bookmark'}
-          closePopup={() => setSelected(null)}
+          isOpen={selected.includes('bookmark')}
+          closePopup={() => togglePopup('bookmark')}
         />
       )}
       {/* 채팅 팝업 */}
-      {selected === 'messages' && (
+      {selected.includes('messages') && (
         <ChatPopUp
-          isOpen={selected === 'messages'}
-          closePopup={() => setSelected(null)}
+          isOpen={selected.includes('messages')}
+          closePopup={() => togglePopup('messages')}
         />
       )}
-      {/* TODO: 설정 팝업 */}
-      {selected === 'settings' && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-[600px] max-w-full p-6">
-            <h2 className="text-xl font-semibold mb-4">설정</h2>
-            <p>설정 기능은 준비 중입니다.</p>
-          </div>
-        </div>
+      {/* 코인 가격 팝업 */}
+      {selected.includes('coin') && (
+        <CoinPricePopup
+          isOpen={selected.includes('coin')}
+          closePopup={() => togglePopup('coin')}
+        />
       )}
     </>
   );
