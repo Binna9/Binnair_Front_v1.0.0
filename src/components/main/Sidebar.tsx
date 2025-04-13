@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   StarIcon,
   CurrencyDollarIcon,
@@ -9,11 +9,24 @@ import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopUp from '../popup/ChatPopup';
 import CoinPricePopup from '../popup/CoinPricePopup';
 import WalletPopup from '../popup/WalletPopup';
+import { useLocation } from 'react-router-dom';
 
 const Sidebar = () => {
+  const location = useLocation();
+  const isMainPage = location.pathname === '/';
+  
   const [selected, setSelected] = useState<
     ('bookmark' | 'coin' | 'wallet' | 'messages')[]
-  >([]);
+  >(isMainPage ? ['coin'] : []);
+
+  // 메인 페이지로 이동할 때 코인 팝업을 자동으로 열기
+  useEffect(() => {
+    if (isMainPage) {
+      setSelected(['coin']);
+    } else {
+      setSelected([]);
+    }
+  }, [isMainPage]);
 
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },

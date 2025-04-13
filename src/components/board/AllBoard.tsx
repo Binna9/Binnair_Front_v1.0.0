@@ -77,7 +77,7 @@ export default function Board() {
   const notification = useNotification();
 
   return (
-    <div className="container mx-auto p-6 flex justify-center mt-16 min-h-[900px]">
+    <div className="container mx-auto p-6 flex justify-center mt-24 min-h-[900px]">
       {/* 흰색 네모 박스 */}
       <div
         className="w-full max-w-[1400px] bg-white rounded-lg flex h-auto"

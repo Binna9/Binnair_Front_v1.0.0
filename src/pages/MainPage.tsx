@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import MainLayout from '@/layouts/MainLayout';
 import OptionsList from '@/components/ui/OptionsList';
 import NoticeBoard from '@/components/board/NoticeBoard';
@@ -6,6 +8,7 @@ import MachineCard from '@/components/ui/MachineCard';
 import PopularCard from '@/components/ui/PopularCard';
 
 export default function MainPage() {
+  const navigate = useNavigate();
   const [isPopularVisible, setIsPopularVisible] = useState(false);
   const [isMachineVisible, setIsMachineVisible] = useState(false);
   const popularRef = useRef(null);
@@ -37,20 +40,38 @@ export default function MainPage() {
         <div className="flex flex-col gap-28 py-32">
           {/* OptionsList 섹션 */}
           <div className="w-full">
-            <div className="w-fit mr-auto text-left pl-72 mb-12">
-              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
-                Trading Solution : AI
+            <div className="w-full text-center mb-12">
+            <h2 className="text-7xl font-bold text-white mb-12 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-4 ">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+                Trading Solution
               </h2>
-              <p className="text-lg text-white mb-6 custom-text-shadow">
+              <p className="text-xl text-white mb-6 custom-text-shadow">
                 Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션.{' '}
                 <br />
                 실시간 인사이트부터 전략 분석까지, 성공적인 투자를 위한 모든
                 기능을 한 곳에 담았습니다.
               </p>
+              <div className="flex justify-center gap-4 mt-8">
+                <button 
+                  onClick={() => navigate('/trade')}
+                  className="px-6 py-3 bg-gradient-to-r from-red-400 via-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                >
+                  실시간 자동 매매
+                  <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                </button>
+                <button 
+                  onClick={() => navigate('/ai-monitor')}
+                  className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                >
+                  AI 모니터링 / 학습
+                  <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <OptionsList />
           </div>
-
           {/* PopularCard 섹션 */}
           <div
             ref={popularRef}

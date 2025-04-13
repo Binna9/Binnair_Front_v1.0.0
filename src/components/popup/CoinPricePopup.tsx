@@ -25,8 +25,8 @@ const CoinPricePopup: React.FC<CoinPricePopupProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
   const [position, setPosition] = useState({
-    x: window.innerWidth - 450,
-    y: window.innerHeight / 2 - 380,
+    x: window.innerWidth - 420,
+    y: window.innerHeight / 2 - 360,
   });
   const [dragging, setDragging] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -115,78 +115,81 @@ const CoinPricePopup: React.FC<CoinPricePopupProps> = ({
 
   return (
     <div
-      className="fixed bg-white border border-gray-200 shadow-2xl rounded-2xl w-[300px] h-[820px] 
-      overflow-hidden z-30 select-none"
+      className="fixed w-[300px] h-[820px] overflow-hidden z-30 select-none"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
         cursor: dragging ? 'grabbing' : 'grab',
       }}
     >
-      {/* 헤더 영역 (마우스로 드래그 가능) */}
-      <div
-        className="flex justify-between items-center px-4 py-3 border-b cursor-grab select-none bg-zinc-300"
-        onMouseDown={handleMouseDown}
-      >
-        <div className="flex items-center gap-2">
-          <CurrencyDollarIcon className="w-5 h-5 text-gray-700" />
-          <h2 className="text-xl font-semibold text-gray-900">Coin Price</h2>
-        </div>
-        <button
-          onClick={closePopup}
-          className="text-gray-500 hover:text-gray-800"
-        >
-          <XCircleIcon className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* 검색 입력창 */}
-      <div className="px-4 py-2 border-b">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="코인 검색..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <MagnifyingGlassIcon className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-        </div>
-      </div>
-
-      {/* 코인 리스트 */}
-      <div className="h-[calc(100%-8rem)] overflow-y-auto space-y-3 custom-scroll p-4">
-        {loading ? (
-          <div className="text-center py-4">로딩 중...</div>
-        ) : filteredCoins.length > 0 ? (
-          filteredCoins.map((coin) => (
-            <div
-              key={coin.symbol}
-              className="flex items-center p-3 border rounded-lg hover:bg-gray-50 select-none shadow-sm hover:shadow-md transition-shadow duration-200"
-            >
-              <button
-                onClick={() => toggleFavorite(coin.symbol)}
-                className="mr-3 text-gray-400 hover:text-yellow-400 transition-colors duration-200"
-              >
-                <StarIcon
-                  className={`w-5 h-5 ${
-                    favorites.includes(coin.symbol) ? 'text-yellow-400' : ''
-                  }`}
-                />
-              </button>
-              <div className="flex-1 flex justify-between items-center">
-                <span className="font-medium">
-                  {coin.symbol.replace('USDT', '')}
-                </span>
-                <span className="text-gray-700">
-                  ${parseFloat(coin.price).toLocaleString()}
-                </span>
-              </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl p-[1px]">
+        <div className="w-full h-full bg-gradient-to-br from-white to-gray-50 rounded-2xl overflow-hidden">
+          {/* 헤더 영역 (마우스로 드래그 가능) */}
+          <div
+            className="flex justify-between items-center px-4 py-3 border-b border-gray-200 cursor-grab select-none bg-gradient-to-r from-cyan-500 to-blue-600"
+            onMouseDown={handleMouseDown}
+          >
+            <div className="flex items-center gap-2">
+              <CurrencyDollarIcon className="w-5 h-5 text-white" />
+              <h2 className="text-xl font-semibold text-white">Coin Price</h2>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-500 text-center">검색 결과가 없습니다.</p>
-        )}
+            <button
+              onClick={closePopup}
+              className="text-white hover:text-gray-200 transition-colors duration-200"
+            >
+              <XCircleIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* 검색 입력창 */}
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="코인 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              />
+              <MagnifyingGlassIcon className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
+            </div>
+          </div>
+
+          {/* 코인 리스트 */}
+          <div className="h-[calc(100%-8rem)] overflow-y-auto space-y-3 custom-scroll p-4">
+            {loading ? (
+              <div className="text-center py-4 text-gray-500">로딩 중...</div>
+            ) : filteredCoins.length > 0 ? (
+              filteredCoins.map((coin) => (
+                <div
+                  key={coin.symbol}
+                  className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 select-none shadow-sm hover:shadow-md transition-all duration-200 bg-white"
+                >
+                  <button
+                    onClick={() => toggleFavorite(coin.symbol)}
+                    className="mr-3 text-gray-400 hover:text-cyan-500 transition-colors duration-200"
+                  >
+                    <StarIcon
+                      className={`w-5 h-5 ${
+                        favorites.includes(coin.symbol) ? 'text-cyan-500' : ''
+                      }`}
+                    />
+                  </button>
+                  <div className="flex-1 flex justify-between items-center">
+                    <span className="font-medium text-gray-900">
+                      {coin.symbol.replace('USDT', '')}
+                    </span>
+                    <span className="text-gray-700">
+                      ${parseFloat(coin.price).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center">검색 결과가 없습니다.</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -109,7 +109,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && !closing && (
           <motion.div
             ref={menuRef}
-            className="absolute left-0 top-14 w-56 bg-zinc-800/70 border-2 border-white/70 text-white shadow-lg rounded-xl overflow-hidden"
+            className="absolute left-0 top-14 w-56 bg-zinc-900 border-2 border-white/70 text-white shadow-lg rounded-xl overflow-hidden"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}

@@ -24,6 +24,7 @@ import { UserUpdateRequest } from '@/types/UserTypes';
 import { useTheme } from '@/hooks/theme/useTheme';
 import { useUserImage } from '@/hooks/user/useUserImage';
 import { useNotification } from '@/context/NotificationContext';
+import ExchangeBar from '../ui/ExchangeBar';
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -71,9 +72,9 @@ export default function Navbar() {
         />
       )}
 
-      <nav className="fixed top-0 left-0 w-full h-16 bg-zinc-800/80 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
+      <nav className="fixed top-0 left-0 w-full h-16 bg-zinc-900/90 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
         {/* 로고 영역 */}
-        <div className="flex items-center w-[150px]">
+        <div className="flex items-center w-[150px]"> 
           <span
             className="text-3xl font-bold text-white cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-gray-300"
             onClick={() => navigate('/')}
@@ -266,6 +267,7 @@ export default function Navbar() {
           )}
         </div>
       </nav>
+      <ExchangeBar />
     </>
   );
 }
