@@ -86,7 +86,23 @@ export const boardService = {
     boardId: string,
     boardRequest: BoardRequest
   ): Promise<void> => {
-    await apiClient.put(`/boards/${boardId}`, boardRequest);
+    // ✅ FormData 객체 생성
+    const formData = new FormData();
+
+    // ✅ boardRequest 데이터를 FormData에 추가
+    Object.keys(boardRequest).forEach((key) => {
+      const typedKey = key as keyof BoardRequest;
+      const value = boardRequest[typedKey];
+
+      // 값이 null 또는 undefined가 아닌 경우만 추가
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+
+    await apiClient.put(`/boards/${boardId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   // ✅ 게시글 삭제

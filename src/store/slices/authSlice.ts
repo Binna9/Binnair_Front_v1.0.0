@@ -2,16 +2,18 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import storage from 'redux-persist/lib/storage';
 import { RootState } from '@/store/store';
 
+interface User {
+  userId: string;
+  loginId: string;
+  userName: string;
+  email?: string;
+  nickName?: string;
+  phoneNumber?: string;
+}
+
 interface AuthState {
   accessToken: string | null;
-  user: {
-    userId: string;
-    loginId: string;
-    username: string;
-    email?: string;
-    nickName?: string;
-    phoneNumber?: string;
-  } | null;
+  user: User | null;
   userImageUrl: string | null;
 }
 

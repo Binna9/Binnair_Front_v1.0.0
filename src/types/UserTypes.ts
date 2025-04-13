@@ -3,7 +3,7 @@ import { Page } from './page';
 export interface UserResponse {
   userId: string; // 사용자 ID
   loginId: string; // 로그인 ID
-  username: string; // 사용자 명
+  userName: string; // 사용자 명
   email?: string; // 사용자 이메일
   nickName?: string; // 사용자 별명
   phoneNumber?: string; // 사용자 핸드폰 번호

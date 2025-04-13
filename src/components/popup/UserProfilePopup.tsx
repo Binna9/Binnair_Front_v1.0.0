@@ -95,7 +95,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
       // username이 비어있는 경우 기존 값을 유지
       const updatedData = {
         ...formData,
-        username: formData.username || user.username,
+        username: formData.userName || user.userName,
       };
       await updateUser(updatedData);
       setEditing(false);
@@ -269,7 +269,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
               </label>
             </div>
             <h3 className="text-lg font-bold text-zinc-900">
-              {formData.username || '-'}
+              {formData.userName || '-'}
             </h3>
             <p className="text-sm text-zinc-800">@{user.nickName}</p>
           </div>
@@ -514,7 +514,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                         <input
                           type="text"
                           name="username"
-                          value={formData.username || ''}
+                          value={formData.userName || ''}
                           onChange={handleChange}
                           className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"
                         />
@@ -581,7 +581,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           <p className="text-gray-300 font-bold text-md">
                             Name
                           </p>
-                          <p className="text-xl font-bold">{user.username}</p>
+                          <p className="text-xl font-bold">{user.userName}</p>
                         </div>
                         <div className="space-y-1">
                           <p className="text-gray-300 font-bold text-md">

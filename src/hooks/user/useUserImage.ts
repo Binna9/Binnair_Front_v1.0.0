@@ -8,13 +8,9 @@ import { setUserImage } from '@/store/slices/authSlice';
 import UserService from '@/services/UserService';
 
 export const useUserImage = () => {
-  const [profileImage, setProfileImage] = useState<string>(
-    '/default-profile.png'
-  );
+  const [profileImage, setProfileImage] = useState<string>('/default-profile.png');
   const userId = useSelector((state: RootState) => state.auth.user?.userId);
-  const userImageUrl = useSelector(
-    (state: RootState) => state.auth.userImageUrl
-  );
+  const userImageUrl = useSelector((state: RootState) => state.auth.userImageUrl);
   const dispatch = useDispatch();
 
   const fetchUserImage = useCallback(async () => {
@@ -24,9 +20,10 @@ export const useUserImage = () => {
     }
 
     try {
-      const imageUrl = await UserService.getUserImage();
-      dispatch(setUserImage(imageUrl));
-      setProfileImage(imageUrl);
+      const response = await UserService.getUserImage();
+      const blobUrl = URL.createObjectURL(response.data);
+      dispatch(setUserImage(blobUrl));
+      setProfileImage(blobUrl);
     } catch (error) {
       console.error('사용자 이미지 로드 실패:', error);
       dispatch(setUserImage(null));
@@ -57,10 +54,8 @@ export const useUserImage = () => {
         targetId: userId,
       };
 
-      // 파일 업로드
       const response = await fileService.uploadFiles(fileRequest, [file]);
 
-      // 업로드된 이미지 URL로 프로필 이미지 업데이트
       if (response && response.files && response.files.length > 0) {
         const imageUrl = response.files[0].filePath;
         setProfileImage(imageUrl);

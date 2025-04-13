@@ -104,7 +104,7 @@ export const userService = {
       const response = await apiClient.get<Blob>(`/users/image`, {
         responseType: 'blob',
       });
-      return URL.createObjectURL(response.data);
+      return response;
     } catch (error) {
       console.error('❌ 사용자 이미지 가져오기 실패:', error);
       throw error;
