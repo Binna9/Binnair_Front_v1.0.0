@@ -4,9 +4,11 @@ import {
   CurrencyDollarIcon,
   WalletIcon,
   ChatBubbleLeftRightIcon,
+  ChatBubbleOvalLeftIcon,
 } from '@heroicons/react/24/solid';
 import BookmarkPopup from '../popup/BookmarkPopup';
-import ChatPopUp from '../popup/ChatPopup';
+import ChatPopup from '../popup/ChatPopup';
+import RealTimeChatPopup from '../popup/RealTimeChatPopup';
 import CoinPricePopup from '../popup/CoinPricePopup';
 import WalletPopup from '../popup/WalletPopup';
 import { useLocation } from 'react-router-dom';
@@ -14,9 +16,9 @@ import { useLocation } from 'react-router-dom';
 const Sidebar = () => {
   const location = useLocation();
   const isMainPage = location.pathname === '/';
-  
+
   const [selected, setSelected] = useState<
-    ('bookmark' | 'coin' | 'wallet' | 'messages')[]
+    ('bookmark' | 'coin' | 'wallet' | 'chat' | 'realtime-chat')[]
   >(isMainPage ? ['coin'] : []);
 
   // 메인 페이지로 이동할 때 코인 팝업을 자동으로 열기
@@ -31,11 +33,14 @@ const Sidebar = () => {
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
     { id: 'wallet', icon: WalletIcon, label: '지갑' },
-    { id: 'messages', icon: ChatBubbleLeftRightIcon, label: '메시지' },
+    { id: 'chat', icon: ChatBubbleLeftRightIcon, label: '채팅' },
+    { id: 'realtime-chat', icon: ChatBubbleOvalLeftIcon, label: '실시간 채팅' },
     { id: 'coin', icon: CurrencyDollarIcon, label: '코인' },
   ];
 
-  const togglePopup = (id: 'bookmark' | 'coin' | 'wallet' | 'messages') => {
+  const togglePopup = (
+    id: 'bookmark' | 'coin' | 'wallet' | 'chat' | 'realtime-chat'
+  ) => {
     setSelected((prev) => {
       if (id === 'bookmark' || id === 'wallet') {
         // 즐겨찾기와 지갑은 단독으로만 열림
@@ -67,12 +72,22 @@ const Sidebar = () => {
             onClick={(e) => {
               e.stopPropagation();
               togglePopup(
-                item.id as 'bookmark' | 'coin' | 'wallet' | 'messages'
+                item.id as
+                  | 'bookmark'
+                  | 'coin'
+                  | 'wallet'
+                  | 'chat'
+                  | 'realtime-chat'
               );
             }}
             className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-300 ${
               selected.includes(
-                item.id as 'bookmark' | 'coin' | 'wallet' | 'messages'
+                item.id as
+                  | 'bookmark'
+                  | 'coin'
+                  | 'wallet'
+                  | 'chat'
+                  | 'realtime-chat'
               )
                 ? 'bg-blue-500 text-white shadow-md shadow-blue-300'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
@@ -97,10 +112,17 @@ const Sidebar = () => {
         />
       )}
       {/* 채팅 팝업 */}
-      {selected.includes('messages') && (
-        <ChatPopUp
-          isOpen={selected.includes('messages')}
-          closePopup={() => togglePopup('messages')}
+      {selected.includes('chat') && (
+        <ChatPopup
+          isOpen={selected.includes('chat')}
+          closePopup={() => togglePopup('chat')}
+        />
+      )}
+      {/* 실시간 채팅 팝업 */}
+      {selected.includes('realtime-chat') && (
+        <RealTimeChatPopup
+          isOpen={selected.includes('realtime-chat')}
+          closePopup={() => togglePopup('realtime-chat')}
         />
       )}
       {/* 코인 가격 팝업 */}
