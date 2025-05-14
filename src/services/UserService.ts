@@ -111,20 +111,6 @@ export const userService = {
     }
   },
 
-  // 사용자 이미지 업로드
-  uploadUserImage: async (formData: FormData): Promise<void> => {
-    try {
-      await apiClient.post('/users/image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-    } catch (error) {
-      console.error('사용자 이미지 업로드 실패:', error);
-      throw error;
-    }
-  },
-
   // 현재 비밀번호 검증
   verifyPassword: async (password: string): Promise<boolean> => {
     const response = await apiClient.post<boolean>('/users/verify-password', {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ChatMessage } from '../../types/chat';
-import { X, Send } from 'lucide-react';
+import { X, Send, Settings } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
 
@@ -43,6 +43,9 @@ export default function RealTimeChatPopup({
 
   const [dragging, setDragging] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  const [opacity, setOpacity] = useState(1);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (isOpen && accessToken) {
@@ -151,7 +154,7 @@ export default function RealTimeChatPopup({
 
   return (
     <div
-      className={`fixed bg-zinc-50 shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 ${
+      className={`fixed shadow-xl w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 rounded-lg overflow-hidden ${
         isOpen
           ? 'opacity-100 scale-100'
           : 'opacity-0 scale-90 pointer-events-none'
@@ -161,10 +164,12 @@ export default function RealTimeChatPopup({
         top: `${position.y}px`,
         position: 'fixed',
         cursor: dragging ? 'grabbing' : 'grab',
+        opacity: opacity,
+        backgroundColor: 'rgb(250, 250, 250)',
       }}
     >
       <div
-        className="flex justify-between items-center px-4 py-3 border-b cursor-grab"
+        className="flex justify-between items-center px-4 py-3 border-b cursor-grab bg-white"
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-2">
@@ -179,15 +184,41 @@ export default function RealTimeChatPopup({
             {isConnected ? '연결됨' : '연결 끊김'}
           </span>
         </div>
-        <button
-          onClick={closePopup}
-          className="p-1 rounded-full hover:bg-gray-200"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1 rounded-full hover:bg-gray-200"
+          >
+            <Settings size={18} />
+          </button>
+          <button
+            onClick={closePopup}
+            className="p-1 rounded-full hover:bg-gray-200"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-2 flex flex-col">
+      {showSettings && (
+        <div className="px-4 py-2 border-b bg-white">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">투명도</span>
+            <input
+              type="range"
+              min="0.3"
+              max="1"
+              step="0.01"
+              value={opacity}
+              onChange={(e) => setOpacity(parseFloat(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-sm">{Math.round(opacity * 100)}%</span>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 p-4 overflow-y-auto space-y-2 flex flex-col bg-white">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -207,7 +238,7 @@ export default function RealTimeChatPopup({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 border-t flex items-center">
+      <div className="p-3 border-t flex items-center bg-white">
         <input
           type="text"
           className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-400"

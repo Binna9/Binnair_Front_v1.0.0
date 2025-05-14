@@ -4,7 +4,6 @@ import { XCircleIcon, CameraIcon } from '@heroicons/react/24/solid';
 import {
   PencilIcon,
   UserIcon,
-  ShoppingBagIcon,
   CogIcon,
   EyeIcon,
   EyeOffIcon,

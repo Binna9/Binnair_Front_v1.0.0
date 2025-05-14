@@ -8,9 +8,13 @@ import { setUserImage } from '@/store/slices/authSlice';
 import UserService from '@/services/UserService';
 
 export const useUserImage = () => {
-  const [profileImage, setProfileImage] = useState<string>('/default-profile.png');
+  const [profileImage, setProfileImage] = useState<string>(
+    '/default-profile.png'
+  );
   const userId = useSelector((state: RootState) => state.auth.user?.userId);
-  const userImageUrl = useSelector((state: RootState) => state.auth.userImageUrl);
+  const userImageUrl = useSelector(
+    (state: RootState) => state.auth.userImageUrl
+  );
   const dispatch = useDispatch();
 
   const fetchUserImage = useCallback(async () => {
@@ -54,16 +58,11 @@ export const useUserImage = () => {
         targetId: userId,
       };
 
-      const response = await fileService.uploadFiles(fileRequest, [file]);
+      await fileService.uploadFiles(fileRequest, [file]);
 
-      if (response && response.files && response.files.length > 0) {
-        const imageUrl = response.files[0].filePath;
-        setProfileImage(imageUrl);
-        dispatch(setUserImage(imageUrl));
-        return imageUrl;
-      }
-
-      throw new Error('이미지 업로드에 실패했습니다.');
+      // 업로드 성공 후 이미지 새로고침
+      await fetchUserImage();
+      return true;
     } catch (error) {
       console.error('프로필 이미지 업로드 실패:', error);
       throw error;
