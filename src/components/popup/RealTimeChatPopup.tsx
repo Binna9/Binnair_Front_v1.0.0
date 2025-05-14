@@ -9,7 +9,21 @@ interface RealTimeChatPopupProps {
   closePopup: () => void;
 }
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/websocket';
+// 환경별 WebSocket URL 설정
+const getWebSocketUrl = () => {
+  const isDevelopment = import.meta.env.MODE === 'development';
+  const baseUrl = import.meta.env.VITE_WS_URL;
+
+  if (baseUrl) {
+    return baseUrl;
+  }
+
+  return isDevelopment
+    ? 'ws://localhost:8080/websocket'
+    : 'wss://www.ballbin.com/websocket';
+};
+
+const WS_URL = getWebSocketUrl();
 
 export default function RealTimeChatPopup({
   isOpen,
