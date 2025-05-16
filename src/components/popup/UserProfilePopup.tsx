@@ -13,8 +13,9 @@ import { UserResponse } from '@/types/UserTypes';
 import { useProfile } from '@/hooks/user/useUserProfile';
 import { useNotification } from '@/context/NotificationContext';
 import { useUserImage } from '@/hooks/user/useUserImage';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
+import { setUser } from '@/store/slices/authSlice';
 
 interface UserProfilePopupProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
     (state: RootState) => state.auth.userImageUrl
   );
   const notification = useNotification();
+  const dispatch = useDispatch();
 
   // 비밀번호 변경 관련 상태
   const [passwordChangeStep, setPasswordChangeStep] = useState<
@@ -92,11 +94,20 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
     try {
       // username이 비어있는 경우 기존 값을 유지
-      const updatedData = {
-        ...formData,
-        username: formData.userName || user.userName,
+      const updatedData: UserResponse = {
+        userId: user.userId,
+        loginId: user.loginId,
+        userName: formData.userName || user.userName,
+        email: formData.email,
+        nickName: formData.nickName,
+        phoneNumber: formData.phoneNumber,
       };
+
       await updateUser(updatedData);
+
+      // Redux store 업데이트
+      dispatch(setUser(updatedData));
+
       setEditing(false);
       notification.showAlert(
         'SUCCESS',
@@ -512,7 +523,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                         </label>
                         <input
                           type="text"
-                          name="username"
+                          name="userName"
                           value={formData.userName || ''}
                           onChange={handleChange}
                           className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"

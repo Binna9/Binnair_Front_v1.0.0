@@ -14,6 +14,7 @@ import AiMonitorPage from './pages/AiMonitorPage';
 import HistoryPage from './pages/HistoryPage';
 import DashBoardPage from './pages/DashBoardPage';
 import TradePage from './pages/TradePage';
+import SettingPage from './pages/SettingPage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import { Provider } from 'react-redux';
@@ -73,6 +74,7 @@ function AppRoutes() {
           <Route path="/ai-monitor" element={<AiMonitorPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/dashboard" element={<DashBoardPage />} />
+          <Route path="/setting" element={<SettingPage />} />
           {/* <Route path="/cart" element={<CartPage />} /> */}
           <Route path="*" element={<Login />} />
         </Routes>

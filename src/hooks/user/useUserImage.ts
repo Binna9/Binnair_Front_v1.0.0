@@ -11,9 +11,9 @@ export const useUserImage = () => {
   const [profileImage, setProfileImage] = useState<string>(
     '/default-profile.png'
   );
-  const userId = useSelector((state: RootState) => state.auth.user?.userId);
+  const userId = useSelector((state: RootState) => state.auth?.user?.userId);
   const userImageUrl = useSelector(
-    (state: RootState) => state.auth.userImageUrl
+    (state: RootState) => state.auth?.userImageUrl
   );
   const dispatch = useDispatch();
 
@@ -22,7 +22,6 @@ export const useUserImage = () => {
       dispatch(setUserImage(null));
       return;
     }
-
     try {
       const response = await UserService.getUserImage();
       const blobUrl = URL.createObjectURL(response.data);

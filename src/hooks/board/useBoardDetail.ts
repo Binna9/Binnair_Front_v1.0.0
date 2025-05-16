@@ -1,7 +1,7 @@
 import { fileService } from './../../services/FileService';
 import { commentService } from './../../services/CommentService';
 import { boardService } from './../../services/BoardService';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BoardResponse } from '@/types/BoardTypes';
 import { CommentResponse } from '@/types/CommentTypes';
 import { useNotification } from '@/context/NotificationContext';
@@ -28,7 +28,7 @@ export const useBoardDetail = (
   const notification = useNotification();
 
   // 게시글 조회 함수
-  const loadBoard = async () => {
+  const loadBoard = useCallback(async () => {
     setLoading(true);
     try {
       const boardData = await boardService.getBoardById(boardId);
@@ -44,7 +44,7 @@ export const useBoardDetail = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [boardId]);
 
   // 좋아요 토글 핸들러
   const handleToggleLike = async () => {
@@ -83,7 +83,7 @@ export const useBoardDetail = (
   // 컴포넌트 마운트 시 게시글 로드
   useEffect(() => {
     loadBoard();
-  }, [boardId]);
+  }, [loadBoard]);
 
   // 댓글 작성 처리
   const handleCommentSubmit = async (e: React.FormEvent) => {

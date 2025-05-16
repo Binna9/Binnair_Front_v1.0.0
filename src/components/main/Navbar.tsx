@@ -2,8 +2,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Search,
-  Sun,
-  Moon,
   User,
   LogOut,
   LogIn,
@@ -13,6 +11,7 @@ import {
   MonitorPlay,
   History,
   BarChart2,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import HamburgerMenu from '../ui/HamburgerMenu';
@@ -21,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfile } from '@/hooks/user/useUserProfile';
 import { UserUpdateRequest } from '@/types/UserTypes';
-import { useTheme } from '@/hooks/theme/useTheme';
 import { useUserImage } from '@/hooks/user/useUserImage';
 import { useNotification } from '@/context/NotificationContext';
 import ExchangeBar from '../ui/ExchangeBar';
@@ -29,7 +27,6 @@ import ExchangeBar from '../ui/ExchangeBar';
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const { user, handleLogout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { user: profileUser, updateUser } = useProfile(user?.userId || '');
   const { profileImage } = useUserImage();
   const navigate = useNavigate();
@@ -74,7 +71,7 @@ export default function Navbar() {
 
       <nav className="fixed top-0 left-0 w-full h-16 bg-zinc-900/90 backdrop-blur-md shadow-md flex items-center justify-between px-6 z-50">
         {/* 로고 영역 */}
-        <div className="flex items-center w-[150px]"> 
+        <div className="flex items-center w-[150px]">
           <span
             className="text-3xl font-bold text-white cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-gray-300"
             onClick={() => navigate('/')}
@@ -174,32 +171,42 @@ export default function Navbar() {
         {/* ✅ 로그인 여부에 따른 UI 변경 */}
         <div className="flex items-center w-[300px] ml-20">
           {user ? (
-            <div className="flex items-center space-x-2 w-full">
-              {/* ✅ 프로필 이미지 클릭 시 팝업 열기 */}
-              <img
-                src={profileImage || '/default-profile.png'}
-                alt="Profile"
-                className="w-10 h-10 rounded-full border border-white/70 shadow-md cursor-pointer transition-all duration-200 hover:scale-110"
-                onClick={() => setIsProfileOpen(true)}
-              />
+            <div
+              className="flex items-center space-x-3 w-full bg-white/10 backdrop-blur-md py-1.5 px-2 rounded-lg border border-white/20 
+            shadow-[0_4px_16px_0_rgba(255,255,255,0.1)] hover:bg-white/15 transition-all duration-300"
+            >
+              {/* 프로필 이미지 */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt"></div>
+                <img
+                  src={profileImage || '/default-profile.png'}
+                  alt="Profile"
+                  className="relative w-10 h-10 rounded-full border-2 border-white/80 shadow-lg cursor-pointer transition-all duration-300 hover:scale-110 hover:border-purple-400"
+                  onClick={() => setIsProfileOpen(true)}
+                />
+              </div>
 
-              {/* ✅ 사용자명 클릭 시 팝업 열기 */}
-              <span
-                className="text-lg font-bold text-white underline decoration-white underline-offset-4 cursor-pointer truncate max-w-[120px] whitespace-nowrap 
-             transition-all duration-200 hover:scale-105"
-                onClick={() => setIsProfileOpen(true)}
-              >
-                {profileUser?.nickName || 'User'}
-              </span>
-              <span
-                className="text-sm text-white whitespace-nowrap 
-             transition-all duration-200 hover:scale-105"
-              >
-                님 안녕하세요!
-              </span>
+              {/* 사용자 정보 */}
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-1.5">
+                  <span
+                    className="text-base font-bold text-white cursor-pointer truncate max-w-[100px] whitespace-nowrap 
+                    transition-all duration-300 hover:text-purple-300 hover:scale-105"
+                    onClick={() => setIsProfileOpen(true)}
+                  >
+                    {profileUser?.nickName || 'User'}
+                  </span>
+                  <span className="text-sm text-white/90 whitespace-nowrap">
+                    님
+                  </span>
+                </div>
+                <div className="text-xs text-white/70">
+                  {profileUser?.email || ''}
+                </div>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center w-full">
+            <div className="flex items-center justify-center space-x-2 w-full">
               {/* ✅ 로그인 버튼 */}
               <Button
                 onClick={() => navigate('/login')}
@@ -209,7 +216,6 @@ export default function Navbar() {
                 <LogIn className="text-white w-6 h-6 cursor-pointer" />
                 <span className="text-sm text-gray-300">Log In</span>
               </Button>
-              <div className="w-4" /> {/* 간격용 div */}
               {/* ✅ 회원가입 버튼 */}
               <Button
                 onClick={() => navigate('/register')}
@@ -225,45 +231,49 @@ export default function Navbar() {
 
         {/* ✅ 우측 설정 버튼들 */}
         <div className="flex items-center gap-4 w-[250px] ml-4">
-          {/* ✅ 프로필 버튼 */}
-          <Button
-            variant="ghost"
-            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
-            onClick={() => setIsProfileOpen(true)}
-          >
-            <User className="text-white w-6 h-6 cursor-pointer" />
-            <span className="text-sm text-gray-300">My Page</span>
-          </Button>
+          {user ? (
+            <>
+              {/* ✅ 프로필 버튼 */}
+              <Button
+                variant="ghost"
+                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
+                onClick={() => setIsProfileOpen(true)}
+              >
+                <User className="text-white w-6 h-6 cursor-pointer" />
+                <span className="text-sm text-gray-300">My Page</span>
+              </Button>
 
-          {/* ✅ 다크모드 버튼 */}
-          <Button
-            variant="ghost"
-            className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
-            onClick={toggleTheme}
-          >
-            {theme === 'dark' ? (
-              <>
-                <Moon className="text-white w-6 h-6 cursor-pointer" />
-                <span className="text-sm text-gray-300">Dark</span>
-              </>
-            ) : (
-              <>
-                <Sun className="text-white w-6 h-6 cursor-pointer" />
-                <span className="text-sm text-gray-300">Light</span>
-              </>
-            )}
-          </Button>
+              {/* ✅ 설정 버튼 */}
+              <Button
+                variant="ghost"
+                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
+                onClick={() => navigate('/setting')}
+              >
+                <Settings className="text-white w-6 h-6 cursor-pointer" />
+                <span className="text-sm text-gray-300">Setting</span>
+              </Button>
 
-          {/* ✅ 로그아웃 버튼 */}
-          {user && (
-            <Button
-              variant="ghost"
-              className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
-              onClick={handleLogout}
-            >
-              <LogOut className="text-white w-6 h-6 cursor-pointer" />
-              <span className="text-sm text-gray-300">Logout</span>
-            </Button>
+              {/* ✅ 로그아웃 버튼 */}
+              <Button
+                variant="ghost"
+                className="p-2 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[70px]"
+                onClick={handleLogout}
+              >
+                <LogOut className="text-white w-6 h-6 cursor-pointer" />
+                <span className="text-sm text-gray-300">Logout</span>
+              </Button>
+            </>
+          ) : (
+            <div className="flex items-center justify-start w-full pl-3">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative px-6 py-2 bg-black/20 backdrop-blur-sm rounded-lg border border-white/10">
+                  <span className="text-lg font-semibold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+                    Welcome to BinnAIR !
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </nav>
