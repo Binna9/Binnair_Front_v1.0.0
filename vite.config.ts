@@ -37,6 +37,7 @@ export default defineConfig(({ mode }) => {
           'comments',
           'likes',
           'files',
+          'chats'
         ]),
         // 구글 로그인
         '/auth/google': {

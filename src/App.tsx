@@ -67,15 +67,12 @@ function AppRoutes() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
-          {/* <Route path="/event" element={<EventPage />} /> */}
-          {/* <Route path="/product" element={<ProductPage />} /> */}
           <Route path="/board" element={<BoardPage />} />
           <Route path="/trade" element={<TradePage />} />
           <Route path="/ai-monitor" element={<AiMonitorPage />} />
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/dashboard" element={<DashBoardPage />} />
           <Route path="/setting" element={<SettingPage />} />
-          {/* <Route path="/cart" element={<CartPage />} /> */}
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>

@@ -3,10 +3,17 @@ import { ChatMessage } from '../../types/chat';
 import { X, Send, Settings } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
+import apiClient from '../../utils/apiClient';
 
 interface RealTimeChatPopupProps {
   isOpen: boolean;
   closePopup: () => void;
+}
+
+interface ChatMessageResponse {
+  sender: string;
+  content: string;
+  timestamp: string;
 }
 
 // 환경별 WebSocket URL 설정
@@ -47,8 +54,31 @@ export default function RealTimeChatPopup({
   const [opacity, setOpacity] = useState(1);
   const [showSettings, setShowSettings] = useState(false);
 
+  // 채팅 기록을 가져오는 함수
+  const fetchChatHistory = useCallback(async () => {
+    try {
+      const { data: history } = await apiClient.get<ChatMessageResponse[]>(
+        '/chats'
+      );
+      const formattedHistory = history.map((msg) => ({
+        id: Date.now().toString(),
+        sender: msg.sender,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+      }));
+
+      setMessages(formattedHistory);
+    } catch (error) {
+      console.error('채팅 기록 조회 에러:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen && accessToken) {
+      // 채팅 기록 먼저 가져오기
+      fetchChatHistory();
+
+      // 웹소켓 연결
       console.log('웹소켓 연결 시도:', WS_URL);
       const ws = new WebSocket(`${WS_URL}?token=${accessToken}`);
       wsRef.current = ws;
@@ -89,7 +119,7 @@ export default function RealTimeChatPopup({
         ws.close();
       };
     }
-  }, [isOpen, accessToken]);
+  }, [isOpen, accessToken, fetchChatHistory]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
