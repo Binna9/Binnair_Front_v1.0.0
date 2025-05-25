@@ -3,6 +3,7 @@ import {
   UserUpdateRequest,
   UserPasswordChangeRequest,
   PagedUserResponse,
+  UserRoleRequest,
 } from '@/types/UserTypes';
 import { RegisterRequest } from '@/types/RegisterTypes';
 import apiClient from '@/utils/apiClient';
@@ -132,6 +133,12 @@ export const userService = {
       responseType: 'blob',
     });
     return URL.createObjectURL(response.data);
+  },
+
+  // 사용자 역할 부여
+  assignRoleToUser: async (roleName: string): Promise<void> => {
+    const userRoleRequest: UserRoleRequest = { roleName };
+    await apiClient.post(`/users/assign-role`, userRoleRequest);
   },
 };
 

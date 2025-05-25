@@ -39,4 +39,9 @@ export interface UserPasswordChangeRequest {
   confirmPassword: string; // 새 비밀번호 확인
 }
 
+// 역할 부여 요청 타입 정의
+export interface UserRoleRequest {
+  roleName: string;
+}
+
 export type PagedUserResponse = Page<UserResponse>;
