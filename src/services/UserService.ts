@@ -4,6 +4,7 @@ import {
   UserPasswordChangeRequest,
   PagedUserResponse,
   UserRoleRequest,
+  userActiveRequest,
 } from '@/types/UserTypes';
 import { RegisterRequest } from '@/types/RegisterTypes';
 import apiClient from '@/utils/apiClient';
@@ -127,18 +128,31 @@ export const userService = {
     await apiClient.put('/users/change-password', passwordChangeRequest);
   },
 
-  // 사용자 프로필 이미지 URL 가져오기
-  getUserImageUrl: async (): Promise<string> => {
-    const response = await apiClient.get<Blob>('/users/image', {
-      responseType: 'blob',
-    });
-    return URL.createObjectURL(response.data);
+  // 사용자 활성화 상태 변경
+  changeActive: async (userId: string, isActive: boolean): Promise<void> => {
+    const request: userActiveRequest = {
+      userId,
+      active: isActive,
+    };
+    await apiClient.put('/users/change-active', request);
+  },
+
+  // 사용자 역할 조회
+  getUserRoles: async (): Promise<string[]> => {
+    const response = await apiClient.get<string[]>('/users/role');
+    return response.data;
   },
 
   // 사용자 역할 부여
   assignRoleToUser: async (roleName: string): Promise<void> => {
     const userRoleRequest: UserRoleRequest = { roleName };
     await apiClient.post(`/users/assign-role`, userRoleRequest);
+  },
+
+  // 사용자 역할 제거
+  removeRoleFromUser: async (roleName: string): Promise<void> => {
+    const userRoleRequest: UserRoleRequest = { roleName };
+    await apiClient.delete(`/users/remove-role`, { data: userRoleRequest });
   },
 };
 

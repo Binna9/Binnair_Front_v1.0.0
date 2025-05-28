@@ -8,6 +8,8 @@ export interface UserResponse {
   nickName?: string; // 사용자 별명
   phoneNumber?: string; // 사용자 핸드폰 번호
   imageUrl?: string; // 프로필 이미지 URL
+  active?: boolean; // 계정 활성화 상태
+  roles?: string[]; // 사용자 역할 목록
 }
 
 export interface AuthState {
@@ -37,6 +39,11 @@ export interface UserPasswordChangeRequest {
   currentPassword: string; // 현재 비밀번호
   newPassword: string; // 새 비밀번호
   confirmPassword: string; // 새 비밀번호 확인
+}
+
+export interface userActiveRequest {
+  userId: string;
+  active: boolean;
 }
 
 // 역할 부여 요청 타입 정의

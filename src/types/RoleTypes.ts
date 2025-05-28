@@ -1,6 +1,7 @@
 import { Page } from './page';
 
 export interface RoleResponse {
+  roleId: string; // 역할 ID
   roleName: string; // 역할 명
   roleDescription: string; // 역할 설명
 }
