@@ -616,7 +616,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                       </div>
                       <button
                         onClick={startPasswordChange}
-                        className="bg-zinc-200 hover:bg-zinc-300 text-zinc-900 py-2 px-4 rounded-lg transition flex items-center"
+                        className="bg-zinc-200 hover:bg-zinc-400 text-zinc-900 py-2 px-4 rounded-lg transition flex items-center"
                       >
                         <LockIcon className="w-5 h-5 mr-2" />
                         Password Change

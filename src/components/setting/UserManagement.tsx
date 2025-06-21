@@ -132,7 +132,7 @@ export default function UserManagement() {
               <TableHead>전화번호</TableHead>
               <TableHead>역할</TableHead>
               <TableHead>상태</TableHead>
-              <TableHead className="text-right">작업</TableHead>
+              <TableHead className="text-right">삭제</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

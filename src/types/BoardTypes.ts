@@ -1,4 +1,4 @@
-import { Page } from './page';
+import { Page } from './Page';
 import { CommentResponse } from './CommentTypes';
 import { FileResponse } from './File';
 import { BoardType } from './BoardEnum';

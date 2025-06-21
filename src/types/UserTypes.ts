@@ -1,4 +1,4 @@
-import { Page } from './page';
+import { Page } from './Page';
 
 export interface UserResponse {
   userId: string; // 사용자 ID

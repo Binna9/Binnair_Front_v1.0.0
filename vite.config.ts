@@ -29,15 +29,15 @@ export default defineConfig(({ mode }) => {
           'auth',
           'registers',
           'users',
-          // 'products',
-          // 'carts',
+          'roles',
+          'permissions',
+          'products',
           'bookmarks',
-          // 'addresses',
           'boards',
           'comments',
           'likes',
           'files',
-          'chats'
+          'chats',
         ]),
         // 구글 로그인
         '/auth/google': {
