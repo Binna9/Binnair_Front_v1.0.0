@@ -1,2 +1,2 @@
 ## BinnAIR - FRONT ( Repository )
-### JS React Project
+### TS React Project
