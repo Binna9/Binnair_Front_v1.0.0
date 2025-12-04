@@ -28,7 +28,7 @@ const DashBoard: React.FC = () => {
     return (
       <div className="container mx-auto p-6 flex justify-center mt-24 min-h-[900px]">
         <div
-          className="w-full max-w-[1400px] bg-white rounded-lg h-[850px] overflow-hidden relative"
+          className="w-full max-w-[1200px] bg-white rounded-lg h-[850px] overflow-hidden relative"
           style={{
             boxShadow:
               '0 0 20px 10px rgba(0, 0, 0, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

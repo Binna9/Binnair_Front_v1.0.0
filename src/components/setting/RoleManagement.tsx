@@ -37,7 +37,7 @@ export default function RoleManagement() {
     roleName: '',
     roleDescription: '',
   });
-  const pageSize = 10;
+  const pageSize = 9;
 
   // 역할 목록 조회
   const fetchRoles = useCallback(async () => {
@@ -152,46 +152,47 @@ export default function RoleManagement() {
           placeholder="역할 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm text-xs"
         />
-        <Button onClick={() => handleFormOpen()}>역할 추가</Button>
+        <Button onClick={() => handleFormOpen()} className="text-xs">역할 추가</Button>
       </div>
 
       <div className="bg-white rounded-lg shadow-lg p-6">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>역할 명</TableHead>
-              <TableHead>설명</TableHead>
-              <TableHead className="text-center">수정</TableHead>
-              <TableHead className="text-center">삭제</TableHead>
+              <TableHead className="text-xs">역할 명</TableHead>
+              <TableHead className="text-xs">설명</TableHead>
+              <TableHead className="text-center text-xs">수정</TableHead>
+              <TableHead className="text-center text-xs">삭제</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={4} className="text-center text-xs">
                   로딩 중...
                 </TableCell>
               </TableRow>
             ) : filteredRoles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={4} className="text-center text-xs">
                   역할이 없습니다
                 </TableCell>
               </TableRow>
             ) : (
               filteredRoles.map((role) => (
                 <TableRow key={role.roleId}>
-                  <TableCell>{role.roleName}</TableCell>
-                  <TableCell>{role.roleDescription}</TableCell>
+                  <TableCell className="text-xs">{role.roleName}</TableCell>
+                  <TableCell className="text-xs">{role.roleDescription}</TableCell>
                   <TableCell className="text-center">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleFormOpen(role)}
+                      className="h-7 w-7"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
                   <TableCell className="text-center">
@@ -199,8 +200,9 @@ export default function RoleManagement() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(role)}
+                      className="h-7 w-7"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -216,7 +218,7 @@ export default function RoleManagement() {
               key={i}
               variant={currentPage === i ? 'default' : 'outline'}
               onClick={() => setCurrentPage(i)}
-              className="w-8 h-8 p-0"
+              className="w-8 h-8 p-0 text-xs"
             >
               {i + 1}
             </Button>
@@ -228,29 +230,31 @@ export default function RoleManagement() {
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-sm">
               {selectedRole ? '역할 수정' : '역할 추가'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="roleName">역할 명</Label>
+              <Label htmlFor="roleName" className="text-xs">역할 명</Label>
               <Input
                 id="roleName"
                 value={formData.roleName}
                 onChange={(e) =>
                   setFormData({ ...formData, roleName: e.target.value })
                 }
+                className="text-xs"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="roleDescription">설명</Label>
+              <Label htmlFor="roleDescription" className="text-xs">설명</Label>
               <Input
                 id="roleDescription"
                 value={formData.roleDescription}
                 onChange={(e) =>
                   setFormData({ ...formData, roleDescription: e.target.value })
                 }
+                className="text-xs"
               />
             </div>
           </div>
@@ -258,10 +262,11 @@ export default function RoleManagement() {
             <Button
               variant="outline"
               onClick={() => setIsFormDialogOpen(false)}
+              className="text-xs"
             >
               취소
             </Button>
-            <Button onClick={handleFormSubmit}>
+            <Button onClick={handleFormSubmit} className="text-xs">
               {selectedRole ? '수정' : '추가'}
             </Button>
           </DialogFooter>
@@ -272,11 +277,11 @@ export default function RoleManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>역할 삭제</DialogTitle>
+            <DialogTitle className="text-sm">역할 삭제</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p>정말로 이 역할을 삭제하시겠습니까?</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-xs">정말로 이 역할을 삭제하시겠습니까?</p>
+            <p className="text-xs text-gray-500 mt-2">
               삭제된 역할은 복구할 수 없습니다.
             </p>
           </div>
@@ -284,10 +289,11 @@ export default function RoleManagement() {
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="text-xs"
             >
               취소
             </Button>
-            <Button variant="destructive" onClick={handleDeleteSubmit}>
+            <Button variant="destructive" onClick={handleDeleteSubmit} className="text-xs">
               삭제
             </Button>
           </DialogFooter>

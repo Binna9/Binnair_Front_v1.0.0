@@ -41,7 +41,7 @@ export default function PermissionManagement() {
     permissionName: '',
     permissionDescription: '',
   });
-  const pageSize = 8;
+  const pageSize = 9;
 
   // 권한 목록 조회
   const fetchPermissions = useCallback(async () => {
@@ -172,47 +172,48 @@ export default function PermissionManagement() {
           placeholder="권한 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm text-xs"
         />
-        <Button onClick={() => handleFormOpen()}>권한 추가</Button>
+        <Button onClick={() => handleFormOpen()} className="text-xs">권한 추가</Button>
       </div>
 
       <div className="bg-white rounded-lg shadow-lg p-6">
         <Table>
           <TableHeader>
             <TableRow key="header">
-              <TableHead>권한 명</TableHead>
-              <TableHead>설명</TableHead>
-              <TableHead className="text-center">수정</TableHead>
-              <TableHead className="text-center">삭제</TableHead>
+              <TableHead className="text-xs">권한 명</TableHead>
+              <TableHead className="text-xs">설명</TableHead>
+              <TableHead className="text-center text-xs">수정</TableHead>
+              <TableHead className="text-center text-xs">삭제</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow key="loading">
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={4} className="text-center text-xs">
                   로딩 중...
                 </TableCell>
               </TableRow>
             ) : filteredPermissions.length === 0 ? (
               <TableRow key="empty">
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={4} className="text-center text-xs">
                   권한이 없습니다
                 </TableCell>
               </TableRow>
             ) : (
               filteredPermissions.map((permission) => (
                 <TableRow key={`permission-${permission.permissionId}`}>
-                  <TableCell>{permission.permissionName}</TableCell>
-                  <TableCell>{permission.permissionDescription}</TableCell>
+                  <TableCell className="text-xs">{permission.permissionName}</TableCell>
+                  <TableCell className="text-xs">{permission.permissionDescription}</TableCell>
                   <TableCell className="text-center">
                     <Button
                       key={`edit-${permission.permissionId}`}
                       variant="ghost"
                       size="icon"
                       onClick={() => handleFormOpen(permission)}
+                      className="h-7 w-7"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
                   <TableCell className="text-center">
@@ -221,8 +222,9 @@ export default function PermissionManagement() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(permission)}
+                      className="h-7 w-7"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -239,6 +241,7 @@ export default function PermissionManagement() {
               variant="outline"
               onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
               disabled={currentPage === 0}
+              className="text-xs"
             >
               이전
             </Button>
@@ -248,7 +251,7 @@ export default function PermissionManagement() {
                   key={`page-${i}`}
                   variant={currentPage === i ? 'default' : 'outline'}
                   onClick={() => setCurrentPage(i)}
-                  className="w-8 h-8 p-0"
+                  className="w-8 h-8 p-0 text-xs"
                 >
                   {i + 1}
                 </Button>
@@ -261,6 +264,7 @@ export default function PermissionManagement() {
                 setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
               }
               disabled={currentPage === totalPages - 1}
+              className="text-xs"
             >
               다음
             </Button>
@@ -272,23 +276,24 @@ export default function PermissionManagement() {
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-sm">
               {selectedPermission ? '권한 수정' : '권한 추가'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="permissionName">권한 명</Label>
+              <Label htmlFor="permissionName" className="text-xs">권한 명</Label>
               <Input
                 id="permissionName"
                 value={formData.permissionName}
                 onChange={(e) =>
                   setFormData({ ...formData, permissionName: e.target.value })
                 }
+                className="text-xs"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="permissionDescription">설명</Label>
+              <Label htmlFor="permissionDescription" className="text-xs">설명</Label>
               <Input
                 id="permissionDescription"
                 value={formData.permissionDescription}
@@ -298,6 +303,7 @@ export default function PermissionManagement() {
                     permissionDescription: e.target.value,
                   })
                 }
+                className="text-xs"
               />
             </div>
           </div>
@@ -305,10 +311,11 @@ export default function PermissionManagement() {
             <Button
               variant="outline"
               onClick={() => setIsFormDialogOpen(false)}
+              className="text-xs"
             >
               취소
             </Button>
-            <Button onClick={handleFormSubmit}>
+            <Button onClick={handleFormSubmit} className="text-xs">
               {selectedPermission ? '수정' : '추가'}
             </Button>
           </DialogFooter>
@@ -319,11 +326,11 @@ export default function PermissionManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>권한 삭제</DialogTitle>
+            <DialogTitle className="text-sm">권한 삭제</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p>정말로 이 권한을 삭제하시겠습니까?</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-xs">정말로 이 권한을 삭제하시겠습니까?</p>
+            <p className="text-xs text-gray-500 mt-2">
               삭제된 권한은 복구할 수 없습니다.
             </p>
           </div>
@@ -331,10 +338,11 @@ export default function PermissionManagement() {
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="text-xs"
             >
               취소
             </Button>
-            <Button variant="destructive" onClick={handleDeleteSubmit}>
+            <Button variant="destructive" onClick={handleDeleteSubmit} className="text-xs">
               삭제
             </Button>
           </DialogFooter>

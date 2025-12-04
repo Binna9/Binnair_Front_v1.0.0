@@ -34,7 +34,7 @@ export default function UserManagement() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedUser, setSelectedUser] = useState<UserResponse | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const pageSize = 10;
+  const pageSize = 9;
 
   const { deleteUser } = useProfile(selectedUser?.userId || null);
 
@@ -118,7 +118,7 @@ export default function UserManagement() {
           placeholder="사용자 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm text-xs"
         />
       </div>
 
@@ -126,35 +126,35 @@ export default function UserManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>이름</TableHead>
-              <TableHead>닉네임</TableHead>
-              <TableHead>이메일</TableHead>
-              <TableHead>전화번호</TableHead>
-              <TableHead>역할</TableHead>
-              <TableHead>상태</TableHead>
-              <TableHead className="text-right">삭제</TableHead>
+              <TableHead className="text-xs">이름</TableHead>
+              <TableHead className="text-xs">닉네임</TableHead>
+              <TableHead className="text-xs">이메일</TableHead>
+              <TableHead className="text-xs">전화번호</TableHead>
+              <TableHead className="text-xs">역할</TableHead>
+              <TableHead className="text-xs">상태</TableHead>
+              <TableHead className="text-right text-xs">삭제</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={7} className="text-center text-xs">
                   로딩 중...
                 </TableCell>
               </TableRow>
             ) : filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center">
+                <TableCell colSpan={7} className="text-center text-xs">
                   사용자가 없습니다
                 </TableCell>
               </TableRow>
             ) : (
               filteredUsers.map((user) => (
                 <TableRow key={user.userId}>
-                  <TableCell>{user.userName}</TableCell>
-                  <TableCell>{user.nickName || '-'}</TableCell>
-                  <TableCell>{user.email || '-'}</TableCell>
-                  <TableCell>{user.phoneNumber || '-'}</TableCell>
+                  <TableCell className="text-xs">{user.userName}</TableCell>
+                  <TableCell className="text-xs">{user.nickName || '-'}</TableCell>
+                  <TableCell className="text-xs">{user.email || '-'}</TableCell>
+                  <TableCell className="text-xs">{user.phoneNumber || '-'}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {user.roles?.map((role) => (
@@ -183,7 +183,7 @@ export default function UserManagement() {
                         />
                         <Label
                           htmlFor={`active-${user.userId}`}
-                          className="flex items-center justify-center w-16 h-8 text-sm font-medium rounded-md cursor-pointer border border-input bg-background hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:bg-blue-500 peer-data-[state=checked]:text-white peer-data-[state=checked]:border-blue-500"
+                          className="flex items-center justify-center w-16 h-8 text-xs font-medium rounded-md cursor-pointer border border-input bg-background hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:bg-blue-500 peer-data-[state=checked]:text-white peer-data-[state=checked]:border-blue-500"
                         >
                           활성
                         </Label>
@@ -196,7 +196,7 @@ export default function UserManagement() {
                         />
                         <Label
                           htmlFor={`inactive-${user.userId}`}
-                          className="flex items-center justify-center w-16 h-8 text-sm font-medium rounded-md cursor-pointer border border-input bg-background hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:bg-destructive peer-data-[state=checked]:text-destructive-foreground peer-data-[state=checked]:border-destructive"
+                          className="flex items-center justify-center w-16 h-8 text-xs font-medium rounded-md cursor-pointer border border-input bg-background hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:bg-destructive peer-data-[state=checked]:text-destructive-foreground peer-data-[state=checked]:border-destructive"
                         >
                           비활성
                         </Label>
@@ -209,8 +209,9 @@ export default function UserManagement() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDeleteClick(user)}
+                        className="h-7 w-7"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </TableCell>
@@ -227,7 +228,7 @@ export default function UserManagement() {
               key={i}
               variant={currentPage === i ? 'default' : 'outline'}
               onClick={() => setCurrentPage(i)}
-              className="w-8 h-8 p-0"
+              className="w-8 h-8 p-0 text-xs"
             >
               {i + 1}
             </Button>
@@ -239,11 +240,11 @@ export default function UserManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>사용자 삭제</DialogTitle>
+            <DialogTitle className="text-sm">사용자 삭제</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p>정말로 이 사용자를 삭제하시겠습니까?</p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-xs">정말로 이 사용자를 삭제하시겠습니까?</p>
+            <p className="text-xs text-gray-500 mt-2">
               삭제된 사용자는 복구할 수 없습니다.
             </p>
           </div>
@@ -251,10 +252,11 @@ export default function UserManagement() {
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="text-xs"
             >
               취소
             </Button>
-            <Button variant="destructive" onClick={handleDeleteSubmit}>
+            <Button variant="destructive" onClick={handleDeleteSubmit} className="text-xs">
               삭제
             </Button>
           </DialogFooter>

@@ -20,20 +20,6 @@ export default function SettingPage() {
         <TabsContent value="permissions" className="mt-0">
           <PermissionManagement />
         </TabsContent>
-
-        <TabsContent value="menus" className="mt-0">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-gray-900">메뉴 목록</h2>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                메뉴 추가
-              </button>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <div className="p-4">메뉴 관리 내용</div>
-            </div>
-          </div>
-        </TabsContent>
       </SettingsLayout>
     </MainLayout>
   );
