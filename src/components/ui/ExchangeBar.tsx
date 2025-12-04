@@ -102,10 +102,10 @@ export default function ExchangeBar() {
   }, []);
 
   return (
-    <div className="fixed top-16 left-0 w-full bg-gradient-to-r from-red-400 via-red-600 to-red-900 backdrop-blur-sm shadow-md z-40">
-      <div className={`flex items-center justify-center gap-8 transition-all duration-300 ${isOpen ? 'h-10' : 'h-0 overflow-hidden'}`}>
+    <div className="fixed top-12 left-0 w-full bg-gradient-to-r from-red-400 via-red-600 to-red-900 backdrop-blur-sm shadow-md z-40">
+      <div className={`flex items-center justify-center gap-3 transition-all duration-300 ${isOpen ? 'h-7' : 'h-0 overflow-hidden'}`}>
         {prices.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
+          <div key={index} className="flex items-center gap-1">
             <img 
               src={
                 item.exchange === 'Binance' ? 'https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png' :
@@ -118,17 +118,17 @@ export default function ExchangeBar() {
                 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png'
               }
               alt={item.exchange}
-              className="w-6 h-6 object-contain bg-white/10 rounded-full p-0.5"
+              className="w-4 h-4 object-contain bg-white/10 rounded-full p-0.5"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png';
               }}
             />
-            <span className="text-sm font-medium text-white">{item.exchange}</span>
-            <span className="text-sm text-white">
+            <span className="text-xs font-medium text-white">{item.exchange}</span>
+            <span className="text-xs text-white">
               ${item.loading ? 'Loading...' : item.price}
             </span>
-            <span className={`text-sm ${item.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`text-xs ${item.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {item.change >= 0 ? '+' : ''}{item.change}%
             </span>
           </div>
@@ -136,12 +136,12 @@ export default function ExchangeBar() {
       </div>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="absolute right-4 top-[70%] -translate-y-1/3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 rounded-full p-2 text-white transition-all duration-200 shadow-lg hover:shadow-xl"
+        className="absolute right-4 top-[70%] -translate-y-1/3 bg-gradient-to-r from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 rounded-full p-1 text-white transition-all duration-200 shadow-lg hover:shadow-xl"
       >
         {isOpen ? (
-          <ChevronUpIcon className="w-6 h-6" />
+          <ChevronUpIcon className="w-4 h-4" />
         ) : (
-          <ChevronDownIcon className="w-6 h-6" />
+          <ChevronDownIcon className="w-4 h-4" />
         )}
       </button>
     </div>

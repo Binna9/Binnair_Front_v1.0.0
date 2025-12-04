@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Headset,
   Bell,
@@ -42,6 +43,7 @@ const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
 ];
 
 export default function Board() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const {
     activeSection,
     boards,
@@ -75,6 +77,17 @@ export default function Board() {
   } = useAllBoard();
 
   const notification = useNotification();
+
+  // URL 쿼리 파라미터에서 boardId를 읽어서 상세 페이지 표시
+  useEffect(() => {
+    const boardId = searchParams.get('boardId');
+    if (boardId && !isViewingDetail && !isWriting) {
+      // 공지사항 섹션으로 설정
+      setActiveSection(BoardType.NOTICE);
+      handleViewDetail(boardId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto p-4 flex justify-center mt-24 min-h-[700px]">
@@ -262,7 +275,10 @@ export default function Board() {
             // ✅ 상세 페이지 표시
             <BoardDetail
               boardId={currentBoard.boardId}
-              onBack={handleBackToList}
+              onBack={() => {
+                handleBackToList();
+                setSearchParams({});
+              }}
               requireLogin={requireLogin}
               handleEdit={handleEdit}
               handleDelete={handleDelete}

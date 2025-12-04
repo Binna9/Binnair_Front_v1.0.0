@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { ChatMessage } from '@/types/Chat';
+import { ChatMessage } from '@/types/chat';
 import { X, Send, Settings } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store/store';

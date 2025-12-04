@@ -37,14 +37,14 @@ export default function MainPage() {
     <MainLayout>
       <div className="w-full max-w-[96rem] mx-auto">
         <NoticeBoard />
-        <div className="flex flex-col gap-28 py-32">
+        <div className="flex flex-col gap-16 py-16">
           {/* OptionsList 섹션 */}
-          <div className="w-full">
-            <div className="w-full text-center mb-12">
-              <h2 className="text-7xl font-bold text-white mb-12 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-4 ">
+          <div className="w-full">  
+            <div className="w-full text-center mt-14 mb-8">
+              <h2 className="text-5xl font-bold text-white mb-8 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-3 ">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-16 w-16"
+                  className="h-12 w-12"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#ffffff"
@@ -54,28 +54,28 @@ export default function MainPage() {
                 >
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
-                Trading Solution
+                BinnAIR Trading Solution
               </h2>
-              <p className="text-xl text-white mb-6 custom-text-shadow">
-                Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션.{' '}
+              <p className="text-lg text-white mb-4 custom-text-shadow">
+                Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션{' '}
                 <br />
                 실시간 인사이트부터 전략 분석까지, 성공적인 투자를 위한 모든
                 기능을 한 곳에 담았습니다.
               </p>
-              <div className="flex justify-center gap-4 mt-8">
+              <div className="flex justify-center gap-3 mt-6">
                 <button
                   onClick={() => navigate('/trade')}
-                  className="px-6 py-3 bg-gradient-to-r from-red-400 via-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                  className="px-4 py-2 text-sm bg-gradient-to-r from-red-400 via-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
                 >
                   실시간 자동 매매
-                  <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => navigate('/ai-monitor')}
-                  className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                  className="px-4 py-2 text-sm bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
                 >
                   AI 모니터링 / 학습
-                  <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -88,20 +88,20 @@ export default function MainPage() {
               isPopularVisible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-20'
-            } my-16`}
+            } my-8`}
           >
-            <div className="w-fit mr-auto text-left pl-72 mb-14">
-              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
+            <div className="w-fit mr-auto text-left pl-32 mb-8">
+              <h2 className="text-4xl font-bold text-white mb-3 custom-text-shadow">
                 Leafy Haven: Indoor
               </h2>
-              <p className="text-lg text-white mb-6 custom-text-shadow">
+              <p className="text-base text-white mb-4 custom-text-shadow">
                 Transform your space into a green sanctuary with our carefully
                 curated selection of indoor plants. <br></br> Each plant is
                 chosen for its unique characteristics and air-purifying
                 qualities.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-8 sm:gap-16">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8">
               <PopularCard
                 gradient="pink-blue"
                 title="Hot This Month!"
@@ -126,19 +126,19 @@ export default function MainPage() {
               isMachineVisible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-20'
-            } my-16`}
+            } my-8`}
           >
-            <div className="w-fit mx-auto text-center mb-14">
-              <h2 className="text-5xl font-bold text-white mb-4 custom-text-shadow">
+            <div className="w-fit mx-auto text-center mb-8">
+              <h2 className="text-4xl font-bold text-white mb-3 custom-text-shadow">
                 트레이딩 솔루션 구독 플랜
               </h2>
-              <p className="text-lg text-white mb-6 custom-text-shadow">
+              <p className="text-base text-white mb-4 custom-text-shadow">
                 나에게 맞는 플랜을 선택하여 인공지능 트레이딩의 모든 혜택을
                 누려보세요. <br />
                 언제든지 업그레이드하거나 다운그레이드할 수 있습니다.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-8">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
               <SubscriptionCard
                 title="무료 체험"
                 price="무료"

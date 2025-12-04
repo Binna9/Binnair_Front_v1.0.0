@@ -52,19 +52,19 @@ export default function OptionsList() {
   return (
     <div className="relative z-20">
       <div
-        className="flex justify-center items-center h-auto w-full max-w-[64%] mx-auto"
+        className="flex justify-center items-center h-auto w-full max-w-[60%] mx-auto"
         onMouseMove={handleMouseMove} // ✅ 이벤트를 이 div 내부에서만 감지
         onMouseLeave={handleMouseLeave} // ✅ 마우스를 벗어나면 초기화
       >
-        <div className="flex space-x-2 w-full max-w-full h-[500px]">
+        <div className="flex space-x-1.5 w-full max-w-full h-[420px]">
           {options.map((option, index) => (
             <div
               key={index}
-              className={`relative flex-grow cursor-pointer overflow-hidden transition-all duration-500 rounded-2xl shadow-lg
+              className={`relative flex-grow cursor-pointer overflow-hidden transition-all duration-500 rounded-xl shadow-lg
               ${
                 activeIndex === index
-                  ? 'flex-[5] max-w-[600px]'
-                  : 'flex-1 max-w-[100px]'
+                  ? 'flex-[5] max-w-[500px]'
+                  : 'flex-1 max-w-[110px]'
               }`}
               style={{
                 backgroundImage: `url(${option.background})`,
@@ -73,8 +73,8 @@ export default function OptionsList() {
               }}
             >
               <div className="absolute inset-0 bg-opacity-30 transition-all duration-500"></div>
-              <div className="absolute bottom-4 left-4 flex items-center space-x-3">
-                <div className="w-10 h-10 flex items-center justify-center bg-white text-gray-800 rounded-full">
+              <div className="absolute bottom-3 left-3 flex items-center space-x-2">
+                <div className="w-8 h-8 flex items-center justify-center bg-white text-gray-800 rounded-full">
                   {option.icon}
                 </div>
                 <div
@@ -83,13 +83,13 @@ export default function OptionsList() {
                   }`}
                 >
                   <div
-                    className="text-lg font-bold whitespace-nowrap"
+                    className="text-base font-bold whitespace-nowrap"
                     style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.6)' }}
                   >
                     {option.title}
                   </div>
                   <div
-                    className="text-sm whitespace-nowrap"
+                    className="text-xs whitespace-nowrap"
                     style={{ textShadow: '1px 1px 4px rgba(0,0,0,0.5)' }}
                   >
                     {option.subtitle}

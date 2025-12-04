@@ -98,7 +98,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
         userId: user.userId,
         loginId: user.loginId,
         userName: formData.userName || user.userName,
-        email: formData.email,
+        email: formData.email || user.email,
         nickName: formData.nickName,
         phoneNumber: formData.phoneNumber,
       };
@@ -245,19 +245,39 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+    <div 
+      className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
+      onClick={(e) => {
+        // 배경 클릭 시 팝업 닫기
+        if (e.target === e.currentTarget) {
+          closePopup();
+        }
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="flex rounded-2xl overflow-hidden w-3/4 max-w-5xl h-3/4 max-h-[32rem] 
+        drag
+        dragMomentum={false}
+        className="flex rounded-xl overflow-hidden w-2/3 max-w-4xl h-2/3 max-h-[28rem] 
                 bg-black shadow-lg drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]"
+        onClick={(e) => {
+          // 팝업 내부 클릭 시 이벤트 전파 방지
+          e.stopPropagation();
+        }}
       >
         {/* 사이드바 */}
-        <div className="w-64 bg-white text-zinc-900 border-r border-gray-300 shadow-sm">
-          <div className="p-6 flex flex-col items-center border-b border-zinc-200">
-            <div className="relative cursor-pointer mb-4 group">
+        <div className="w-56 bg-white text-zinc-900 border-r border-gray-300 shadow-sm">
+          <div 
+            className="p-4 flex flex-col items-center border-b border-zinc-200 cursor-move select-none"
+            onMouseDown={(e) => {
+              // 사이드바 헤더 드래그 핸들
+              e.preventDefault();
+            }}
+          >
+            <div className="relative cursor-pointer mb-3 group">
               <label htmlFor="profile-upload" className="cursor-pointer">
                 <input
                   id="profile-upload"
@@ -269,56 +289,56 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                 <img
                   src={userImageUrl || profileImage || '/default-profile.png'}
                   alt="Profile"
-                  className="w-20 h-20 rounded-full border-2 border-gray-400 shadow-lg object-cover 
+                  className="w-16 h-16 rounded-full border-2 border-gray-400 shadow-lg object-cover 
                              transition-all duration-300 group-hover:border-blue-400 
                              group-hover:shadow-blue-100 group-hover:scale-105"
                 />
-                <div className="absolute bottom-0 right-0 bg-zinc-400 p-1 rounded-full group-hover:bg-blue-500 transition-colors duration-300">
-                  <CameraIcon className="w-4 h-4 text-white" />
+                <div className="absolute bottom-0 right-0 bg-zinc-400 p-0.5 rounded-full group-hover:bg-blue-500 transition-colors duration-300">
+                  <CameraIcon className="w-3 h-3 text-white" />
                 </div>
               </label>
             </div>
-            <h3 className="text-lg font-bold text-zinc-900">
+            <h3 className="text-base font-bold text-zinc-900">
               {formData.userName || '-'}
             </h3>
-            <p className="text-sm text-zinc-800">@{user.nickName}</p>
+            <p className="text-xs text-zinc-800">{user.email}</p>
           </div>
 
-          <nav className="p-4">
-            <ul className="space-y-2">
+          <nav className="p-3">
+            <ul className="space-y-1.5">
               <li>
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className={`w-full flex items-center p-3 rounded-lg transition ${
+                  className={`w-full flex items-center p-2 rounded-lg transition ${
                     activeTab === 'profile'
                       ? 'bg-zinc-800 text-white shadow-md'
                       : 'text-zinc-800 hover:bg-zinc-400 hover:shadow-sm hover:translate-x-1'
                   }`}
                 >
-                  <UserIcon className="w-5 h-5 mr-3" />
-                  <span>My Profile</span>
+                  <UserIcon className="w-4 h-4 mr-2" />
+                  <span className="text-sm">My Profile</span>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => setActiveTab('settings')}
-                  className={`w-full flex items-center p-3 rounded-lg transition ${
+                  className={`w-full flex items-center p-2 rounded-lg transition ${
                     activeTab === 'settings'
                       ? 'bg-zinc-800 text-white shadow-md'
                       : 'text-zinc-800 hover:bg-zinc-400 hover:shadow-sm hover:translate-x-1'
                   }`}
                 >
-                  <CogIcon className="w-5 h-5 mr-3" />
-                  <span>설정</span>
+                  <CogIcon className="w-4 h-4 mr-2" />
+                  <span className="text-sm">설정</span>
                 </button>
               </li>
             </ul>
           </nav>
 
-          <div className="mt-auto p-4 border-t border-gray-200">
+          <div className="mt-auto p-3 border-t border-gray-200">
             <button
               onClick={logout}
-              className="w-full bg-red-500 hover:bg-red-700 text-white py-2 rounded-lg transition"
+              className="w-full bg-red-500 hover:bg-red-700 text-white py-1.5 rounded-lg transition text-sm"
             >
               로그아웃
             </button>
@@ -327,7 +347,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
         {/* 메인 콘텐츠 */}
         <div
-          className="flex-1 text-white overflow-y-auto p-8 relative"
+          className="flex-1 text-white overflow-y-auto p-6 relative"
           style={{
             backgroundImage: "url('/img/profile_popup.png')",
             backgroundBlendMode: 'overlay',
@@ -339,20 +359,26 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
         >
           <button
             onClick={closePopup}
-            className="absolute top-4 right-4 text-white hover:text-gray-400 transition"
+            className="absolute top-2 right-2 text-white hover:text-gray-400 transition"
           >
-            <XCircleIcon className="w-7 h-7" />
+            <XCircleIcon className="w-6 h-6" />
           </button>
 
           {/* 프로필 탭 */}
           {activeTab === 'profile' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white border-b border-white pb-4 flex items-center">
-                <UserIcon className="w-6 h-6 mr-2 inline" />
+            <div className="space-y-4">
+              <h2 
+                className="text-xl font-bold text-white border-b border-white pb-3 flex items-center cursor-move select-none"
+                onMouseDown={(e) => {
+                  // 헤더 드래그 핸들
+                  e.preventDefault();
+                }}
+              >
+                <UserIcon className="w-5 h-5 mr-2 inline" />
                 My Profile
                 {!passwordChangeStep && (
                   <PencilIcon
-                    className="w-7 h-7 ml-5 text-gray-300 cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-110 hover:text-blue-400"
+                    className="w-5 h-5 ml-4 text-gray-300 cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-110 hover:text-blue-400"
                     onClick={() => setEditing(true)}
                   />
                 )}
@@ -360,17 +386,17 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
               {/* 비밀번호 검증 단계 */}
               {passwordChangeStep === 'verification' && (
-                <div className="space-y-4 bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-xl font-semibold flex items-center">
-                    <LockIcon className="w-5 h-5 mr-2" />
+                <div className="space-y-3 bg-gray-800 p-4 rounded-lg border border-gray-600">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <LockIcon className="w-4 h-4 mr-2" />
                     비밀번호 확인
                   </h3>
-                  <p className="text-gray-300">
+                  <p className="text-gray-300 text-sm">
                     계속하려면 현재 비밀번호를 입력해주세요.
                   </p>
 
                   <div className="space-y-2">
-                    <label className="block text-gray-300 text-sm">
+                    <label className="block text-gray-300 text-xs">
                       현재 비밀번호
                     </label>
                     <div className="relative">
@@ -383,42 +409,42 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                             handleVerifyPassword();
                           }
                         }}
-                        className="w-full bg-gray-700 border border-gray-500 p-3 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                        className="w-full bg-gray-700 border border-gray-500 p-2 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                         placeholder="현재 비밀번호 입력"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                        className="absolute right-2 top-2 text-gray-400 hover:text-white"
                         onClick={() =>
                           setShowCurrentPassword(!showCurrentPassword)
                         }
                       >
                         {showCurrentPassword ? (
-                          <EyeOffIcon className="w-5 h-5" />
+                          <EyeOffIcon className="w-4 h-4" />
                         ) : (
-                          <EyeIcon className="w-5 h-5" />
+                          <EyeIcon className="w-4 h-4" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   {passwordError && (
-                    <div className="text-red-400 text-sm py-1">
+                    <div className="text-red-400 text-xs py-1">
                       {passwordError}
                     </div>
                   )}
 
-                  <div className="flex space-x-4 pt-2">
+                  <div className="flex space-x-3 pt-2">
                     <button
                       onClick={handleVerifyPassword}
                       disabled={isVerifying}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition disabled:opacity-70 disabled:cursor-not-allowed text-sm"
                     >
                       {isVerifying ? '확인 중...' : '확인'}
                     </button>
                     <button
                       onClick={cancelPasswordChange}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition"
+                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition text-sm"
                     >
                       취소
                     </button>
@@ -428,14 +454,14 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
               {/* 비밀번호 변경 단계 */}
               {passwordChangeStep === 'change' && (
-                <div className="space-y-4 bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-xl font-semibold flex items-center">
-                    <LockIcon className="w-5 h-5 mr-2" />새 비밀번호 설정
+                <div className="space-y-3 bg-gray-800 p-4 rounded-lg border border-gray-600">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <LockIcon className="w-4 h-4 mr-2" />새 비밀번호 설정
                   </h3>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="space-y-2">
-                      <label className="block text-gray-300 text-sm">
+                      <label className="block text-gray-300 text-xs">
                         새 비밀번호
                       </label>
                       <div className="relative">
@@ -443,25 +469,25 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           type={showNewPassword ? 'text' : 'password'}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full bg-gray-700 border border-gray-500 p-3 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                          className="w-full bg-gray-700 border border-gray-500 p-2 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                           placeholder="새 비밀번호 입력"
                         />
                         <button
                           type="button"
-                          className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                          className="absolute right-2 top-2 text-gray-400 hover:text-white"
                           onClick={() => setShowNewPassword(!showNewPassword)}
                         >
                           {showNewPassword ? (
-                            <EyeOffIcon className="w-5 h-5" />
+                            <EyeOffIcon className="w-4 h-4" />
                           ) : (
-                            <EyeIcon className="w-5 h-5" />
+                            <EyeIcon className="w-4 h-4" />
                           )}
                         </button>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-gray-300 text-sm">
+                      <label className="block text-gray-300 text-xs">
                         새 비밀번호 확인
                       </label>
                       <div className="relative">
@@ -469,41 +495,41 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           type={showConfirmPassword ? 'text' : 'password'}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="w-full bg-gray-700 border border-gray-500 p-3 rounded-lg text-white focus:outline-none focus:border-blue-500"
+                          className="w-full bg-gray-700 border border-gray-500 p-2 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                           placeholder="새 비밀번호 확인"
                         />
                         <button
                           type="button"
-                          className="absolute right-3 top-3 text-gray-400 hover:text-white"
+                          className="absolute right-2 top-2 text-gray-400 hover:text-white"
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
                         >
                           {showConfirmPassword ? (
-                            <EyeOffIcon className="w-5 h-5" />
+                            <EyeOffIcon className="w-4 h-4" />
                           ) : (
-                            <EyeIcon className="w-5 h-5" />
+                            <EyeIcon className="w-4 h-4" />
                           )}
                         </button>
                       </div>
                     </div>
 
                     {passwordError && (
-                      <div className="text-red-400 text-sm py-1">
+                      <div className="text-red-400 text-xs py-1">
                         {passwordError}
                       </div>
                     )}
 
-                    <div className="flex space-x-4 pt-2">
+                    <div className="flex space-x-3 pt-2">
                       <button
                         onClick={handleChangePassword}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition text-sm"
                       >
                         변경하기
                       </button>
                       <button
                         onClick={cancelPasswordChange}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition"
+                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition text-sm"
                       >
                         취소
                       </button>
@@ -516,9 +542,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
               {!passwordChangeStep && (
                 <>
                   {editing ? (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-gray-300 text-xs">
                           Name
                         </label>
                         <input
@@ -526,12 +552,12 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           name="userName"
                           value={formData.userName || ''}
                           onChange={handleChange}
-                          className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"
+                          className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black text-sm focus:outline-none focus:border-blue-500 hover:bg-gray-200"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">
+                      <div className="space-y-1.5">
+                        <label className="block text-gray-300 text-xs">
                           닉네임
                         </label>
                         <input
@@ -539,25 +565,25 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           name="nickName"
                           value={formData.nickName || ''}
                           onChange={handleChange}
-                          className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"
+                          className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black text-sm focus:outline-none focus:border-blue-500 hover:bg-gray-200"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">
+                      <div className="space-y-1.5">
+                        <label className="block text-gray-300 text-xs">
                           이메일
                         </label>
                         <input
                           type="email"
                           name="email"
-                          value={formData.email || ''}
+                          value={formData.email || user.email || ''}
                           onChange={handleChange}
-                          className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"
+                          className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black text-sm focus:outline-none focus:border-blue-500 hover:bg-gray-200"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="block text-gray-300 text-sm">
+                      <div className="space-y-1.5">
+                        <label className="block text-gray-300 text-xs">
                           전화번호
                         </label>
                         <input
@@ -565,60 +591,60 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                           name="phoneNumber"
                           value={formData.phoneNumber || ''}
                           onChange={handleChange}
-                          className="w-full bg-white border border-gray-300 p-3 rounded-lg text-black focus:outline-none focus:border-blue-500 hover:bg-gray-200"
+                          className="w-full bg-white border border-gray-300 p-2 rounded-lg text-black text-sm focus:outline-none focus:border-blue-500 hover:bg-gray-200"
                         />
                       </div>
 
-                      <div className="flex space-x-4 pt-4">
+                      <div className="flex space-x-3 pt-3">
                         <button
                           onClick={handleSave}
-                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition"
+                          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition text-sm"
                         >
                           저장
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-lg transition"
+                          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition text-sm"
                         >
                           취소
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">
-                            Name
+                          <p className="text-gray-300 font-bold text-xs">
+                            Name :
                           </p>
-                          <p className="text-xl font-bold">{user.userName}</p>
+                          <p className="text-lg font-bold">{user.userName}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">
-                            NickName
+                          <p className="text-gray-300 font-bold text-xs">
+                            NickName :
                           </p>
-                          <p className="text-xl font-bold">{user.nickName}</p>
+                          <p className="text-lg font-bold">{user.nickName}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">
-                            @Email
+                          <p className="text-gray-300 font-bold text-xs">
+                            Email :
                           </p>
-                          <p className="text-xl font-bold">{user.email}</p>
+                          <p className="text-lg font-bold">{user.email || '-'}</p>
                         </div>
                         <div className="space-y-1">
-                          <p className="text-gray-300 font-bold text-md">
-                            PhoneNumber
+                          <p className="text-gray-300 font-bold text-xs">
+                            PhoneNumber :
                           </p>
-                          <p className="text-xl font-bold">
+                          <p className="text-lg font-bold">
                             {user.phoneNumber}
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={startPasswordChange}
-                        className="bg-zinc-200 hover:bg-zinc-400 text-zinc-900 py-2 px-4 rounded-lg transition flex items-center"
+                        className="bg-zinc-200 hover:bg-zinc-400 text-zinc-900 py-1.5 px-3 rounded-lg transition flex items-center text-sm"
                       >
-                        <LockIcon className="w-5 h-5 mr-2" />
+                        <LockIcon className="w-4 h-4 mr-2" />
                         Password Change
                       </button>
                     </div>
@@ -630,44 +656,50 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
 
           {/* 설정 탭 */}
           {activeTab === 'settings' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white border-b border-white pb-4">
-                <CogIcon className="w-6 h-6 mr-2 inline" />
+            <div className="space-y-4">
+              <h2 
+                className="text-xl font-bold text-white border-b border-white pb-3 cursor-move select-none"
+                onMouseDown={(e) => {
+                  // 헤더 드래그 핸들
+                  e.preventDefault();
+                }}
+              >
+                <CogIcon className="w-5 h-5 mr-2 inline" />
                 설정
               </h2>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                   <div>
-                    <p className="font-medium text-black">마케팅 정보 수신</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-black text-sm">마케팅 정보 수신</p>
+                    <p className="text-xs text-gray-600">
                       특별 프로모션 및 이벤트 알림 수신
                     </p>
                   </div>
-                  <div className="w-12 h-6 bg-blue-500 rounded-full relative cursor-pointer">
-                    <div className="w-5 h-5 bg-white rounded-full absolute right-1 top-0.5"></div>
+                  <div className="w-10 h-5 bg-blue-500 rounded-full relative cursor-pointer">
+                    <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                   <div>
-                    <p className="font-medium text-black">2단계 인증</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-medium text-black text-sm">2단계 인증</p>
+                    <p className="text-xs text-gray-600">
                       보안 강화를 위한 2단계 인증 설정
                     </p>
                   </div>
-                  <div className="w-12 h-6 bg-gray-600 rounded-full relative cursor-pointer">
-                    <div className="w-5 h-5 bg-white rounded-full absolute left-1 top-0.5"></div>
+                  <div className="w-10 h-5 bg-gray-600 rounded-full relative cursor-pointer">
+                    <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5"></div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg">
                   <div>
-                    <p className="font-medium text-black">다크 모드</p>
-                    <p className="text-sm text-gray-600">어두운 테마 설정</p>
+                    <p className="font-medium text-black text-sm">다크 모드</p>
+                    <p className="text-xs text-gray-600">어두운 테마 설정</p>
                   </div>
-                  <div className="w-12 h-6 bg-blue-500 rounded-full relative cursor-pointer">
-                    <div className="w-5 h-5 bg-white rounded-full absolute right-1 top-0.5"></div>
+                  <div className="w-10 h-5 bg-blue-500 rounded-full relative cursor-pointer">
+                    <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
                   </div>
                 </div>
               </div>

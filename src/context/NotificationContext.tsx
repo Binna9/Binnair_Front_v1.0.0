@@ -190,67 +190,63 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     switch (status) {
       case 'success':
         return (
-          <div className="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4 text-green-500 dark:text-green-400"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
         );
       case 'error':
         return (
-          <div className="flex-shrink-0 w-5 h-5 text-red-500 dark:text-red-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4 text-red-500 dark:text-red-400"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
         );
       case 'warning':
         return (
-          <div className="flex-shrink-0 w-5 h-5 text-yellow-500 dark:text-yellow-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4 text-yellow-500 dark:text-yellow-400"
+          >
+            <path
+              fillRule="evenodd"
+              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
         );
       case 'info':
         return (
-          <div className="flex-shrink-0 w-5 h-5 text-blue-500 dark:text-blue-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="w-4 h-4 text-blue-500 dark:text-blue-400"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
+              clipRule="evenodd"
+            />
+          </svg>
         );
       default:
         return null;
@@ -282,18 +278,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
       {/* 다이얼로그 (confirm, alert) */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm p-4">
           <DialogHeader>
-            <DialogTitle>{notification?.title}</DialogTitle>
-            <DialogDescription>{notification?.message}</DialogDescription>
+            <DialogTitle className="text-base">{notification?.title}</DialogTitle>
+            <DialogDescription className="text-xs">{notification?.message}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex justify-end gap-2 sm:justify-end">
             {notification?.type === 'confirm' && (
-              <Button variant="outline" onClick={handleCancel}>
+              <Button variant="outline" onClick={handleCancel} className="text-sm px-3 py-1.5 h-auto">
                 취소
               </Button>
             )}
-            <Button onClick={handleConfirm}>확인</Button>
+            <Button onClick={handleConfirm} className="text-sm px-3 py-1.5 h-auto">확인</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -318,33 +314,35 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
             .map((toast) => (
               <div
                 key={toast.id}
-                className={`shadow-xl rounded-xl p-5 min-w-[22rem] max-w-md min-h-32 animate-in fade-in slide-in-from-top-5 duration-300 border ${getStatusClasses(
+                className={`shadow-xl rounded-lg p-3 min-w-[18rem] max-w-sm min-h-20 animate-in fade-in slide-in-from-top-5 duration-300 border ${getStatusClasses(
                   toast.status || 'default'
                 )}`}
                 role="alert"
               >
-                <div className="flex items-start space-x-3">
-                  {getStatusIcon(toast.status || 'default')}
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0 w-4 h-4">
+                    {getStatusIcon(toast.status || 'default')}
+                  </div>
                   <div className="flex-1">
                     <h3
-                      className={`font-medium ${getTitleColorClass(
+                      className={`text-sm font-medium ${getTitleColorClass(
                         toast.status || 'default'
                       )}`}
                     >
                       {toast.title}
                     </h3>
-                    <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                    <div className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">
                       {toast.message}
                     </div>
                   </div>
                   <button
                     type="button"
-                    className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-500 focus:outline-none"
+                    className="flex-shrink-0 ml-1 text-gray-400 hover:text-gray-500 focus:outline-none"
                     onClick={() => removeToast(toast.id)}
                   >
                     <span className="sr-only">닫기</span>
                     <svg
-                      className="h-4 w-4"
+                      className="h-3 w-3"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >

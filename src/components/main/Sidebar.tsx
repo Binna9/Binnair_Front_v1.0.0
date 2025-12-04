@@ -76,11 +76,11 @@ const Sidebar = () => {
                   | 'bookmark'
                   | 'coin'
                   | 'wallet'
-                  | 'chat'
+                  | 'chat'  
                   | 'realtime-chat'
               );
             }}
-            className={`w-14 h-14 flex items-center justify-center rounded-lg transition-all duration-300 ${
+            className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-300 ${
               selected.includes(
                 item.id as
                   | 'bookmark'
