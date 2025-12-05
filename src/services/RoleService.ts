@@ -56,9 +56,22 @@ export const roleService = {
     await apiClient.delete(`/roles/${roleId}`);
   },
 
-  // 역할에 권한 부여
-  assignPermissionToRole: async (rolePermissionRequest: RolePermissionRequest): Promise<void> => {
-    await apiClient.post('/roles/assign-permission', rolePermissionRequest);
+  // 역할 권한 조회 (단일 역할)
+  getRolePermissions: async (roleId: string): Promise<string[]> => {
+    const response = await apiClient.get<string[]>('/roles/permission', {
+      params: { roleId },
+    });
+    return response.data;
+  },
+
+  // 역할에 권한 부여 (리스트)
+  assignPermissionsToRoles: async (rolePermissionRequests: RolePermissionRequest[]): Promise<void> => {
+    await apiClient.post('/roles/assign-permission', rolePermissionRequests);
+  },
+
+  // 역할 권한 제거 (리스트)
+  removePermissionsFromRoles: async (rolePermissionRequests: RolePermissionRequest[]): Promise<void> => {
+    await apiClient.delete(`/roles/remove-permission`, { data: rolePermissionRequests });
   },
 };
 

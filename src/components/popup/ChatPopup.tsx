@@ -8,13 +8,13 @@ export default function ChatPopUp({
   isOpen: boolean;
   closePopup: () => void;
 }) {
-  const [messages, setMessages] = useState<string[]>([]);
-  const [input, setInput] = useState('');
+    const [messages, setMessages] = useState<string[]>([]);
+    const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const [position, setPosition] = useState({
-    x: window.innerWidth - 550,
-    y: window.innerHeight / 2 - 275,
+  const [position, setPosition] = useState({  
+    x: window.innerWidth - 460,
+    y: window.innerHeight / 2 - 210,
   });
 
   const [dragging, setDragging] = useState(false);
@@ -71,7 +71,7 @@ export default function ChatPopUp({
     <>
       {/* ChatPopUp 본체 (사이드바를 가리지 않고 살짝 오른쪽으로 띄우기) */}
       <div
-        className={`fixed bg-zinc-50 shadow-xl rounded-lg w-[420px] h-[550px] flex flex-col z-50 transition-transform duration-300 ${
+        className={`fixed bg-zinc-50 shadow-xl rounded-lg w-[340px] h-[430px] flex flex-col z-50 transition-transform duration-300 ${
           isOpen
             ? 'opacity-100 scale-100'
             : 'opacity-0 scale-90 pointer-events-none'
@@ -85,23 +85,23 @@ export default function ChatPopUp({
       >
         {/* 헤더 영역 (마우스로 드래그 가능) */}
         <div
-          className="flex justify-between items-center px-4 py-3 border-b cursor-grab"
+          className="flex justify-between items-center px-2.5 py-2.5 border-b cursor-grab"
           onMouseDown={handleMouseDown}
         >
-          <h3 className="text-lg font-bold">💬 Chat</h3>
+          <h3 className="text-sm font-bold">💬 Chat</h3>
           <button
             onClick={closePopup}
-            className="p-1 rounded-full hover:bg-gray-200"
+            className="p-0.5 rounded-full hover:bg-gray-200"
           >
-            <X size={18} />
+            <X size={14} />
           </button>
         </div>
         {/* 채팅 메시지 영역 (아래로 누적되는 형태) */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-2 flex flex-col">
+        <div className="flex-1 p-2 overflow-y-auto space-y-1 flex flex-col">
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`p-3 rounded-lg max-w-[80%] break-words ${
+              className={`p-2.5 rounded-md max-w-[85%] break-words text-xs ${
                 index === 0
                   ? 'bg-zinc-500 text-white self-start'
                   : 'bg-zinc-200 self-end'
@@ -114,10 +114,10 @@ export default function ChatPopUp({
         </div>
 
         {/* 입력창 + 전송 버튼 */}
-        <div className="p-3 border-t flex items-center">
+        <div className="p-2.5 border-t flex items-center">
           <input
             type="text"
-            className="flex-1 p-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="flex-1 p-2 text-xs border rounded-full focus:outline-none focus:ring-1 focus:ring-zinc-400"
             placeholder="메시지를 입력하세요..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -125,9 +125,9 @@ export default function ChatPopUp({
           />
           <button
             onClick={handleSend}
-            className="ml-2 p-2 bg-zinc-500 text-white rounded-full hover:bg-zinc-600 transition"
+            className="ml-1.5 p-1 bg-zinc-500 text-white rounded-full hover:bg-zinc-600 transition"
           >
-            <Send size={18} />
+            <Send size={14} />
           </button>
         </div>
       </div>

@@ -313,48 +313,82 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
             .filter((toast) => toast.position === position)
             .map((toast) => (
               <div
-                key={toast.id}
-                className={`shadow-xl rounded-lg p-3 min-w-[18rem] max-w-sm min-h-20 animate-in fade-in slide-in-from-top-5 duration-300 border ${getStatusClasses(
-                  toast.status || 'default'
-                )}`}
-                role="alert"
-              >
-                <div className="flex items-start space-x-2">
-                  <div className="flex-shrink-0 w-4 h-4">
+              key={toast.id}
+              className={`relative overflow-hidden backdrop-blur-sm shadow-2xl rounded-2xl p-4 min-w-[20rem] max-w-sm animate-in fade-in slide-in-from-top-5 duration-500 border-2 ${getStatusClasses(
+                toast.status || 'default'
+              )}`}
+              role="alert"
+              style={{
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              }}
+            >
+              {/* 배경 그라디언트 효과 */}
+              <div className="absolute inset-0 opacity-30">
+                <div className={`absolute inset-0 ${
+                  toast.status === 'success' ? 'bg-gradient-to-br from-green-400 to-emerald-500' :
+                  toast.status === 'error' ? 'bg-gradient-to-br from-red-400 to-rose-500' :
+                  toast.status === 'warning' ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
+                  toast.status === 'info' ? 'bg-gradient-to-br from-blue-400 to-cyan-500' :
+                  'bg-gradient-to-br from-gray-300 to-gray-400'
+                }`} />
+              </div>
+
+              {/* 애니메이션 바 */}
+              <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-50 animate-pulse" 
+                   style={{ 
+                     width: '100%',
+                     animation: `shrink ${toast.duration}ms linear forwards`
+                   }} 
+              />
+
+              <div className="relative flex items-start space-x-3">
+                {/* 아이콘 영역 - 더 크고 눈에 띄게 */}
+                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                     style={{
+                       background: toast.status === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
+                                 toast.status === 'error' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' :
+                                 toast.status === 'warning' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                                 toast.status === 'info' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' :
+                                 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
+                     }}>
+                  <div className="w-6 h-6 text-white">
                     {getStatusIcon(toast.status || 'default')}
                   </div>
-                  <div className="flex-1">
-                    <h3
-                      className={`text-sm font-medium ${getTitleColorClass(
-                        toast.status || 'default'
-                      )}`}
-                    >
-                      {toast.title}
-                    </h3>
-                    <div className="mt-0.5 text-xs text-gray-600 dark:text-gray-300">
-                      {toast.message}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="flex-shrink-0 ml-1 text-gray-400 hover:text-gray-500 focus:outline-none"
-                    onClick={() => removeToast(toast.id)}
-                  >
-                    <span className="sr-only">닫기</span>
-                    <svg
-                      className="h-3 w-3"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </button>
                 </div>
+
+                {/* 텍스트 영역 */}
+                <div className="flex-1 pt-0.5">
+                  <h3 className={`text-base font-bold tracking-tight ${getTitleColorClass(
+                      toast.status || 'default'
+                    )}`}>
+                    {toast.title}
+                  </h3>
+                  <div className="mt-1 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
+                    {toast.message}
+                  </div>
+                </div>
+
+                {/* 닫기 버튼 - 더 현대적인 디자인 */}
+                <button
+                  type="button"
+                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                  onClick={() => removeToast(toast.id)}
+                >
+                  <span className="sr-only">닫기</span>
+                  <svg
+                    className="h-4 w-4 text-gray-500 dark:text-gray-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
               </div>
+            </div>
             ))}
         </div>
       ))}

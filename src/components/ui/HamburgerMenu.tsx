@@ -109,19 +109,23 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && !closing && (
           <motion.div
             ref={menuRef}
-            className="absolute left-0 top-14 w-56 bg-zinc-900 border-2 border-white/70 text-white shadow-lg rounded-xl overflow-hidden"
+            className="absolute left-0 top-14 w-40 bg-zinc-900 border-2 border-white/70 text-white shadow-lg rounded-lg overflow-visible"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10, transition: { duration: 0.3 } }}
           >
-            <ul className="py-2 text-center space-y-1">
+            {/* 말풍선 꼬리 */}
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[8px] border-l-transparent border-r-transparent border-b-white/70"></div>
+            <div className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-b-[7px] border-l-transparent border-r-transparent border-b-zinc-900"></div>
+            
+            <ul className="py-1 text-center space-y-0.5">
               {items.map((item) => (
                 <li
                   key={item.id}
                   onClick={() => onItemClick(item)}
-                  className="py-1.5 px-3 w-11/12 mx-auto transition cursor-pointer hover:bg-white/50 rounded-lg flex items-center justify-center space-x-2 whitespace-nowrap"
+                  className="py-1 px-2 w-11/12 mx-auto transition cursor-pointer hover:bg-white/50 rounded-md flex items-center justify-center space-x-1.5 whitespace-nowrap text-xs"
                 >
-                  {item.icon && <span>{item.icon}</span>}
+                  {item.icon && <span className="flex items-center text-xs [&>svg]:w-3 [&>svg]:h-3">{item.icon}</span>}
                   <span>{item.name}</span>
                 </li>
               ))}

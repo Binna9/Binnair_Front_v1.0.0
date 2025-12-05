@@ -4,6 +4,7 @@ import {
   UserPasswordChangeRequest,
   PagedUserResponse,
   UserRoleRequest,
+  UserRoleListRequest,
   userActiveRequest,
 } from '@/types/UserTypes';
 import { RegisterRequest } from '@/types/RegisterTypes';
@@ -143,16 +144,13 @@ export const userService = {
     return response.data;
   },
 
-  // 사용자 역할 부여
-  assignRoleToUser: async (roleName: string): Promise<void> => {
-    const userRoleRequest: UserRoleRequest = { roleName };
-    await apiClient.post(`/users/assign-role`, userRoleRequest);
+  // 사용자 역할 부여 (리스트)
+  assignRolesToUsers: async (userRoleRequests: UserRoleRequest[]): Promise<void> => {
+    await apiClient.post(`/users/assign-role`, userRoleRequests);
   },
-
-  // 사용자 역할 제거
-  removeRoleFromUser: async (roleName: string): Promise<void> => {
-    const userRoleRequest: UserRoleRequest = { roleName };
-    await apiClient.delete(`/users/remove-role`, { data: userRoleRequest });
+  // 사용자 역할 제거 (리스트)
+  removeRolesFromUsers: async (userRoleRequests: UserRoleRequest[]): Promise<void> => {
+    await apiClient.delete(`/users/remove-role`, { data: userRoleRequests });
   },
 };
 

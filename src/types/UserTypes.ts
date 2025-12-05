@@ -48,7 +48,13 @@ export interface userActiveRequest {
 
 // 역할 부여 요청 타입 정의
 export interface UserRoleRequest {
+  userId: string;
   roleName: string;
+}
+
+// 역할 부여 리스트 요청 타입 정의
+export interface UserRoleListRequest {
+  userRoleRequests: UserRoleRequest[];
 }
 
 export type PagedUserResponse = Page<UserResponse>;
