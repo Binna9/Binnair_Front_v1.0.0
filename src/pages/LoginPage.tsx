@@ -25,13 +25,13 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
-        <h2 className="flex justify-center text-black text-6xl font-bold mt-5 mb-[-50px] kanit">
-          BinnAIR
-        </h2>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-3">
-            <label className="mt-20 block text-sm font-bold text-gray-700 font-sans font-extrabold">
+      <Card className="px-5 pt-0 pb-5 w-full max-w-md card-login relative z-50 border-none overflow-visible">
+        <div className="flex justify-start -mt-14 -mb-20 mr-6 pointer-events-none">
+          <img src="/img/binnair_logo_black.png" alt="BinnAIR" className="h-80 w-auto block leading-none scale-x-150" />
+        </div>
+        <form onSubmit={onSubmit} className="space-y-3 relative z-10">
+          <div className="space-y-2"> 
+            <label className="block text-xs font-bold text-gray-700 font-sans font-extrabold">
               로그인 ID
             </label>
             <Input
@@ -40,11 +40,11 @@ export default function LoginPage() {
               value={loginId}
               onChange={(e) => setLoginId(e.target.value)}
               required
-              className="bg-white/90 border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="bg-white/90 border border-gray-300 p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
             />
           </div>
-          <div className="space-y-3">
-            <label className="block text-sm font-bold text-gray-700 font-sans font-extrabold">
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-gray-700 font-sans font-extrabold">
               비밀번호
             </label>
             <Input
@@ -53,7 +53,7 @@ export default function LoginPage() {
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
               required
-              className="bg-white/90 border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="bg-white/90 border border-gray-300 p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
             />
           </div>
 
@@ -64,22 +64,22 @@ export default function LoginPage() {
               checked={staySignedIn}
               onCheckedChange={setStaySignedIn}
             />
-            <label htmlFor="staySignedIn" className="text-sm text-gray-700">
+            <label htmlFor="staySignedIn" className="text-xs text-gray-700">
               Stay Signed In
             </label>
           </div>
-          <Button type="submit" className="w-full py-3 font-sans">
+          <Button type="submit" className="w-full py-2 font-sans text-sm">
             로그인
           </Button>
         </form>
 
         {/* 추가된 버튼 영역 */}
-        <div className="flex justify-center space-x-4 mt-4">
+        <div className="flex justify-center space-x-3 mt-3">
           <Button
             onClick={() => navigate('/register')}
             variant="outline"
             size="sm"
-            className="text-xs px-3 py-1"
+            className="text-xs px-2 py-0.5"
           >
             신규 가입
           </Button>
@@ -87,7 +87,7 @@ export default function LoginPage() {
             onClick={() => navigate('/forgot-password')}
             variant="outline"
             size="sm"
-            className="text-xs px-3 py-1"
+            className="text-xs px-2 py-0.5"
           >
             비밀번호 찾기
           </Button>
@@ -95,33 +95,33 @@ export default function LoginPage() {
       </Card>
 
       {/* ✅ SSO 로그인 카드 */}
-      <Card className="p-8 w-full max-w-md card-login relative z-10 border-none overflow-hidden">
-        <div className="flex flex-col items-center space-y-3">
+      <Card className="p-5 w-full max-w-md card-login relative z-10 border-none overflow-hidden">
+        <div className="flex flex-col items-center space-y-2">
           <GoogleLoginButton />
-          <Button className="w-80 flex items-center justify-center space-x-3 bg-yellow-400 hover:bg-yellow-300 rounded-lg shadow-md py-4 border-none">
-            <img src="/img/kakao-logo.png" alt="Kakao" className="h-5 w-5" />
-            <span className="font-medium text-black">
+          <Button className="w-64 flex items-center justify-center space-x-2 bg-yellow-400 hover:bg-yellow-300 rounded-lg shadow-md py-2 border-none text-sm">
+            <img src="/img/kakao-logo.png" alt="Kakao" className="h-4 w-4" />
+            <span className="font-medium text-black text-xs">
               카카오톡 계정으로 로그인
             </span>
           </Button>
 
-          <Button className="w-80 flex items-center justify-center space-x-3 bg-green-500 hover:bg-green-400 rounded-lg shadow-md py-4 border-none">
-            <SiNaver className="text-white" />
-            <span className="font-medium text-white">
+          <Button className="w-64 flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-400 rounded-lg shadow-md py-2 border-none text-sm">
+            <SiNaver className="text-white text-sm" />
+            <span className="font-medium text-white text-xs">
               네이버 계정으로 로그인
             </span>
           </Button>
 
-          <Button className="w-80 flex items-center justify-center space-x-3 bg-black hover:bg-gray-900 rounded-lg shadow-md py-3 border-none">
-            <FaApple className="text-white" />
-            <span className="font-medium text-white">
+          <Button className="w-64 flex items-center justify-center space-x-2 bg-black hover:bg-gray-900 rounded-lg shadow-md py-2 border-none text-sm">
+            <FaApple className="text-white text-sm" />
+            <span className="font-medium text-white text-xs">
               Apple 계정으로 로그인
             </span>
           </Button>
 
-          <Button className="w-80 flex items-center justify-center space-x-3 bg-gray-800 hover:bg-gray-700 rounded-lg shadow-md py-3 border-none">
-            <FaGithub className="text-white" />
-            <span className="font-medium text-white">
+          <Button className="w-64 flex items-center justify-center space-x-2 bg-gray-800 hover:bg-gray-700 rounded-lg shadow-md py-2 border-none text-sm">
+            <FaGithub className="text-white text-sm" />
+            <span className="font-medium text-white text-xs">
               Github 계정으로 로그인
             </span>
           </Button>

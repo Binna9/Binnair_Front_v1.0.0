@@ -69,19 +69,19 @@ export default function Navbar() {
         />
       )}
 
-      <nav className="fixed top-0 left-0 w-full h-12 bg-zinc-900/90 backdrop-blur-md shadow-md flex items-center justify-between px-4 z-50">
+      <nav className="fixed top-0 left-0 w-full h-12 bg-zinc-900/90 backdrop-blur-md shadow-md flex items-center justify-start gap-4 pr-4 z-50">
         {/* 로고 영역 */}
-        <div className="flex items-center w-[120px]">
-          <span
-            className="text-2xl font-bold text-white cursor-pointer transition-transform duration-200 hover:scale-105 hover:text-gray-300"
+        <div className="flex items-center flex-shrink-0">
+          <img
+            src="/img/binnair_logo_white.png"
+            alt="BinnAIR"
+            className="h-48 w-auto cursor-pointer transition-transform duration-200 hover:scale-105 object-contain"
             onClick={() => navigate('/')}
-          >
-            BinnAIR
-          </span>
+          />
         </div>
 
         {/* 검색 영역 */}
-        <div className="flex items-center w-[400px]"> 
+        <div className="flex items-center w-[360px]"> 
           <div className="relative w-full transition-transform duration-200 hover:scale-105">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 text-white w-4 h-4" />
             <Input
@@ -95,7 +95,7 @@ export default function Navbar() {
         </div>
 
         {/* 메뉴 영역 */}
-        <div className="flex justify-between w-[680px] px-2 ml-2">
+        <div className="flex justify-between w-[680px] px-2">
           <HamburgerMenu
             menuName="Trade Arena"
             items={[

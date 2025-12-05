@@ -35,12 +35,22 @@ export default function MainPage() {
 
   return (
     <MainLayout>
-      <div className="w-full max-w-[96rem] mx-auto">
+      {/* 가운데 어두운 그라데이션 오버레이 */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 40%, transparent 80%)'
+          }}
+        />
+      </div>
+
+      <div className="relative z-10 w-full max-w-[96rem] mx-auto">
         <NoticeBoard />
-        <div className="flex flex-col gap-16 py-16">
+        <div className="flex flex-col gap-16 py-16">  
           {/* OptionsList 섹션 */}
           <div className="w-full">  
-            <div className="w-full text-center mt-14 mb-8">
+            <div className="w-full text-center mt-16 mb-8">
               <h2 className="text-5xl font-bold text-white mb-8 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-3 ">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +72,7 @@ export default function MainPage() {
                 실시간 인사이트부터 전략 분석까지, 성공적인 투자를 위한 모든
                 기능을 한 곳에 담았습니다.
               </p>
-              <div className="flex justify-center gap-3 mt-6">
+              <div className="flex justify-center gap-3 mt-8">
                 <button
                   onClick={() => navigate('/trade')}
                   className="px-4 py-2 text-sm bg-gradient-to-r from-red-400 via-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"

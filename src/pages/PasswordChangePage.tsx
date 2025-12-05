@@ -37,22 +37,22 @@ export default function PasswordChangePage() {
 
   return (
     <AuthLayout>
-      <Card className="p-8 w-full max-w-md card-login relative z-50 border-none overflow-hidden">
-        <h2 className="flex justify-center text-black text-6xl font-bold mt-5 mb-8 kanit">
-          BinnAIR
-        </h2>
+      <Card className="px-5 pt-0 pb-5 w-full max-w-md card-login relative z-50 border-none overflow-visible">
+        <div className="flex justify-start -mt-14 -mb-20 mr-6 pointer-events-none">
+          <img src="/img/binnair_logo_black.png" alt="BinnAIR" className="h-80 w-auto block leading-none scale-x-150" />
+        </div>
         {submitted ? (
-          <div className="text-center text-white">
-            <p>비밀번호 재설정 링크를 이메일로 보냈습니다.</p>
-            <p className="text-sm opacity-75">이메일을 확인해주세요.</p>
-            <Button onClick={() => navigate('/login')} className="mt-4 w-full">
+          <div className="text-center text-gray-700 relative z-10">
+            <p className="text-sm">비밀번호 재설정 링크를 이메일로 보냈습니다.</p>
+            <p className="text-xs opacity-75 mt-1">이메일을 확인해주세요.</p>
+            <Button onClick={() => navigate('/login')} className="mt-4 w-full py-2 text-sm">
               로그인 화면으로 이동
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-3">
-              <label className="block text-sm font-bold text-gray-700">
+          <form onSubmit={handleSubmit} className="space-y-3 relative z-10">
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-700">
                 이메일 주소
               </label>
               <Input
@@ -61,23 +61,23 @@ export default function PasswordChangePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/90 border border-gray-300 p-2 rounded-md focus:ring-2 focus:ring-blue-400"
+                className="bg-white/90 border border-gray-300 p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
               />
             </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && <p className="text-red-500 text-xs">{error}</p>}
 
-            <Button type="submit" className="w-full py-3" disabled={loading}>
+            <Button type="submit" className="w-full py-2 font-sans text-sm" disabled={loading}>
               {loading ? '요청 중...' : '비밀번호 재설정 요청'}
             </Button>
           </form>
         )}
-        <div className="flex justify-center space-x-4 mt-4">
+        <div className="flex justify-center space-x-3 mt-3 relative z-10">
           <Button
             onClick={() => navigate('/login')}
             variant="outline"
             size="sm"
-            className="text-xs px-3 py-1"
+            className="text-xs px-2 py-0.5"
           >
             로그인으로 돌아가기
           </Button>

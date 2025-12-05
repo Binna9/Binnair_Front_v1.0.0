@@ -14,10 +14,10 @@ export default function GoogleLoginButton() {
   return (
     <button
       onClick={handleGoogleLogin}
-      className="w-80 flex items-center justify-center space-x-3 bg-white text-gray-700 hover:bg-gray-100 rounded-lg shadow-md py-4 border-none"
+      className="w-80 flex items-center justify-center space-x-2 bg-white text-gray-700 hover:bg-gray-200 rounded-lg shadow-md py-3 border-none text-sm"
     >
-      <img src="/img/google-logo.png" alt="Google" className="h-5 w-5" />
-      <span className="font-medium">구글 계정으로 로그인</span>
+      <img src="/img/google-logo.png" alt="Google" className="h-4 w-4" />
+      <span className="font-medium text-xs">구글 계정으로 로그인</span>
     </button>
   );
 }
