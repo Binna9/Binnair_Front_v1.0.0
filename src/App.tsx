@@ -17,6 +17,7 @@ import TradePage from './pages/TradePage';
 import SettingPage from './pages/SettingPage';
 import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './store/store';
@@ -62,17 +63,63 @@ function AppRoutes() {
         }}
       >
         <Routes location={location}>
+          {/* 공개 라우트 */}
           <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/google" element={<GoogleAuthHandler />} />
-          <Route path="/board" element={<BoardPage />} />
-          <Route path="/trade" element={<TradePage />} />
-          <Route path="/ai-monitor" element={<AiMonitorPage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/dashboard" element={<DashBoardPage />} />
-          <Route path="/setting" element={<SettingPage />} />
+          
+          {/* 보호된 라우트 - 로그인 필요 */}
+          <Route
+            path="/trade"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+                <TradePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai-monitor"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+                <AiMonitorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+                <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+                <DashBoardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/board"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+                <BoardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/setting"
+            element={
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN']}>
+                <SettingPage />
+              </ProtectedRoute>
+            }
+          />
+          
           <Route path="*" element={<Login />} />
         </Routes>
       </motion.div>

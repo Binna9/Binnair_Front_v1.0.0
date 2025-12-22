@@ -31,21 +31,8 @@ export default function Navbar() {
   const { profileImage } = useUserImage();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const { showAlert } = useNotification();
 
   const handleMenuClick = (menuName: string) => {
-    if (
-      !user &&
-      [
-        '트레이드아레나',
-        'AI 모니터링',
-        '트레이드 히스토리',
-        '대시보드',
-      ].includes(menuName)
-    ) {
-      showAlert('로그인 필요', '해당 기능을 이용하려면 로그인이 필요합니다.');
-      return;
-    }
     setOpenMenu((prevMenu) => (prevMenu === menuName ? null : menuName));
   };
 
