@@ -43,9 +43,6 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const [formData, setFormData] = useState<Partial<UserResponse>>({ ...user });
   const [, setCurrentUser] = useState<UserResponse | null>(null);
   const { profileImage, uploadProfileImage, refreshImage } = useUserImage();
-  const userImageUrl = useSelector(
-    (state: RootState) => state.auth.userImageUrl
-  );
   const notification = useNotification();
   const dispatch = useDispatch();
 
@@ -287,7 +284,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
                   onChange={handleProfileImageUpload}
                 />
                 <img
-                  src={userImageUrl || profileImage || '/default-profile.png'}
+                  src={profileImage || '/default-profile.png'}
                   alt="Profile"
                   className="w-16 h-16 rounded-full border-2 border-gray-400 shadow-lg object-cover 
                              transition-all duration-300 group-hover:border-blue-400 

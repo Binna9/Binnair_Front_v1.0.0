@@ -16,7 +16,7 @@ export interface AuthState {
   user: UserResponse | null;
   accessToken: string | null;
   refreshToken: string | null;
-  userImageUrl: string | null;
+  userImageVersion: number | null;
 }
 
 export interface UserRequest {

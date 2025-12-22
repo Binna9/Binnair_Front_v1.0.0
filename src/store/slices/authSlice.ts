@@ -14,13 +14,13 @@ interface User {
 interface AuthState {
   accessToken: string | null;
   user: User | null;
-  userImageUrl: string | null;
+  userImageVersion: number | null;
 }
 
 const initialState: AuthState = {
   accessToken: null,
   user: null,
-  userImageUrl: null,
+  userImageVersion: null,
 };
 
 export const authSlice = createSlice({
@@ -40,20 +40,20 @@ export const authSlice = createSlice({
     setUser: (state, action: PayloadAction<AuthState['user']>) => {
       state.user = action.payload;
     },
-    setUserImage: (state, action: PayloadAction<string | null>) => {
-      state.userImageUrl = action.payload;
+    setImageVersion: (state, action: PayloadAction<number | null>) => {
+      state.userImageVersion = action.payload;
     },
     logout: (state) => {
       state.accessToken = null;
       state.user = null;
-      state.userImageUrl = null;
+      state.userImageVersion = null;
       // localStorage 초기화
       storage.removeItem('persist:root');
     },
   },
 });
 
-export const { setCredentials, loginSuccess, setUser, setUserImage, logout } =
+export const { setCredentials, loginSuccess, setUser, setImageVersion, logout } =
   authSlice.actions;
 export const selectAuth = (state: RootState) => state.auth;
 export default authSlice.reducer;
