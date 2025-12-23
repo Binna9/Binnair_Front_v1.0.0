@@ -21,6 +21,7 @@ export const useBoardDetail = (
 
   // 댓글 상태 관리
   const [newComment, setNewComment] = useState('');
+  const [newReplyComment, setNewReplyComment] = useState<Record<string, string>>({});
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
   const [parentCommentId, setParentCommentId] = useState<string | null>(null);
@@ -190,7 +191,11 @@ export const useBoardDetail = (
 
         // 댓글 추가 후 게시글 정보 새로고침
         loadBoard();
-        setNewComment('');
+        setNewReplyComment((prev) => {
+          const updated = { ...prev };
+          delete updated[parentId];
+          return updated;
+        });
         setParentCommentId(null);
         notification.showAlert('SUCCESS', '답글이 작성되었습니다.');
       } catch (error) {
@@ -258,6 +263,8 @@ export const useBoardDetail = (
     error,
     newComment,
     setNewComment,
+    newReplyComment,
+    setNewReplyComment,
     editingCommentId,
     editedContent,
     setEditedContent,

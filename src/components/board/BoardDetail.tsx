@@ -45,6 +45,8 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
     error,
     newComment,
     setNewComment,
+    newReplyComment,
+    setNewReplyComment,
     editingCommentId,
     editedContent,
     setEditedContent,
@@ -157,8 +159,13 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
           {parentCommentId === comment.commentId && (
             <div className="mt-2 p-2 border-l-4 border-blue-300">
               <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                value={newReplyComment[comment.commentId] || ''}
+                onChange={(e) =>
+                  setNewReplyComment((prev) => ({
+                    ...prev,
+                    [comment.commentId]: e.target.value,
+                  }))
+                }
                 placeholder="답글을 작성하세요..."
                 className="w-full p-1.5 border rounded-lg resize-none text-sm"
                 rows={2}
@@ -166,10 +173,14 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
               <div className="flex justify-end mt-2">
                 <button
                   onClick={(e) =>
-                    handleReplySubmit(e, newComment, comment.commentId)
+                    handleReplySubmit(
+                      e,
+                      newReplyComment[comment.commentId] || '',
+                      comment.commentId
+                    )
                   }
                   className="bg-blue-500 hover:bg-blue-600 text-white p-2 transition-all rounded-full shadow-md hover:shadow-lg active:scale-90 flex items-center justify-center mr-3"
-                  disabled={!newComment.trim()}
+                  disabled={!newReplyComment[comment.commentId]?.trim()}
                 >
                   <Send className="w-4 h-4" />
                 </button>
