@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CommentResponse } from '@/types/CommentTypes';
 import { useBoardDetail } from '@/hooks/board/useBoardDetail';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 type BoardDetailProps = {
   boardId: string;
@@ -199,13 +200,7 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
     ));
   };
 
-  if (loading) {
-    return (
-      <div className="w-full text-center py-8">게시글을 불러오는 중...</div>
-    );
-  }
-
-  if (error || !board) {
+  if (error || (!loading && !board)) {
     return (
       <div className="w-full">
         <button
@@ -222,7 +217,8 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
   }
 
   return (
-    <div className="w-full">
+    <LoadingOverlay isLoading={loading} message="게시글을 불러오는 중...">
+      <div className="w-full">
       <button
         onClick={onBack}
         className="mb-3 px-2 py-1 bg-zinc-100 text-gray-800 font-bold rounded-lg shadow-md hover:bg-zinc-200 transition text-sm"
@@ -230,6 +226,8 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
         List Back
       </button>
 
+      {board && (
+        <>
       <div className="bg-zinc-50 p-4 rounded-lg shadow-lg border">
         <div className="flex justify-between items-start mb-2">
           <div className="flex items-center">
@@ -395,7 +393,10 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
           )}
         </div>
       </div>
-    </div>
+        </>
+      )}
+      </div>
+    </LoadingOverlay>
   );
 };
 

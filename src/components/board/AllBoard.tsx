@@ -14,9 +14,10 @@ import {
   ThumbsDown,
 } from 'lucide-react';
 import { BoardType } from '@/types/BoardEnum';
-import { useAllBoard } from '@/hooks/board/useAllBoard'; // Import the custom hook
+import { useAllBoard, BoardContentPreview } from '@/hooks/board/useAllBoard';
 import { useNotification } from '@/context/NotificationContext';
 import BoardDetail from './BoardDetail';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 // ✅ 섹션 배열 (아이콘 추가)
 const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
@@ -287,123 +288,123 @@ export default function Board() {
             />
           ) : (
             // ✅ 게시글 목록
-            <>
-              {loading ? (
-                <p className="text-gray-600 text-sm">⏳ 데이터를 불러오는 중...</p>
-              ) : error ? (
+            <LoadingOverlay isLoading={loading} message="데이터를 불러오는 중...">
+              {error ? (
                 <p className="text-red-500 text-sm">{error}</p>
               ) : boards?.content?.length === 0 ? (
                 <p className="text-gray-500 text-sm">게시글이 없습니다.</p>
               ) : (
-                <ul className="space-y-3">
-                  {boards?.content?.map((board) => (
-                    <li key={board.boardId} className="border-b pb-3">
-                      <div className="flex justify-between items-start">
-                        {/* 제목 클릭 시 상세 페이지 보기 */}
-                        <h2
-                          className="text-lg font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500 cursor-pointer"
-                          onClick={() => handleViewDetail(board.boardId)}
-                        >
-                          {board.title}
-                        </h2>
-                        {/* 수정/삭제 버튼 및 추가 정보 */}
-                        <div className="flex items-center space-x-3 text-gray-600 text-xs">
-                          {/* 작성자, 조회수, 좋아요 */}
-                          <span>
-                            {' • '}작성자 : {board.writerName}
-                          </span>
-                          <span>
-                            {' • '}조회수 : {board.views}
-                          </span>
-                          <button
-                            onClick={() =>
-                              requireLogin(() =>
-                                handleToggleLike(board.boardId)
-                              )
-                            }
-                            className="flex items-center space-x-1 hover:text-blue-400 transition"
-                            title="좋아요"
+                <>
+                  <ul className="space-y-3">
+                    {boards?.content?.map((board) => (
+                      <li key={board.boardId} className="border-b pb-3">
+                        <div className="flex justify-between items-start">
+                          {/* 제목 클릭 시 상세 페이지 보기 */}
+                          <h2
+                            className="text-lg font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500 cursor-pointer"
+                            onClick={() => handleViewDetail(board.boardId)}
                           >
-                            <ThumbsUp
-                              className={`w-4 h-4 ${
-                                board.likes ? 'text-blue-400 fill-blue-400' : ''
-                              }`}
-                            />
-                            <span>{board.likes}</span>
-                          </button>
-                          <button
-                            onClick={() =>
-                              requireLogin(() =>
-                                handleToggleUnlike(board.boardId)
-                              )
-                            }
-                            className="flex items-center space-x-1 hover:text-red-400 transition"
-                            title="싫어요"
-                          >
-                            <ThumbsDown
-                              className={`w-4 h-4 ${
-                                board.unlikes ? 'text-red-400 fill-red-400' : ''
-                              }`}
-                            />
-                            <span>{board.unlikes}</span>
-                          </button>
-                          {/* 수정/삭제 버튼 */}
-                          <button
-                            onClick={() =>
-                              requireLogin(() => handleEdit(board.boardId))
-                            }
-                            className="text-blue-500 hover:text-blue-700 transition"
-                            title="수정"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              requireLogin(() => handleDelete(board.boardId))
-                            }
-                            className="text-red-500 hover:text-red-700 transition"
-                            title="삭제"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            {board.title}
+                          </h2>
+                          {/* 수정/삭제 버튼 및 추가 정보 */}
+                          <div className="flex items-center space-x-3 text-gray-600 text-xs">
+                            {/* 작성자, 조회수, 좋아요 */}
+                            <span>
+                              {' • '}작성자 : {board.writerName}
+                            </span>
+                            <span>
+                              {' • '}조회수 : {board.views}
+                            </span>
+                            <button
+                              onClick={() =>
+                                requireLogin(() =>
+                                  handleToggleLike(board.boardId)
+                                )
+                              }
+                              className="flex items-center space-x-1 hover:text-blue-400 transition"
+                              title="좋아요"
+                            >
+                              <ThumbsUp
+                                className={`w-4 h-4 ${
+                                  board.likes ? 'text-blue-400 fill-blue-400' : ''
+                                }`}
+                              />
+                              <span>{board.likes}</span>
+                            </button>
+                            <button
+                              onClick={() =>
+                                requireLogin(() =>
+                                  handleToggleUnlike(board.boardId)
+                                )
+                              }
+                              className="flex items-center space-x-1 hover:text-red-400 transition"
+                              title="싫어요"
+                            >
+                              <ThumbsDown
+                                className={`w-4 h-4 ${
+                                  board.unlikes ? 'text-red-400 fill-red-400' : ''
+                                }`}
+                              />
+                              <span>{board.unlikes}</span>
+                            </button>
+                            {/* 수정/삭제 버튼 */}
+                            <button
+                              onClick={() =>
+                                requireLogin(() => handleEdit(board.boardId))
+                              }
+                              className="text-blue-500 hover:text-blue-700 transition"
+                              title="수정"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                requireLogin(() => handleDelete(board.boardId))
+                              }
+                              className="text-red-500 hover:text-red-700 transition"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* ✅ 생성 날짜 추가 (시, 분, 초) */}
-                      <p className="text-gray-500 text-xs mt-1">
-                        {new Date(board.createDatetime).toLocaleTimeString(
-                          'ko-KR',
-                          {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                          }
-                        )}
-                      </p>
-                      <p className="text-gray-800 mt-1 text-sm">{board.content}</p>
-                    </li>
-                  ))}
-                </ul>
+                        {/* ✅ 생성 날짜 추가 (시, 분, 초) */}
+                        <p className="text-gray-500 text-xs mt-1">
+                          {new Date(board.createDatetime).toLocaleTimeString(
+                            'ko-KR',
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            }
+                          )}
+                        </p>
+                        <BoardContentPreview content={board.content} />
+                      </li>
+                    ))}
+                  </ul>
+                  {boards?.totalPages > 0 && (
+                    <div className="flex justify-center gap-1 mt-3">
+                      {/* 페이지 번호 버튼만 표시 */}
+                      {Array.from({ length: boards.totalPages }, (_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePageChange(index)}
+                          className={`px-2 py-1 rounded-md text-sm ${
+                            currentPage === index
+                              ? 'bg-zinc-500 text-white font-bold'
+                              : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
-              {boards?.totalPages > 0 && (
-                <div className="flex justify-center gap-1 mt-3">
-                  {/* 페이지 번호 버튼만 표시 */}
-                  {Array.from({ length: boards.totalPages }, (_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handlePageChange(index)}
-                      className={`px-2 py-1 rounded-md text-sm ${
-                        currentPage === index
-                          ? 'bg-zinc-500 text-white font-bold'
-                          : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
-                      }`}
-                    >
-                      {index + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
+            </LoadingOverlay>
           )}
         </div>
       </div>

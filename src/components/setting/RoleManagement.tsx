@@ -513,7 +513,7 @@ export default function RoleManagement() {
           </DialogHeader>
           <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
             {/* 역할 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '40%' }}>
+            <div className="flex flex-col min-h-0" style={{ height: '35%' }}>
               <Label className="text-xs mb-2 block flex-shrink-0">
                 역할 선택 ({selectedPermissionRoles.length}개 선택됨)
               </Label>
@@ -578,7 +578,7 @@ export default function RoleManagement() {
             </div>
 
             {/* 권한 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '40%' }}>
+            <div className="flex flex-col min-h-0" style={{ height: '50%' }}>
               <Label className="text-xs mb-2 block flex-shrink-0">
                 권한 선택 ({selectedPermissionNames.length}개 선택됨)
               </Label>
@@ -654,7 +654,7 @@ export default function RoleManagement() {
           </DialogHeader>
           <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
             {/* 역할 선택 (단일) */}
-            <div className="flex flex-col min-h-0" style={{ height: '40%' }}>
+            <div className="flex flex-col min-h-0" style={{ height: '35%' }}>
               <Label className="text-xs mb-2 block flex-shrink-0">
                 역할 선택{' '}
                 {selectedRemovePermissionRole &&
@@ -723,7 +723,7 @@ export default function RoleManagement() {
             </div>
 
             {/* 권한 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '40%' }}>
+            <div className="flex flex-col min-h-0" style={{ height: '50%' }}>
               <Label className="text-xs mb-2 block flex-shrink-0">
                 권한 선택 ({selectedRemovePermissionNames.length}개 선택됨)
               </Label>

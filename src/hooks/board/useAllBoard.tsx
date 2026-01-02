@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
@@ -11,6 +12,42 @@ import {
 import { BoardType } from '@/types/BoardEnum';
 import { useNotification } from '@/context/NotificationContext';
 import { boardService } from '@/services/BoardService';
+
+// 게시글 내용 미리보기 컴포넌트 (3줄 제한 + 그라데이션)
+export const BoardContentPreview = ({ content }: { content: string }) => {
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const [showGradient, setShowGradient] = useState(false);
+
+  useEffect(() => {
+    if (textRef.current) {
+      // 실제 텍스트의 스크롤 높이와 클라이언트 높이를 비교
+      const scrollHeight = textRef.current.scrollHeight;
+      const clientHeight = textRef.current.clientHeight;
+      // 스크롤이 필요하면 (텍스트가 잘렸으면) 그라데이션 표시
+      setShowGradient(scrollHeight > clientHeight);
+    }
+  }, [content]);
+
+  return (
+    <div className="relative mt-1">
+      <p
+        ref={textRef}
+        className="text-gray-800 text-sm line-clamp-3"
+      >
+        {content}
+      </p>
+      {showGradient && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to bottom, transparent, rgba(255, 255, 255, 1))',
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
 export function useAllBoard() {
   const accessToken = useSelector((state: RootState) => state.auth.accessToken);
