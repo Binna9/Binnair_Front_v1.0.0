@@ -25,6 +25,7 @@ import { useNotification } from '@/context/NotificationContext';
 import { useProfile } from '@/hooks/user/useUserProfile';
 import { roleService } from '@/services/RoleService';
 import { RoleResponse } from '@/types/RoleTypes';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 export default function UserManagement() {
   const { showConfirm, showToast } = useNotification();
@@ -318,27 +319,22 @@ export default function UserManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">이름</TableHead>
-              <TableHead className="text-xs">닉네임</TableHead>
-              <TableHead className="text-xs">이메일</TableHead>
-              <TableHead className="text-xs">전화번호</TableHead>
-              <TableHead className="text-xs">역할</TableHead>
-              <TableHead className="text-xs">상태</TableHead>
-              <TableHead className="text-right text-xs">삭제</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      <LoadingOverlay isLoading={isLoading} message="사용자 목록을 불러오는 중...">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-xs">
-                  로딩 중...
-                </TableCell>
+                <TableHead className="text-xs">이름</TableHead>
+                <TableHead className="text-xs">닉네임</TableHead>
+                <TableHead className="text-xs">이메일</TableHead>
+                <TableHead className="text-xs">전화번호</TableHead>
+                <TableHead className="text-xs">역할</TableHead>
+                <TableHead className="text-xs">상태</TableHead>
+                <TableHead className="text-right text-xs">삭제</TableHead>
               </TableRow>
-            ) : filteredUsers.length === 0 ? (
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-xs">
                   사용자가 없습니다
@@ -425,23 +421,24 @@ export default function UserManagement() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
 
-        {/* 페이지네이션 */}
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <Button
-              key={i}
-              variant={currentPage === i ? 'default' : 'outline'}
-              onClick={() => setCurrentPage(i)}
-              className="w-8 h-8 p-0 text-xs"
-            >
-              {i + 1}
-            </Button>
-          ))}
+          {/* 페이지네이션 */}
+          <div className="flex justify-center gap-2 mt-4">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={currentPage === i ? 'default' : 'outline'}
+                onClick={() => setCurrentPage(i)}
+                className="w-8 h-8 p-0 text-xs"
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      </LoadingOverlay>
 
       {/* 사용자 삭제 다이얼로그 */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

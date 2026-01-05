@@ -25,6 +25,7 @@ import {
 import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNotification } from '@/context/NotificationContext';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 export default function PermissionManagement() {
   const { showConfirm } = useNotification();
@@ -162,7 +163,8 @@ export default function PermissionManagement() {
 
   // 검색어에 따른 권한 필터링
   const filteredPermissions = permissions.filter((permission) =>
-    permission.permissionName.toLowerCase().includes(searchTerm.toLowerCase())
+    permission.permissionName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (permission.permissionDescription?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -177,24 +179,19 @@ export default function PermissionManagement() {
         <Button onClick={() => handleFormOpen()} className="text-xs">권한 추가</Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <Table>
-          <TableHeader>
-            <TableRow key="header">
-              <TableHead className="text-xs">권한 명</TableHead>
-              <TableHead className="text-xs">설명</TableHead>
-              <TableHead className="text-center text-xs">수정</TableHead>
-              <TableHead className="text-center text-xs">삭제</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow key="loading">
-                <TableCell colSpan={4} className="text-center text-xs">
-                  로딩 중...
-                </TableCell>
+      <LoadingOverlay isLoading={isLoading} message="권한 목록을 불러오는 중...">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <Table>
+            <TableHeader>
+              <TableRow key="header">
+                <TableHead className="text-xs">권한 명</TableHead>
+                <TableHead className="text-xs">설명</TableHead>
+                <TableHead className="text-center text-xs">수정</TableHead>
+                <TableHead className="text-center text-xs">삭제</TableHead>
               </TableRow>
-            ) : filteredPermissions.length === 0 ? (
+            </TableHeader>
+            <TableBody>
+              {filteredPermissions.length === 0 ? (
               <TableRow key="empty">
                 <TableCell colSpan={4} className="text-center text-xs">
                   권한이 없습니다
@@ -230,47 +227,48 @@ export default function PermissionManagement() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
 
-        {/* 페이지네이션 수정 */}
-        {totalPages > 0 && (
-          <div className="flex justify-center items-center gap-2 mt-4">
-            <Button
-              key="prev"
-              variant="outline"
-              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-              className="text-xs"
-            >
-              이전
-            </Button>
-            <div className="flex gap-1">
-              {Array.from({ length: totalPages }, (_, i) => (
-                <Button
-                  key={`page-${i}`}
-                  variant={currentPage === i ? 'default' : 'outline'}
-                  onClick={() => setCurrentPage(i)}
-                  className="w-8 h-8 p-0 text-xs"
-                >
-                  {i + 1}
-                </Button>
-              ))}
+          {/* 페이지네이션 수정 */}
+          {totalPages > 0 && (
+            <div className="flex justify-center items-center gap-2 mt-4">
+              <Button
+                key="prev"
+                variant="outline"
+                onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                disabled={currentPage === 0}
+                className="text-xs"
+              >
+                이전
+              </Button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <Button
+                    key={`page-${i}`}
+                    variant={currentPage === i ? 'default' : 'outline'}
+                    onClick={() => setCurrentPage(i)}
+                    className="w-8 h-8 p-0 text-xs"
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                key="next"
+                variant="outline"
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
+                }
+                disabled={currentPage === totalPages - 1}
+                className="text-xs"
+              >
+                다음
+              </Button>
             </div>
-            <Button
-              key="next"
-              variant="outline"
-              onClick={() =>
-                setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
-              }
-              disabled={currentPage === totalPages - 1}
-              className="text-xs"
-            >
-              다음
-            </Button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </LoadingOverlay>
 
       {/* 권한 생성/수정 다이얼로그 */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>

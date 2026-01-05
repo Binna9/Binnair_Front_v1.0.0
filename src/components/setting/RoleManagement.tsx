@@ -23,6 +23,7 @@ import { RoleResponse } from '@/types/RoleTypes';
 import { PermissionResponse } from '@/types/PermissionTypes';
 import { Pencil, Trash2, ShieldPlus, ShieldMinus } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 export default function RoleManagement() {
   const { showConfirm, showToast } = useNotification();
@@ -338,25 +339,20 @@ export default function RoleManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">역할 명</TableHead>
-              <TableHead className="text-xs">설명</TableHead>
-              <TableHead className="text-xs w-90">권한</TableHead>
-              <TableHead className="text-center text-xs">수정</TableHead>
-              <TableHead className="text-center text-xs">삭제</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+      <LoadingOverlay isLoading={isLoading} message="역할 목록을 불러오는 중...">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-xs">
-                  로딩 중...
-                </TableCell>
+                <TableHead className="text-xs">역할 명</TableHead>
+                <TableHead className="text-xs">설명</TableHead>
+                <TableHead className="text-xs w-90">권한</TableHead>
+                <TableHead className="text-center text-xs">수정</TableHead>
+                <TableHead className="text-center text-xs">삭제</TableHead>
               </TableRow>
-            ) : filteredRoles.length === 0 ? (
+            </TableHeader>
+            <TableBody>
+              {filteredRoles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-xs">
                   역할이 없습니다
@@ -413,23 +409,24 @@ export default function RoleManagement() {
                 </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+            </TableBody>
+          </Table>
 
-        {/* 페이지네이션 */}
-        <div className="flex justify-center gap-2 mt-4">
-          {Array.from({ length: totalPages }, (_, i) => (
-            <Button
-              key={i}
-              variant={currentPage === i ? 'default' : 'outline'}
-              onClick={() => setCurrentPage(i)}
-              className="w-8 h-8 p-0 text-xs"
-            >
-              {i + 1}
-            </Button>
-          ))}
+          {/* 페이지네이션 */}
+          <div className="flex justify-center gap-2 mt-4">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={currentPage === i ? 'default' : 'outline'}
+                onClick={() => setCurrentPage(i)}
+                className="w-8 h-8 p-0 text-xs"
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      </LoadingOverlay>
 
       {/* 역할 생성/수정 다이얼로그 */}
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
