@@ -73,7 +73,7 @@ export function useAuth() {
     if (isConfirmed) {
       await logoutUser();
       dispatch(logout()); // ✅ Redux에서 accessToken 및 user 초기화
-      navigate('/auth/login');
+      navigate('/login');
     }
   };
 

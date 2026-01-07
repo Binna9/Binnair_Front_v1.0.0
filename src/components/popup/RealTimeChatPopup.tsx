@@ -27,7 +27,7 @@ const getWebSocketUrl = () => {
 
   return isDevelopment
     ? 'ws://localhost:8080/websocket'
-    : 'wss://www.ballbin.com/websocket';
+    : 'wss://www.binnair.com/websocket';
 };
 
 const WS_URL = getWebSocketUrl();

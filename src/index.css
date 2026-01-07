@@ -5,6 +5,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes toast-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 .kanit {
   font-family: 'Kanit', sans-serif;
 }

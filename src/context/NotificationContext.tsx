@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+} from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +28,49 @@ type ToastPosition =
   | 'bottom-right'
   | 'bottom-center'
   | 'bottom-left';
+
+// 상단에 추가 (컴포넌트 밖에 두면 렌더 비용 줄어듦)
+const POSITIONS: ToastPosition[] = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+];
+
+const STATUS_STYLE: Record<
+  ToastStatus,
+  { accent: string; ring: string; icon: string }
+> = {
+  success: {
+    accent: 'bg-emerald-500',
+    ring: 'ring-emerald-400/30',
+    icon: 'text-emerald-500',
+  },
+  error: {
+    accent: 'bg-rose-500',
+    ring: 'ring-rose-400/30',
+    icon: 'text-rose-500',
+  },
+  warning: {
+    accent: 'bg-amber-500',
+    ring: 'ring-amber-400/30',
+    icon: 'text-amber-500',
+  },
+  info: {
+    accent: 'bg-sky-500',
+    ring: 'ring-sky-400/30',
+    icon: 'text-sky-500',
+  },
+  default: {
+    accent: 'bg-zinc-400',
+    ring: 'ring-zinc-400/25',
+    icon: 'text-zinc-500',
+  },
+};
+
+const MAX_TOASTS = 5;
 
 // 알림 인터페이스 정의
 interface NotificationData {
@@ -75,6 +125,29 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     Array<NotificationData & { id: string }>
   >([]);
 
+  // id별 timeout 누적 방지 및 cleanup을 위해 Map으로 관리
+  const toastTimeoutsRef = useRef<Map<string, number>>(new Map());
+
+  const clearToastTimeout = (id: string) => {
+    const handle = toastTimeoutsRef.current.get(id);
+    if (handle !== undefined) {
+      window.clearTimeout(handle);
+      toastTimeoutsRef.current.delete(id);
+    }
+  };
+
+  const removeToast = (id: string) => {
+    clearToastTimeout(id);
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  };
+
+  useEffect(() => {
+    return () => {
+      toastTimeoutsRef.current.forEach((handle) => window.clearTimeout(handle));
+      toastTimeoutsRef.current.clear();
+    };
+  }, []);
+
   const showConfirm = (title: string, message: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setNotification({
@@ -109,7 +182,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     duration = 5000,
     position: ToastPosition = 'top-right'
   ) => {
-    const id = Date.now().toString();
+    const id =
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const toast = {
       id,
       type: 'toast' as NotificationType,
@@ -120,11 +196,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       status,
     };
 
-    setToasts((prev) => [...prev, toast]);
+    setToasts((prev) => {
+      const next = [...prev, toast];
+      if (next.length <= MAX_TOASTS) return next;
 
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, duration);
+      const overflow = next.length - MAX_TOASTS;
+      const removed = next.slice(0, overflow);
+      removed.forEach((t) => clearToastTimeout(t.id));
+      return next.slice(overflow);
+    });
+
+    clearToastTimeout(id);
+    const timeoutHandle = window.setTimeout(() => removeToast(id), duration);
+    toastTimeoutsRef.current.set(id, timeoutHandle);
   };
 
   const hideNotification = () => {
@@ -143,10 +227,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       notification.onCancel();
     }
     hideNotification();
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   // 토스트 위치에 따른 클래스 지정
@@ -168,105 +248,92 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     }
   };
 
-  // 토스트 상태에 따른 클래스 지정
-  const getStatusClasses = (status: ToastStatus) => {
-    switch (status) {
-      case 'success':
-        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
-      case 'error':
-        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-      case 'warning':
-        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-      case 'info':
-        return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
-      case 'default':
-      default:
-        return 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700';
-    }
-  };
-
-  // 토스트 상태에 따른 아이콘 표시
+  // 토스트 상태에 따른 아이콘 표시 (더 심플한 디자인)
   const getStatusIcon = (status: ToastStatus) => {
+    const iconClass = 'w-5 h-5';
     switch (status) {
       case 'success':
         return (
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-4 h-4 text-green-500 dark:text-green-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iconClass}
           >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         );
       case 'error':
         return (
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-4 h-4 text-red-500 dark:text-red-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iconClass}
           >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
         );
       case 'warning':
         return (
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-4 h-4 text-yellow-500 dark:text-yellow-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iconClass}
           >
-            <path
-              fillRule="evenodd"
-              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
         );
       case 'info':
         return (
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-4 h-4 text-blue-500 dark:text-blue-400"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iconClass}
           >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z"
-              clipRule="evenodd"
-            />
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
         );
       default:
-        return null;
-    }
-  };
-
-  // 토스트 상태에 따른 제목 텍스트 색상
-  const getTitleColorClass = (status: ToastStatus) => {
-    switch (status) {
-      case 'success':
-        return 'text-green-800 dark:text-green-200';
-      case 'error':
-        return 'text-red-800 dark:text-red-200';
-      case 'warning':
-        return 'text-yellow-800 dark:text-yellow-200';
-      case 'info':
-        return 'text-blue-800 dark:text-blue-200';
-      case 'default':
-      default:
-        return 'text-gray-900 dark:text-white';
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={iconClass}
+          >
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
     }
   };
 
@@ -295,101 +362,109 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       </Dialog>
 
       {/* 토스트 컨테이너들 */}
-      {[
-        'top-left',
-        'top-center',
-        'top-right',
-        'bottom-left',
-        'bottom-center',
-        'bottom-right',
-      ].map((position) => (
+      {POSITIONS.map((position) => (
         <div
           key={position}
-          className={`fixed z-50 flex flex-col gap-2 ${getPositionClasses(
-            position as ToastPosition
-          )}`}
+          className={`fixed z-50 flex flex-col gap-3 ${getPositionClasses(position)}`}
         >
           {toasts
             .filter((toast) => toast.position === position)
-            .map((toast) => (
-              <div
-              key={toast.id}
-              className={`relative overflow-hidden backdrop-blur-sm shadow-2xl rounded-2xl p-4 min-w-[20rem] max-w-sm animate-in fade-in slide-in-from-top-5 duration-500 border-2 ${getStatusClasses(
-                toast.status || 'default'
-              )}`}
-              role="alert"
-              style={{
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              }}
-            >
-              {/* 배경 그라디언트 효과 */}
-              <div className="absolute inset-0 opacity-30">
-                <div className={`absolute inset-0 ${
-                  toast.status === 'success' ? 'bg-gradient-to-br from-green-400 to-emerald-500' :
-                  toast.status === 'error' ? 'bg-gradient-to-br from-red-400 to-rose-500' :
-                  toast.status === 'warning' ? 'bg-gradient-to-br from-yellow-400 to-amber-500' :
-                  toast.status === 'info' ? 'bg-gradient-to-br from-blue-400 to-cyan-500' :
-                  'bg-gradient-to-br from-gray-300 to-gray-400'
-                }`} />
-              </div>
+            .map((toast) => {
+              const status = toast.status ?? 'default';
+              const s = STATUS_STYLE[status];
 
-              {/* 애니메이션 바 */}
-              <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-50 animate-pulse" 
-                   style={{ 
-                     width: '100%',
-                     animation: `shrink ${toast.duration}ms linear forwards`
-                   }} 
-              />
-
-              <div className="relative flex items-start space-x-3">
-                {/* 아이콘 영역 - 더 크고 눈에 띄게 */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
-                     style={{
-                       background: toast.status === 'success' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' :
-                                 toast.status === 'error' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' :
-                                 toast.status === 'warning' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
-                                 toast.status === 'info' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' :
-                                 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)'
-                     }}>
-                  <div className="w-6 h-6 text-white">
-                    {getStatusIcon(toast.status || 'default')}
-                  </div>
-                </div>
-
-                {/* 텍스트 영역 */}
-                <div className="flex-1 pt-0.5">
-                  <h3 className={`text-base font-bold tracking-tight ${getTitleColorClass(
-                      toast.status || 'default'
-                    )}`}>
-                    {toast.title}
-                  </h3>
-                  <div className="mt-1 text-sm leading-relaxed text-gray-700 dark:text-gray-200">
-                    {toast.message}
-                  </div>
-                </div>
-
-                {/* 닫기 버튼 - 더 현대적인 디자인 */}
-                <button
-                  type="button"
-                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
-                  onClick={() => removeToast(toast.id)}
+              return (
+                <div
+                  key={toast.id}
+                  role="alert"
+                  className={[
+                    // gradient border wrapper
+                    'relative rounded-2xl p-[1px]',
+                    'bg-gradient-to-br from-white/60 via-white/20 to-white/60 dark:from-white/10 dark:via-white/5 dark:to-white/10',
+                    // depth
+                    'shadow-[0_18px_60px_-18px_rgba(0,0,0,0.35)] dark:shadow-[0_22px_70px_-22px_rgba(0,0,0,0.65)]',
+                    // motion
+                    'animate-in fade-in zoom-in-95 duration-200',
+                  ].join(' ')}
                 >
-                  <span className="sr-only">닫기</span>
-                  <svg
-                    className="h-4 w-4 text-gray-500 dark:text-gray-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                  <div
+                    className={[
+                      'relative overflow-hidden rounded-2xl',
+                      'bg-white/85 dark:bg-zinc-950/72',
+                      'backdrop-blur-xl',
+                      'ring-1 ring-black/5 dark:ring-white/10',
+                      `ring-2 ${s.ring}`, // 상태별 은은한 링
+                      'min-w-[320px] max-w-md',
+                      'transition-transform will-change-transform',
+                      'hover:-translate-y-0.5 hover:shadow-[0_24px_80px_-28px_rgba(0,0,0,0.45)]',
+                      'active:translate-y-0',
+                    ].join(' ')}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
+                    {/* 좌측 accent bar */}
+                    <div
+                      className={`absolute left-0 top-0 h-full w-1.5 ${s.accent}`}
                     />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            ))}
+
+                    {/* 상단 progress bar (은은한 라인) */}
+                    <div className="absolute left-0 top-0 h-[2px] w-full bg-black/5 dark:bg-white/10">
+                      <div
+                        className={`h-full ${s.accent} opacity-70`}
+                        style={{
+                          width: '100%',
+                          animation: `toast-shrink ${toast.duration}ms linear forwards`,
+                          transformOrigin: 'left',
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-start gap-3 p-4 pl-5">
+                      {/* 아이콘 */}
+                      <div className={`mt-0.5 flex-shrink-0 ${s.icon}`}>
+                        {getStatusIcon(status)}
+                      </div>
+
+                      {/* 텍스트 */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold leading-5 text-zinc-900 dark:text-zinc-50">
+                          {toast.title}
+                        </h3>
+                        {!!toast.message && (
+                          <p className="mt-1 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                            {toast.message}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 닫기 */}
+                      <button
+                        type="button"
+                        onClick={() => removeToast(toast.id)}
+                        aria-label="닫기"
+                        className={[
+                          'flex-shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-xl',
+                          'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200',
+                          'hover:bg-black/5 dark:hover:bg-white/10',
+                          'transition-colors',
+                        ].join(' ')}
+                      >
+                        <svg
+                          className="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       ))}
     </NotificationContext.Provider>
