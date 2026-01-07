@@ -37,7 +37,7 @@ export default function MainPage() {
     <MainLayout>
       {/* 가운데 어두운 그라데이션 오버레이 */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 40%, transparent 80%)'
@@ -47,9 +47,9 @@ export default function MainPage() {
 
       <div className="relative z-10 w-full max-w-[96rem] mx-auto">
         <NoticeBoard />
-        <div className="flex flex-col gap-16 py-16">  
+        <div className="flex flex-col gap-16 py-16">
           {/* OptionsList 섹션 */}
-          <div className="w-full">  
+          <div className="w-full">
             <div className="w-full text-center mt-16 mb-8">
               <h2 className="text-5xl font-bold text-white mb-8 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-3 ">
                 <svg
@@ -94,49 +94,60 @@ export default function MainPage() {
           {/* PopularCard 섹션 */}
           <div
             ref={popularRef}
-            className={`w-full transition-all duration-700 transform ${
-              isPopularVisible
+            className={`w-full transition-all duration-700 transform ${isPopularVisible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-20'
-            } my-8`}
+              } my-8`}
           >
-            <div className="w-fit mr-auto text-left pl-32 mb-8">
-              <h2 className="text-4xl font-bold text-white mb-3 custom-text-shadow">
-                Leafy Haven: Indoor
-              </h2>
+            <div className="w-fit mx-auto text-center mb-8">
               <p className="text-base text-white mb-4 custom-text-shadow">
-                Transform your space into a green sanctuary with our carefully
-                curated selection of indoor plants. <br></br> Each plant is
-                chosen for its unique characteristics and air-purifying
-                qualities.
+                주식·코인 예측 그래프와 뉴스/이슈 위험도 지표를 한 곳에서 확인하세요.
+                <br />
+                실시간 데이터 업데이트와 근거 기반 스코어로 빠르게 의사결정합니다.
               </p>
+              {/* 선택: 버튼 2개를 두면 전환율이 더 좋음 */}
+              <div className="flex justify-center gap-3 mt-4">
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="px-5 py-2 rounded-lg bg-white/35 text-white hover:bg-white/50 backdrop-blur">
+                  예측 그래프 보기
+                </button>
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="px-5 py-2 rounded-lg bg-white/35 text-white hover:bg-white/50 backdrop-blur">
+                  위험도 대시보드
+                </button>
+              </div>
             </div>
+
             <div className="flex flex-col sm:flex-row justify-center items-center gap-6 sm:gap-8">
               <PopularCard
                 gradient="pink-blue"
-                title="Hot This Month!"
-                description="BinnAIR"
+                title="Prediction Graphs"
+                description="주식·코인 예측 + 멀티 타임프레임 시그널"
+                image="/img/popular_card_01.png"
               />
               <PopularCard
                 gradient="purple-cyan"
-                title="Hot Last Month!"
-                description="BinnAIR"
+                title="News Risk Radar"
+                description="뉴스/사회 이슈 크롤링 → 위험도 스코어링"
+                image="/img/popular_card_02.png"
               />
               <PopularCard
                 gradient="pink-blue"
-                title="Hot This Month!"
-                description="BinnAIR"
+                title="Today’s Snapshot"
+                description="Top 위험 키워드 · 변동성 상위 종목"
+                image="/img/popular_card_03.png"
               />
             </div>
           </div>
           {/* 구독 플랜 섹션 (MachineCard 대체) */}
           <div
             ref={machineRef}
-            className={`w-full transition-all duration-700 transform ${
-              isMachineVisible
+            className={`w-full transition-all duration-700 transform ${isMachineVisible
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-20'
-            } my-8`}
+              } my-8`}
           >
             <div className="w-fit mx-auto text-center mb-8">
               <h2 className="text-4xl font-bold text-white mb-3 custom-text-shadow">

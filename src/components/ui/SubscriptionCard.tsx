@@ -14,7 +14,7 @@ const SubscriptionCard = ({
     <div className="relative w-full sm:w-auto max-w-sm">
       {isPopular && (
         <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white py-1 px-4 rounded-full text-sm font-bold shadow-lg z-20">
-          가장 인기있는 플랜
+          Best Plan
         </div>
       )}
       <div

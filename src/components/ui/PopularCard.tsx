@@ -6,18 +6,26 @@ interface PopularCardProps {
   gradient?: 'pink-blue' | 'purple-cyan';
   title: string;
   description: string;
+  image?: string;
 }
 
 const PopularCard: React.FC<PopularCardProps> = ({
   gradient = 'pink-blue',
   title,
   description,
+  image,
 }) => {
   return (
     <StyledWrapper className={gradient}>
       <StyledCard>
-        <p className="heading">{title}</p>
-        <p>{description}</p>
+        {image && (
+          <StyledImageContainer>
+            <img src={image} alt={title} className="card-image" />
+          </StyledImageContainer>
+        )}
+        <div className="card-content">
+          <p className="heading">{title}</p>
+        </div>
       </StyledCard>
     </StyledWrapper>
   );
@@ -54,6 +62,38 @@ const StyledWrapper = styled.div`
   }
 `;
 
+/* ✅ 이미지 컨테이너 */
+const StyledImageContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 50px;
+  overflow: hidden;
+  z-index: 1;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    opacity: 0.8;
+    filter: brightness(1.1) contrast(1.05);
+  }
+`;
+
 /* ✅ 검은색 카드 자체 */
 const StyledCard = styled.div`
   position: relative;
@@ -68,6 +108,12 @@ const StyledCard = styled.div`
   border-radius: 8px;
   cursor: pointer;
   z-index: 10;
+  overflow: hidden;
+
+  .card-content {
+    position: relative;
+    z-index: 2;
+  }
 
   .heading {
     font-size: 18px;
@@ -76,15 +122,6 @@ const StyledCard = styled.div`
     color: white;
   }
 
-  p:not(.heading) {
-    font-size: 14px;
-    color: white;
-  }
-
-  p:last-child {
-    color: #e81cff;
-    font-weight: 600;
-  }
 `;
 
 export default PopularCard;

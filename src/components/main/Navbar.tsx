@@ -35,7 +35,11 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(true);
 
   const handleMenuClick = (menuName: string) => {
-    setOpenMenu((prev) => (prev === menuName ? null : menuName));
+    setOpenMenu((prev) => {
+      const next = prev === menuName ? null : menuName;
+      console.log('openMenu:', prev, '->', next);
+      return next;
+    });
   };
 
   const handleUpdateUser = (updatedUser: UserUpdateRequest) => {

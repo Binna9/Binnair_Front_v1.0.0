@@ -39,18 +39,21 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   align = 'left',
   side = 'right',
 }) => {
+  const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handlePointerDownOutside = (event: PointerEvent) => {
       if (!isOpen) return;
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClick();
-      }
+
+      const target = event.target as Node;
+      if (rootRef.current && rootRef.current.contains(target)) return;
+
+      onClick();
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handlePointerDownOutside, true);
+    return () => document.removeEventListener('pointerdown', handlePointerDownOutside, true);
   }, [isOpen, onClick]);
 
   const handleSelect = (item: MenuItem) => {
@@ -73,7 +76,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       : 'left-1/2 -translate-x-1/2';
 
   return (
-    <div className={`relative ${className || ''}`}>
+    <div ref={rootRef} className={`relative ${className || ''}`}>
       {/* Trigger */}
       <button
         type="button"
@@ -82,6 +85,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       >
         {variant !== 'drawer' && (
           <label className="hamburger group pointer-events-none">
+            <input type="checkbox" checked={isOpen} readOnly className="hidden" />
             <svg
               viewBox="0 0 32 32"
               width="32"
@@ -113,14 +117,33 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
         {isOpen && variant === 'dropdown' && (
           <motion.div
             ref={panelRef}
-            className={`absolute ${dropdownAlignClass} top-14 w-44 bg-zinc-900 border border-white/30 text-white shadow-lg rounded-lg`}
+            className={`absolute ${dropdownAlignClass} top-14 w-44 bg-zinc-900 border border-white/30 text-white shadow-lg rounded-lg z-50 overflow-visible`}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8, transition: { duration: 0.18 } }}
           >
-            {/* 말풍선 포인터 */}
+            {/* 말풍선 포인터 - 자연스러운 삼각형 */}
             <div
-              className={`absolute ${arrowPositionClass} -top-1.5 w-3 h-3 bg-zinc-900 border-l border-t border-white/30 rotate-45`}
+              className={`absolute ${arrowPositionClass} -top-2`}
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderBottom: '8px solid #18181b',
+                filter: 'drop-shadow(0 -1px 1px rgba(255, 255, 255, 0.3))',
+              }}
+            />
+            <div
+              className={`absolute ${arrowPositionClass} -top-[7px]`}
+              style={{
+                width: 0,
+                height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderBottom: '7px solid rgba(255, 255, 255, 0.3)',
+                zIndex: -1,
+              }}
             />
             <ul className="py-1 text-center space-y-0.5 relative z-10">
               {items.map((item) => (
