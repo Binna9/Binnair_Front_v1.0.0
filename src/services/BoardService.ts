@@ -64,32 +64,59 @@ export const boardService = {
     }
   },
 
-  // ✅ 게시글 생성 (파일 포함)
-  createBoard: async (boardData: BoardRequest, files: File[] = []) => {
-    // ✅ FormData 객체 생성
+  // ✅ 게시글 생성 (파일 없이, 파일은 별도로 업로드)
+  createBoard: async (boardData: BoardRequest): Promise<BoardResponse> => {
+    // ✅ FormData 형식으로 게시글 생성 (백엔드가 multipart/form-data를 기대)
     const formData = new FormData();
 
-    // ✅ 회원가입 데이터를 FormData에 추가
+    // ✅ boardData를 FormData에 추가
     Object.keys(boardData).forEach((key) => {
       const typedKey = key as keyof BoardRequest;
       const value = boardData[typedKey];
 
       // 값이 null 또는 undefined가 아닌 경우만 추가
       if (value !== undefined && value !== null) {
-        formData.append(key, String(value)); // 숫자, boolean 등을 문자열로 변환
+        formData.append(key, String(value));
       }
     });
 
-    // ✅ 파일 추가
-    files.forEach((file) => {
-      formData.append('files', file);
-    });
-
-    // ✅ 전송
+    // ✅ 파일 없이 게시글만 생성 (files는 required = false이므로 생략 가능)
     const response = await apiClient.post('/boards', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
-    return response.data;
+
+    // ✅ 백엔드가 ResponseEntity<Void>를 반환하므로, Location 헤더나 응답 본문 확인
+    // 응답 본문이 있으면 사용, 없으면 최신 게시글 조회
+    if (response.data && response.data.boardId) {
+      return response.data;
+    }
+
+    // ✅ 응답 본문이 없으면 Location 헤더에서 boardId 추출 시도
+    const location = response.headers?.location;
+    if (location) {
+      const boardId = location.split('/').pop();
+      if (boardId) {
+        // 생성된 게시글 조회하여 반환
+        const createdBoard = await boardService.getBoardById(boardId);
+        if (createdBoard) {
+          return createdBoard;
+        }
+      }
+    }
+
+    // ✅ 헤더도 없으면 해당 타입의 최신 게시글 조회
+    const boards = await boardService.getAllBoards(boardData.boardType, {
+      page: 0,
+      size: 1,
+      sort: 'createDatetime',
+      direction: 'DESC',
+    });
+
+    if (boards?.content && boards.content.length > 0) {
+      return boards.content[0];
+    }
+
+    throw new Error('게시글 생성 후 조회에 실패했습니다.');
   },
 
   // ✅ 게시글 수정 (파일 포함)

@@ -242,19 +242,16 @@ export const useBoardDetail = (
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // 파일 삭제 함수
-  const handleFileDelete = async (fileId: string) => {
-    try {
-      await fileService.removeFile(fileId);
-      notification.showAlert('SUCCESS', '파일이 삭제되었습니다.');
-      // 파일 삭제 후 새로고침 또는 데이터 갱신
-      setBoard((prev) => ({
-        ...prev,
-        files: prev.files.filter((file) => file.fileId !== fileId),
-      }));
-    } catch (error) {
-      console.error('파일 삭제 오류:', error);
-    }
+  // 파일 다운로드 함수
+  const handleFileDownload = async (fileId: string, fileName: string) => {
+    requireLogin(async () => {
+      try {
+        await fileService.downloadFile(fileId, fileName);
+      } catch (error) {
+        console.error('파일 다운로드 오류:', error);
+        notification.showAlert('FAIL', '파일 다운로드에 실패했습니다.');
+      }
+    });
   };
 
   return {
@@ -282,6 +279,6 @@ export const useBoardDetail = (
     handleDeleteWithConfirm,
     loadBoard,
     formatFileSize,
-    handleFileDelete,
+    handleFileDownload,
   };
 };

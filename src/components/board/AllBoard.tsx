@@ -13,6 +13,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   MessageCircle,
+  Eye,
+  Upload,
+  X,
+  Check,
+  Paperclip,
 } from 'lucide-react';
 import { BoardType } from '@/types/BoardEnum';
 import { useAllBoard, BoardContentPreview } from '@/hooks/board/useAllBoard';
@@ -57,6 +62,7 @@ export default function Board() {
     content,
     selectedSection,
     files,
+    selectedFileIndices,
     currentPage,
     isViewingDetail,
     currentBoard,
@@ -71,6 +77,15 @@ export default function Board() {
     handleSectionChange,
     handleFileChange,
     removeFile,
+    toggleFileSelection,
+    toggleSelectAllFiles,
+    removeSelectedFiles,
+    removeAllFiles,
+    existingFiles,
+    selectedExistingFileIds,
+    toggleExistingFileSelection,
+    toggleSelectAllExistingFiles,
+    removeSelectedExistingFiles,
     handlePostSubmit,
     handlePageChange,
     handleViewDetail,
@@ -135,8 +150,8 @@ export default function Board() {
                     }
                   }}
                   className={`w-full flex items-center text-left px-3 py-2 rounded-lg transition text-sm ${activeSection === section.id
-                      ? 'bg-zinc-500 text-white font-semibold'
-                      : 'bg-zinc-50 text-gray-900 hover:bg-zinc-300'
+                    ? 'bg-zinc-500 text-white font-semibold'
+                    : 'bg-zinc-50 text-gray-900 hover:bg-zinc-300'
                     }`}
                 >
                   {section.icon} {section.title}
@@ -205,36 +220,131 @@ export default function Board() {
                 className="w-full p-2 h-32 border border-gray-300 rounded-lg text-sm"
               ></textarea>
 
+              {/* ✅ 기존 파일 목록 (수정 모드에서만 표시) */}
+              {isEditing && existingFiles.length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-gray-900 font-semibold mb-2 text-sm">
+                    기존 첨부파일
+                  </label>
+                  <div className="bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                    {/* 전체 선택 및 삭제 버튼 */}
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedExistingFileIds.size === existingFiles.length && existingFiles.length > 0}
+                          onChange={toggleSelectAllExistingFiles}
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">전체 선택</span>
+                      </label>
+                      {selectedExistingFileIds.size > 0 && (
+                        <button
+                          onClick={removeSelectedExistingFiles}
+                          className="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          선택 삭제 ({selectedExistingFileIds.size})
+                        </button>
+                      )}
+                    </div>
+                    {/* 기존 파일 목록 */}
+                    <div className="space-y-2">
+                      {existingFiles.map((file) => (
+                        <div
+                          key={file.fileId}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedExistingFileIds.has(file.fileId)}
+                            onChange={() => toggleExistingFileSelection(file.fileId)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="flex-1 text-sm text-gray-800 truncate">
+                            {file.originalFileName || file.filePath}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {(file.fileSize / 1024).toFixed(2)} KB
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* ✅ 파일 업로드 */}
               <div className="mt-3">
                 <label className="block text-gray-900 font-semibold mb-1 text-sm">
-                  파일 첨부
+                  {isEditing ? '새 파일 추가' : '파일 첨부'}
                 </label>
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="w-full p-2 border border-gray-300 rounded-lg bg-white text-sm
-  file:bg-blue-500 file:text-white file:border-none file:px-3 file:py-1.5 
-  file:rounded-lg file:cursor-pointer file:mr-3 file:hover:bg-blue-600 file:text-xs"
-                />
-                {/* 파일 목록 */}
+                <label className="block w-full p-4 border-2 border-dashed border-gray-300 rounded-lg bg-transparent hover:border-gray-400 transition cursor-pointer">
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    multiple
+                  />
+                  <div className="flex items-center justify-center">
+                    <Upload className="w-6 h-6 text-gray-500" />
+                  </div>
+                </label>
+                {/* 새로 추가한 파일 목록 */}
                 {files.length > 0 && (
-                  <ul className="mt-2 space-y-1">
-                    {files.map((file, index) => (
-                      <li
-                        key={file.name || index}
-                        className="flex items-center justify-between bg-gray-300 p-1.5 rounded-lg text-sm"
-                      >
-                        <span className="text-gray-800">{file.name}</span>
+                  <div className="mt-3 bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
+                    {/* 전체 선택 및 삭제 버튼 */}
+                    <div className="flex items-center justify-between mb-3 pb-2 border-b">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedFileIndices.size === files.length && files.length > 0}
+                          onChange={toggleSelectAllFiles}
+                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="text-gray-700">전체 선택</span>
+                      </label>
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => removeFile(index)}
-                          className="text-red-500 hover:text-red-700 transition"
+                          onClick={removeSelectedFiles}
+                          disabled={selectedFileIndices.size === 0}
+                          className="px-3 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
+                          선택 삭제 ({selectedFileIndices.size})
                         </button>
-                      </li>
-                    ))}
-                  </ul>
+                        <button
+                          onClick={removeAllFiles}
+                          className="px-3 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          전체 삭제
+                        </button>
+                      </div>
+                    </div>
+                    {/* 파일 목록 */}
+                    <div className="space-y-2">
+                      {files.map((file, index) => (
+                        <div
+                          key={file.name || index}
+                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedFileIndices.has(index)}
+                            onChange={() => toggleFileSelection(index)}
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="flex-1 text-sm text-gray-800 truncate">
+                            {file.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {(file.size / 1024).toFixed(2)} KB
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -250,9 +360,10 @@ export default function Board() {
                       toggleWriteMode();
                     }
                   }}
-                  className="px-3 py-1.5 bg-zinc-500 text-white rounded-lg hover:bg-zinc-600 transition text-sm"
+                  className="px-3 py-1.5 bg-zinc-500 text-white rounded-lg hover:bg-zinc-600 transition text-sm flex items-center gap-1.5"
                   disabled={loading}
                 >
+                  <X className="w-4 h-4" />
                   취소
                 </button>
                 {/* 등록/수정 버튼 */}
@@ -266,9 +377,10 @@ export default function Board() {
                       handlePostSubmit();
                     }
                   }}
-                  className="px-3 py-1.5 bg-zinc-300 text-zinc-900 rounded-lg hover:bg-zinc-500 transition text-sm"
+                  className="px-3 py-1.5 bg-zinc-300 text-zinc-900 rounded-lg hover:bg-zinc-500 transition text-sm flex items-center gap-1.5"
                   disabled={loading}
                 >
+                  <Check className="w-4 h-4" />
                   {loading ? '처리 중...' : isEditing ? '수정' : '등록'}
                 </button>
               </div>
@@ -301,23 +413,32 @@ export default function Board() {
                       <li key={board.boardId} className="border-b pb-3">
                         <div className="flex justify-between items-start">
                           {/* 제목 클릭 시 상세 페이지 보기 */}
-                          <h2
-                            className="text-lg font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500 cursor-pointer"
-                            onClick={() => handleViewDetail(board.boardId)}
-                          >
-                            {board.title}
-                          </h2>
+                          <div className="flex items-center gap-2">
+                            <h2
+                              className="text-lg font-semibold text-gray-900 transition-all duration-400 hover:scale-[1.01] hover:font-bold hover:text-blue-500 cursor-pointer flex items-center gap-2"
+                              onClick={() => handleViewDetail(board.boardId)}
+                            >
+                              <span>{board.title}</span>
+                              {/* 첨부파일 아이콘 */}
+                              {board.files && Array.isArray(board.files) && board.files.length > 0 && (
+                                <span title="첨부파일 있음">
+                                  <Paperclip className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                </span>
+                              )}
+                            </h2>
+                          </div>
                           {/* 수정/삭제 버튼 및 추가 정보 */}
                           <div className="flex items-center space-x-3 text-gray-600 text-xs">
                             {/* 작성자, 조회수, 좋아요 */}
-                            <span>
-                              {' • '}작성자 : {board.writerName}
-                            </span>
-                            <span>
-                              {' • '}조회수 : {board.views}
+                            <span className="flex items-center space-x-1">
+                              <Pencil className="w-3 h-3" />
+                              {board.writerName}
                             </span>
                             <span className="flex items-center space-x-1">
-                              {' • '} <br />
+                              <Eye className="w-3 h-3" />
+                              {board.views}
+                            </span>
+                            <span className="flex items-center space-x-1">
                               <MessageCircle className="w-3 h-3" />
                               {commentCounts[board.boardId] ?? 0}
                             </span>
@@ -396,8 +517,8 @@ export default function Board() {
                           key={index}
                           onClick={() => handlePageChange(index)}
                           className={`px-2 py-1 rounded-md text-sm ${currentPage === index
-                              ? 'bg-zinc-500 text-white font-bold'
-                              : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
+                            ? 'bg-zinc-500 text-white font-bold'
+                            : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
                             }`}
                         >
                           {index + 1}

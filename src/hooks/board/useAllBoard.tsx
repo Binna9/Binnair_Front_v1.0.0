@@ -12,6 +12,9 @@ import {
 import { BoardType } from '@/types/BoardEnum';
 import { useNotification } from '@/context/NotificationContext';
 import { boardService } from '@/services/BoardService';
+import { fileService } from '@/services/FileService';
+import { TargetType } from '@/types/TargetEnum';
+import { FileResponse } from '@/types/File';
 
 // 게시글 내용 미리보기 컴포넌트 (3줄 제한 + 그라데이션)
 export const BoardContentPreview = ({ content }: { content: string }) => {
@@ -70,6 +73,9 @@ export function useAllBoard() {
   );
   const [, setFile] = useState<File | undefined>(undefined);
   const [files, setFiles] = useState<File[]>([]);
+  const [selectedFileIndices, setSelectedFileIndices] = useState<Set<number>>(new Set());
+  const [existingFiles, setExistingFiles] = useState<FileResponse[]>([]);
+  const [selectedExistingFileIds, setSelectedExistingFileIds] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isViewingDetail, setIsViewingDetail] = useState(false);
   const [currentBoard, setCurrentBoard] = useState<BoardResponse | null>(null);
@@ -196,6 +202,9 @@ export function useAllBoard() {
     setSelectedSection(activeSection);
     setFiles([]);
     setFile(undefined);
+    setExistingFiles([]);
+    setSelectedExistingFileIds(new Set());
+    setSelectedFileIndices(new Set());
     setIsViewingDetail(false); // 상세 보기 모드 해제
   };
 
@@ -211,6 +220,15 @@ export function useAllBoard() {
       setContent(boardDetail.content);
       setSelectedSection(boardDetail.boardType);
       setCurrentBoardId(boardDetail.boardId);
+
+      // 기존 파일 목록 설정
+      setExistingFiles(boardDetail.files || []);
+      setSelectedExistingFileIds(new Set());
+      
+      // 새로 추가할 파일 초기화
+      setFiles([]);
+      setFile(undefined);
+      setSelectedFileIndices(new Set());
 
       // 수정 모드 설정
       setIsEditing(true);
@@ -263,20 +281,132 @@ export function useAllBoard() {
       // 첫 번째 파일만 사용 (API는 단일 파일만 지원)
       setFile(event.target.files[0]);
 
-      // UI 표시용 파일 배열 설정
-      const selectedFiles = Array.from(event.target.files);
-      setFiles(selectedFiles);
+      // UI 표시용 파일 배열 설정 (기존 파일에 새 파일 추가)
+      const newFiles = Array.from(event.target.files);
+      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+      setSelectedFileIndices(new Set()); // 새 파일 추가 시 선택 초기화
     }
   };
 
-  // ✅ 파일 제거
+  // ✅ 파일 제거 (단일)
   const removeFile = (index: number) => {
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setFiles((prevFiles) => {
+      const newFiles = prevFiles.filter((_, i) => i !== index);
+      // 인덱스 재계산: 삭제된 인덱스보다 큰 인덱스들을 1씩 감소
+      setSelectedFileIndices((prev) => {
+        const newSet = new Set<number>();
+        prev.forEach((idx) => {
+          if (idx < index) {
+            newSet.add(idx);
+          } else if (idx > index) {
+            newSet.add(idx - 1);
+          }
+        });
+        return newSet;
+      });
+      return newFiles;
+    });
 
     // 선택된 단일 파일이 삭제되는 경우 `file`도 업데이트
     if (files.length === 1) {
       setFile(undefined);
     }
+  };
+
+  // ✅ 체크박스 토글
+  const toggleFileSelection = (index: number) => {
+    setSelectedFileIndices((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  // ✅ 전체 선택/해제
+  const toggleSelectAllFiles = () => {
+    if (selectedFileIndices.size === files.length) {
+      setSelectedFileIndices(new Set());
+    } else {
+      setSelectedFileIndices(new Set(files.map((_, index) => index)));
+    }
+  };
+
+  // ✅ 선택된 파일 삭제
+  const removeSelectedFiles = () => {
+    if (selectedFileIndices.size === 0) return;
+    
+    setFiles((prevFiles) => {
+      const newFiles = prevFiles.filter((_, index) => !selectedFileIndices.has(index));
+      
+      // 모든 파일이 삭제되면 file도 초기화
+      if (newFiles.length === 0) {
+        setFile(undefined);
+      }
+      
+      return newFiles;
+    });
+    
+    // 선택 초기화
+    setSelectedFileIndices(new Set());
+  };
+
+  // ✅ 전체 파일 삭제
+  const removeAllFiles = () => {
+    setFiles([]);
+    setSelectedFileIndices(new Set());
+    setFile(undefined);
+  };
+
+  // ✅ 기존 파일 선택 토글
+  const toggleExistingFileSelection = (fileId: string) => {
+    setSelectedExistingFileIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileId)) {
+        newSet.delete(fileId);
+      } else {
+        newSet.add(fileId);
+      }
+      return newSet;
+    });
+  };
+
+  // ✅ 기존 파일 전체 선택/해제
+  const toggleSelectAllExistingFiles = () => {
+    if (selectedExistingFileIds.size === existingFiles.length) {
+      setSelectedExistingFileIds(new Set());
+    } else {
+      setSelectedExistingFileIds(new Set(existingFiles.map((file) => file.fileId)));
+    }
+  };
+
+  // ✅ 선택된 기존 파일 삭제 (서버에서 삭제)
+  const removeSelectedExistingFiles = async () => {
+    if (selectedExistingFileIds.size === 0) return;
+
+    requireLogin(async () => {
+      const confirmed = await notification.showConfirm(
+        'DELETE',
+        `선택한 ${selectedExistingFileIds.size}개의 파일을 삭제하시겠습니까?`
+      );
+      if (!confirmed) return;
+
+      try {
+        await fileService.removeFiles(Array.from(selectedExistingFileIds));
+        // 기존 파일 목록에서 삭제된 파일 제거
+        setExistingFiles((prev) =>
+          prev.filter((file) => !selectedExistingFileIds.has(file.fileId))
+        );
+        setSelectedExistingFileIds(new Set());
+        notification.showAlert('SUCCESS', '파일이 삭제되었습니다.');
+      } catch (error) {
+        console.error('기존 파일 삭제 오류:', error);
+        notification.showAlert('FAIL', '파일 삭제에 실패했습니다.');
+      }
+    });
   };
 
   // ✅ 글 등록/수정 함수 (API 연결)
@@ -293,13 +423,37 @@ export function useAllBoard() {
       if (isEditing) {
         // 수정 API 호출
         await boardService.updateBoard(currentBoardId, boardRequest);
+        
+        // 수정 시 파일이 있으면 업로드
+        if (files.length > 0) {
+          await fileService.uploadFiles(
+            {
+              targetType: TargetType.BOARD,
+              targetId: currentBoardId,
+            },
+            files
+          );
+        }
+        
         notification.showAlert(
           'SUCCESS',
           '게시글이 성공적으로 수정되었습니다.'
         );
       } else {
-        // 등록 API 호출
-        await boardService.createBoard(boardRequest, files);
+        // 등록 API 호출 - 먼저 게시글 생성
+        const createdBoard = await boardService.createBoard(boardRequest);
+        
+        // 파일이 있으면 별도로 파일 업로드
+        if (files.length > 0) {
+          await fileService.uploadFiles(
+            {
+              targetType: TargetType.BOARD,
+              targetId: createdBoard.boardId,
+            },
+            files
+          );
+        }
+        
         notification.showAlert(
           'SUCCESS',
           '게시글이 성공적으로 등록되었습니다.'
@@ -394,6 +548,7 @@ export function useAllBoard() {
     content,
     selectedSection,
     files,
+    selectedFileIndices,
     currentPage,
     isViewingDetail,
     currentBoard,
@@ -414,6 +569,15 @@ export function useAllBoard() {
     handleSectionChange,
     handleFileChange,
     removeFile,
+    toggleFileSelection,
+    toggleSelectAllFiles,
+    removeSelectedFiles,
+    removeAllFiles,
+    existingFiles,
+    selectedExistingFileIds,
+    toggleExistingFileSelection,
+    toggleSelectAllExistingFiles,
+    removeSelectedExistingFiles,
     handlePostSubmit,
     handleViewDetail,
     handleToggleLike,
