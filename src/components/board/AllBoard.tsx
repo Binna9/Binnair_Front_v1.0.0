@@ -12,6 +12,7 @@ import {
   Trash2,
   ThumbsUp,
   ThumbsDown,
+  MessageCircle,
 } from 'lucide-react';
 import { BoardType } from '@/types/BoardEnum';
 import { useAllBoard, BoardContentPreview } from '@/hooks/board/useAllBoard';
@@ -59,6 +60,7 @@ export default function Board() {
     currentPage,
     isViewingDetail,
     currentBoard,
+    commentCounts,
     setActiveSection,
     setTitle,
     setContent,
@@ -98,7 +100,7 @@ export default function Board() {
         style={{
           boxShadow:
             '0 0 20px 10px rgba(0, 0, 0, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        }}  
+        }}
       >
         {/* 왼쪽 메뉴 (탭) */}
         <div
@@ -132,11 +134,10 @@ export default function Board() {
                       handleBackToList();
                     }
                   }}
-                  className={`w-full flex items-center text-left px-3 py-2 rounded-lg transition text-sm ${
-                    activeSection === section.id
+                  className={`w-full flex items-center text-left px-3 py-2 rounded-lg transition text-sm ${activeSection === section.id
                       ? 'bg-zinc-500 text-white font-semibold'
                       : 'bg-zinc-50 text-gray-900 hover:bg-zinc-300'
-                  }`}
+                    }`}
                 >
                   {section.icon} {section.title}
                 </button>
@@ -315,6 +316,11 @@ export default function Board() {
                             <span>
                               {' • '}조회수 : {board.views}
                             </span>
+                            <span className="flex items-center space-x-1">
+                              {' • '} <br />
+                              <MessageCircle className="w-3 h-3" />
+                              {commentCounts[board.boardId] ?? 0}
+                            </span>
                             <button
                               onClick={() =>
                                 requireLogin(() =>
@@ -325,9 +331,8 @@ export default function Board() {
                               title="좋아요"
                             >
                               <ThumbsUp
-                                className={`w-4 h-4 ${
-                                  board.likes ? 'text-blue-400 fill-blue-400' : ''
-                                }`}
+                                className={`w-4 h-4 ${board.likes ? 'text-blue-400 fill-blue-400' : ''
+                                  }`}
                               />
                               <span>{board.likes}</span>
                             </button>
@@ -341,9 +346,8 @@ export default function Board() {
                               title="싫어요"
                             >
                               <ThumbsDown
-                                className={`w-4 h-4 ${
-                                  board.unlikes ? 'text-red-400 fill-red-400' : ''
-                                }`}
+                                className={`w-4 h-4 ${board.unlikes ? 'text-red-400 fill-red-400' : ''
+                                  }`}
                               />
                               <span>{board.unlikes}</span>
                             </button>
@@ -391,11 +395,10 @@ export default function Board() {
                         <button
                           key={index}
                           onClick={() => handlePageChange(index)}
-                          className={`px-2 py-1 rounded-md text-sm ${
-                            currentPage === index
+                          className={`px-2 py-1 rounded-md text-sm ${currentPage === index
                               ? 'bg-zinc-500 text-white font-bold'
                               : 'bg-zinc-200 text-gray-700 hover:bg-zinc-300'
-                          }`}
+                            }`}
                         >
                           {index + 1}
                         </button>

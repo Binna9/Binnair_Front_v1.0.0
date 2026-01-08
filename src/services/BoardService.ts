@@ -53,6 +53,17 @@ export const boardService = {
     }
   },
 
+  // ✅ 게시글 댓글 수 조회
+  getBoardByCommentCount: async (boardId: string): Promise<number | null> => {
+    try {
+      const response = await apiClient.get<number | null>(`/boards/comments/${boardId}`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ 게시글 댓글 수 조회회 실패:', error);
+      return null;
+    }
+  },
+
   // ✅ 게시글 생성 (파일 포함)
   createBoard: async (boardData: BoardRequest, files: File[] = []) => {
     // ✅ FormData 객체 생성

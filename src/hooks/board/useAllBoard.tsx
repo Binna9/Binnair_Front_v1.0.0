@@ -73,6 +73,7 @@ export function useAllBoard() {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isViewingDetail, setIsViewingDetail] = useState(false);
   const [currentBoard, setCurrentBoard] = useState<BoardResponse | null>(null);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setCurrentPage(0); // ✅ activeSection 변경 시 페이지를 0으로 초기화
@@ -89,6 +90,23 @@ export function useAllBoard() {
         direction: 'DESC',
       });
       setBoards(data);
+
+      // ✅ 각 게시글의 댓글 수 가져오기
+      if (data?.content) {
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          data.content.map(async (board) => {
+            try {
+              const count = await boardService.getBoardByCommentCount(board.boardId);
+              counts[board.boardId] = count ?? 0;
+            } catch (err) {
+              console.error(`댓글 수 조회 실패 (boardId: ${board.boardId}):`, err);
+              counts[board.boardId] = 0;
+            }
+          })
+        );
+        setCommentCounts(counts);
+      }
     } catch (err) {
       console.error('Error fetching boards:', err);
       setError('게시글을 불러오는 중 오류가 발생했습니다.');
@@ -379,6 +397,7 @@ export function useAllBoard() {
     currentPage,
     isViewingDetail,
     currentBoard,
+    commentCounts,
 
     // 상태 설정 함수들
     setActiveSection,

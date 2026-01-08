@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useDragControls } from 'framer-motion';
 import { XCircleIcon, CameraIcon } from '@heroicons/react/24/solid';
 import {
   PencilIcon,
@@ -45,6 +45,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
   const { profileImage, uploadProfileImage, refreshImage } = useUserImage();
   const notification = useNotification();
   const dispatch = useDispatch();
+  const dragControls = useDragControls();
 
   // 비밀번호 변경 관련 상태
   const [passwordChangeStep, setPasswordChangeStep] = useState<
@@ -257,7 +258,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         drag
+        dragControls={dragControls}
+        dragListener={false}
         dragMomentum={false}
+        dragElastic={0}
         className="flex rounded-xl overflow-hidden w-2/3 max-w-4xl h-2/3 max-h-[28rem] 
                 bg-black shadow-lg drop-shadow-[0_0_20px_rgba(255,255,255,0.8)]"
         onClick={(e) => {
@@ -269,10 +273,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
         <div className="w-56 bg-white text-zinc-900 border-r border-gray-300 shadow-sm">
           <div 
             className="p-4 flex flex-col items-center border-b border-zinc-200 cursor-move select-none"
-            onMouseDown={(e) => {
-              // 사이드바 헤더 드래그 핸들
-              e.preventDefault();
-            }}
+            onPointerDown={(e) => dragControls.start(e)}
           >
             <div className="relative cursor-pointer mb-3 group">
               <label htmlFor="profile-upload" className="cursor-pointer">
@@ -366,10 +367,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
             <div className="space-y-4">
               <h2 
                 className="text-xl font-bold text-white border-b border-white pb-3 flex items-center cursor-move select-none"
-                onMouseDown={(e) => {
-                  // 헤더 드래그 핸들
-                  e.preventDefault();
-                }}
+                onPointerDown={(e) => dragControls.start(e)}
               >
                 <UserIcon className="w-5 h-5 mr-2 inline" />
                 My Profile
@@ -656,10 +654,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({
             <div className="space-y-4">
               <h2 
                 className="text-xl font-bold text-white border-b border-white pb-3 cursor-move select-none"
-                onMouseDown={(e) => {
-                  // 헤더 드래그 핸들
-                  e.preventDefault();
-                }}
+                onPointerDown={(e) => dragControls.start(e)}
               >
                 <CogIcon className="w-5 h-5 mr-2 inline" />
                 설정
