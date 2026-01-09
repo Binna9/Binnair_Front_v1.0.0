@@ -175,6 +175,16 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
                 placeholder="답글을 작성하세요..."
                 className="w-full p-1.5 border rounded-lg resize-none text-sm"
                 rows={2}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleReplySubmit(
+                      e,
+                      newReplyComment[comment.commentId] || '',
+                      comment.commentId
+                    );
+                  }
+                }}
               />
               <div className="flex justify-end mt-2">
                 <button
