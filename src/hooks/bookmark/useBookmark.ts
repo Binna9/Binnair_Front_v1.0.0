@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { BookmarkResponse } from '@/types/BookmarkTypes';
 import bookmarkService from '@/services/BookmarkService';
+import { selectAuth } from '@/store/slices/authSlice';
 
 export const useBookmark = () => {
+  const { accessToken } = useSelector(selectAuth);
   const [bookmarkItems, setBookmarkItems] = useState<BookmarkResponse[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -11,6 +14,16 @@ export const useBookmark = () => {
 
   // 북마크 목록 가져오기
   const fetchBookmarkItems = async (page = 0) => {
+    // 로그인하지 않은 상태면 호출하지 않음 (불필요한 401 방지)
+    if (!accessToken) {
+      setBookmarkItems([]);
+      setTotalPages(0);
+      setCurrentPage(0);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -37,6 +50,11 @@ export const useBookmark = () => {
   // 북마크 추가
   const addToBookmark = async (productId: string) => {
     setError(null);
+    if (!accessToken) {
+      const err = new Error('로그인이 필요합니다.');
+      setError(err.message);
+      throw err;
+    }
     try {
       await bookmarkService.addToBookmark(productId);
       await fetchBookmarkItems(currentPage);
@@ -50,6 +68,11 @@ export const useBookmark = () => {
   // 북마크 삭제
   const deleteBookmarkItem = async (bookmarkId: string) => {
     setError(null);
+    if (!accessToken) {
+      const err = new Error('로그인이 필요합니다.');
+      setError(err.message);
+      throw err;
+    }
     try {
       await bookmarkService.deleteBookmarkItem(bookmarkId);
       await fetchBookmarkItems(currentPage);
@@ -85,8 +108,18 @@ export const useBookmark = () => {
 
   // 컴포넌트 마운트 시 북마크 목록 가져오기
   useEffect(() => {
+    if (!accessToken) {
+      setBookmarkItems([]);
+      setTotalPages(0);
+      setCurrentPage(0);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     fetchBookmarkItems();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accessToken]);
 
   return {
     bookmarkItems,

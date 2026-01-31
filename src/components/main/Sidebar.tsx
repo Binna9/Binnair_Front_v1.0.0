@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   StarIcon,
   CurrencyDollarIcon,
-  WalletIcon,
   ChatBubbleLeftRightIcon,
   ChatBubbleOvalLeftIcon,
 } from '@heroicons/react/24/solid';
@@ -10,16 +9,15 @@ import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopup from '../popup/ChatPopup';
 import RealTimeChatPopup from '../popup/RealTimeChatPopup';
 import CoinPricePopup from '../popup/CoinPricePopup';
-import WalletPopup from '../popup/WalletPopup';
 import { useLocation } from 'react-router-dom';
+
+type PopupId = 'bookmark' | 'coin' | 'chat' | 'realtime-chat';
 
 const Sidebar = () => {
   const location = useLocation();
   const isMainPage = location.pathname === '/';
 
-  const [selected, setSelected] = useState<
-    ('bookmark' | 'coin' | 'wallet' | 'chat' | 'realtime-chat')[]
-  >(isMainPage ? ['coin'] : []);
+  const [selected, setSelected] = useState<PopupId[]>(isMainPage ? ['coin'] : []);
 
   // 메인 페이지로 이동할 때 코인 팝업을 자동으로 열기
   useEffect(() => {
@@ -32,28 +30,22 @@ const Sidebar = () => {
 
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
-    { id: 'wallet', icon: WalletIcon, label: '지갑' },
     { id: 'chat', icon: ChatBubbleLeftRightIcon, label: '채팅' },
     { id: 'realtime-chat', icon: ChatBubbleOvalLeftIcon, label: '실시간 채팅' },
     { id: 'coin', icon: CurrencyDollarIcon, label: '코인' },
   ];
 
-  const togglePopup = (
-    id: 'bookmark' | 'coin' | 'wallet' | 'chat' | 'realtime-chat'
-  ) => {
+  const togglePopup = (id: PopupId) => {
     setSelected((prev) => {
-      if (id === 'bookmark' || id === 'wallet') {
-        // 즐겨찾기와 지갑은 단독으로만 열림
+      if (id === 'bookmark') {
+        // 즐겨찾기는 단독으로만 열림
         return prev.includes(id) ? [] : [id];
       } else {
         // 나머지는 동시에 열 수 있음
         if (prev.includes(id)) {
           return prev.filter((item) => item !== id);
         } else {
-          return [
-            ...prev.filter((item) => item !== 'bookmark' && item !== 'wallet'),
-            id,
-          ];
+          return [...prev.filter((item) => item !== 'bookmark'), id];
         }
       }
     });
@@ -71,24 +63,10 @@ const Sidebar = () => {
             key={item.id}
             onClick={(e) => {
               e.stopPropagation();
-              togglePopup(
-                item.id as
-                  | 'bookmark'
-                  | 'coin'
-                  | 'wallet'
-                  | 'chat'  
-                  | 'realtime-chat'
-              );
+              togglePopup(item.id as PopupId);
             }}
             className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all duration-300 ${
-              selected.includes(
-                item.id as
-                  | 'bookmark'
-                  | 'coin'
-                  | 'wallet'
-                  | 'chat'
-                  | 'realtime-chat'
-              )
+              selected.includes(item.id as PopupId)
                 ? 'bg-blue-500 text-white shadow-md shadow-blue-300'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
@@ -97,13 +75,6 @@ const Sidebar = () => {
           </button>
         ))}
       </div>
-      {/* 지갑 팝업 */}
-      {selected.includes('wallet') && (
-        <WalletPopup
-          isOpen={selected.includes('wallet')}
-          closePopup={() => togglePopup('wallet')}
-        />
-      )}
       {/* 즐겨찾기 팝업 */}
       {selected.includes('bookmark') && (
         <BookmarkPopup
