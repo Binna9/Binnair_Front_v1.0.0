@@ -80,7 +80,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       {/* Trigger */}
       <button
         type="button"
-        className="flex items-center space-x-2 cursor-pointer"
+        className="flex items-center space-x-2 cursor-pointer transition-transform duration-300 hover:scale-105"
         onClick={onClick}
       >
         {variant !== 'drawer' && (

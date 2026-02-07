@@ -84,7 +84,7 @@ export default function MainPage() {
                   onClick={() => navigate('/ai-monitor')}
                   className="px-4 py-2 text-sm bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
                 >
-                  AI 모니터링 / 학습
+                  이상탐지
                   <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                 </button>
               </div>

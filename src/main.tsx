@@ -1,16 +1,11 @@
 import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './store/store';
 import App from './App';
 import './index.css';
 
-const root = createRoot(document.getElementById('root')!);
-root.render(
-  <Provider store={store}>
-    {/* redux-persist 설정 */}
-    <PersistGate loading={null} persistor={persistor}>
-      <App />
-    </PersistGate>
-  </Provider>
-);
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('root 엘리먼트를 찾을 수 없습니다!');
+}
+
+const root = createRoot(rootElement);
+root.render(<App />);

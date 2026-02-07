@@ -50,7 +50,7 @@ export default function Navbar() {
 
   const navItems = [
     { name: '실시간 트레이딩', id: 'trade', icon: <Activity size={14} />, to: '/trade' },
-    { name: '모델 학습 / 예측 상태', id: 'ai-monitor', icon: <MonitorPlay size={14} />, to: '/ai-monitor' },
+    { name: '이상탐지', id: 'ai-monitor', icon: <MonitorPlay size={14} />, to: '/ai-monitor' },
     { name: '트레이딩 내역 / 기록', id: 'history', icon: <History size={14} />, to: '/history' },
     { name: '대시보드', id: 'dashboard', icon: <BarChart2 size={14} />, to: '/dashboard' },
     { name: '고객센터', id: 'service', icon: <HelpCircle size={14} />, to: '/board' },
@@ -93,10 +93,10 @@ export default function Navbar() {
               className="shrink-0"
             />
             <HamburgerMenu
-              menuName="AI Monitor"
-              items={[{ name: '모델 학습 / 예측 상태', id: 'ai-monitor', icon: <MonitorPlay size={14} /> }]}
-              isOpen={openMenu === 'AI Monitor'}
-              onClick={() => handleMenuClick('AI Monitor')}
+              menuName="Anomaly Detection"
+              items={[{ name: '이상탐지', id: 'ai-monitor', icon: <MonitorPlay size={14} /> }]}
+              isOpen={openMenu === '이상탐지'}
+              onClick={() => handleMenuClick('이상탐지')}
               onItemClick={() => navigate('/ai-monitor')}
               className="shrink-0"
             />
