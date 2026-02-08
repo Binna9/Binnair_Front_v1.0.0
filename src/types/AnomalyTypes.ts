@@ -19,6 +19,31 @@ export interface AnomalyScoreSeriesResponse {
 }
 
 /**
+ * Anomaly Score 최종 평가 API 응답
+ * windowDays 30/60/90 결과를 종합한 최종 평가 결과
+ */
+export interface AnomalyScoreFinalResponse {
+  ts: string | null; // ISO 8601 (OffsetDateTime)
+  mode: string; // 예: 'max' | 'consensus'
+  finalScore: number | null;
+  finalLevel: string | null;
+  basis: string | null;
+  components: AnomalyScoreFinalComponent[];
+}
+
+/**
+ * 최종 평가 - 각 windowDays별 컴포넌트
+ */
+export interface AnomalyScoreFinalComponent {
+  windowDays: number;
+  score: number | null;
+  driver: string | null;
+  zRet: number | null;
+  zVol: number | null;
+  zRng: number | null;
+}
+
+/**
  * 메타데이터
  */
 export interface AnomalyScoreMeta {
@@ -29,7 +54,7 @@ export interface AnomalyScoreMeta {
   venueSymbol: string;
   timeframe: string;
   scoreVersion: string;
-  windowDays: number | null;
+  windowDays: number[]; // 예: [30, 60, 90]
   from: string; // ISO 8601 (OffsetDateTime)
   to: string; // ISO 8601 (OffsetDateTime)
   serverTime: string; // ISO 8601 (OffsetDateTime)
@@ -41,9 +66,9 @@ export interface AnomalyScoreMeta {
  */
 export interface AnomalyScoreSummary {
   latestTs: string | null; // ISO 8601 (OffsetDateTime)
-  latestScore: number | null;
-  maxScore: number | null;
-  maxScoreTs: string | null; // ISO 8601 (OffsetDateTime)
+  latestScores: Record<string, number | null> | null; // key: windowDays (예: '30')
+  maxScores: Record<string, number | null> | null; // key: windowDays (예: '30')
+  maxScoreTs: Record<string, string | null> | null; // key: windowDays (예: '30'), value: ISO 8601
 }
 
 /**
@@ -57,11 +82,18 @@ export interface AnomalyScorePoint {
   l: number; // Low (저가)
   c: number; // Close (종가)
   v: number; // Volume (거래량)
-  score: number | null; // 종합 이상 점수
-  zRet: number | null; // 수익률(ret) z-score
-  zVol: number | null; // 거래량(volume) z-score
-  zRng: number | null; // 변동폭(range) z-score
-  driver: string | null; // 이상치 원인 지표 (예: 'zRet', 'zVol', 'zRng')
+  scores: Record<string, number | null> | null; // key: windowDays (예: '30')
+  drivers: Record<string, string | null> | null; // key: windowDays (예: '30')
+  z: Record<string, AnomalyScoreZ | null> | null; // key: windowDays (예: '30')
+}
+
+/**
+ * windowDays별 z-score 묶음
+ */
+export interface AnomalyScoreZ {
+  ret: number | null;
+  vol: number | null;
+  rng: number | null;
 }
 
 // ============================================================================
@@ -198,6 +230,23 @@ export interface AnomalyScoreSeriesRequest {
   to: string; // ISO 8601 (OffsetDateTime) - 필수, 예: '2026-02-06T23:59:59Z' 또는 '2026-02-06T23:59:59+09:00'
   timeframe?: string; // 타임프레임 (선택), 예: '5m', '1h', '1d'
   scoreVersion?: string; // 점수 버전 (선택), 예: 'z_v1', 'ewmz_v1'
+  windowDays?: number; // windowDays (선택), 예: 30, 60, 90
+}
+
+/**
+ * 최종 평가 요청 파라미터
+ * Path Parameters: venueId, instrumentId
+ * Query Parameters: timeframe, scoreVersion, mode, ts (모두 선택)
+ */
+export type AnomalyScoreFinalMode = 'max' | 'consensus';
+
+export interface AnomalyScoreFinalRequest {
+  venueId: number; // Path Parameter
+  instrumentId: number; // Path Parameter
+  timeframe?: string; // 캔들 주기 (기본: '5m')
+  scoreVersion?: string; // 점수 버전 (기본: 'z_v1')
+  mode?: AnomalyScoreFinalMode; // 평가 모드 (기본: 'consensus')
+  ts?: string; // ISO 8601 (OffsetDateTime) - optional, 없으면 최신 공통 ts 사용
 }
 
 // ============================================================================

@@ -64,6 +64,19 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const isInitialLoadRef = useRef(true);
 
   /**
+   * 응답에 포함된 windowDays 중 대표 windowDays 선택
+   * - 30이 있으면 30 우선
+   * - 없으면 첫 번째 값 사용
+   */
+  const getPrimaryWindowKey = useCallback((response: AnomalyScoreSeriesResponse): string | null => {
+    const days = response?.meta?.windowDays;
+    if (!Array.isArray(days) || days.length === 0) return null;
+
+    if (days.includes(30)) return '30';
+    return String(days[0]);
+  }, []);
+
+  /**
    * 서버 응답 데이터를 차트용 데이터 포인트로 변환
    */
   const transformToChartData = useCallback(
@@ -71,16 +84,25 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
       if (!response || !response.points || !Array.isArray(response.points)) {
         return [];
       }
+      const windowKey = getPrimaryWindowKey(response);
+
       return response.points.map((point) => {
         const date = parseISO8601(point.ts);
         const timestamp = date.getTime();
+
+        const score =
+          windowKey && point.scores ? point.scores[windowKey] ?? null : null;
+        const driver =
+          windowKey && point.drivers ? point.drivers[windowKey] ?? null : null;
+        const z =
+          windowKey && point.z ? point.z[windowKey] ?? null : null;
 
         // 이상치 판단
         let isAnomaly = false;
         let anomalySeverity: AnomalySeverity = 'none';
 
-        if (point.score !== null) {
-          const absScore = Math.abs(point.score);
+        if (score !== null) {
+          const absScore = Math.abs(score);
           if (absScore >= threshold.score) {
             isAnomaly = true;
             if (absScore >= threshold.score * 2) {
@@ -102,17 +124,17 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
           low: point.l,
           close: point.c,
           volume: point.v,
-          score: point.score,
-          zRet: point.zRet,
-          zVol: point.zVol,
-          zRng: point.zRng,
-          driver: point.driver,
+          score,
+          zRet: z?.ret ?? null,
+          zVol: z?.vol ?? null,
+          zRng: z?.rng ?? null,
+          driver,
           isAnomaly,
           anomalySeverity,
         };
       });
     },
-    [threshold]
+    [threshold, getPrimaryWindowKey]
   );
 
   /**
@@ -285,6 +307,16 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     );
   }
 
+  const summaryWindowKey = getPrimaryWindowKey(data);
+  const latestScore =
+    summaryWindowKey && data.summary.latestScores
+      ? data.summary.latestScores[summaryWindowKey] ?? null
+      : null;
+  const maxScore =
+    summaryWindowKey && data.summary.maxScores
+      ? data.summary.maxScores[summaryWindowKey] ?? null
+      : null;
+
   return (
     <div className="w-full h-full">
       {/* 헤더 정보 */}
@@ -315,14 +347,16 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
           </div>
         </div>
         {/* 요약 정보 */}
-        {data.summary.latestScore !== null && (
+        {latestScore !== null && (
           <div className="mt-2 flex gap-4 text-sm">
             <span>
-              최신 점수: <strong>{data.summary.latestScore.toFixed(2)}</strong>
+              최신 점수{summaryWindowKey ? `(${summaryWindowKey}d)` : ''}:{' '}
+              <strong>{latestScore.toFixed(2)}</strong>
             </span>
-            {data.summary.maxScore !== null && (
+            {maxScore !== null && (
               <span>
-                최대 점수: <strong>{data.summary.maxScore.toFixed(2)}</strong>
+                최대 점수{summaryWindowKey ? `(${summaryWindowKey}d)` : ''}:{' '}
+                <strong>{maxScore.toFixed(2)}</strong>
               </span>
             )}
           </div>

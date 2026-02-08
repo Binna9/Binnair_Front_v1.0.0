@@ -1,5 +1,10 @@
 import apiClient from '@/utils/apiClient';
-import { AnomalyScoreSeriesResponse, AnomalyScoreSeriesRequest } from '@/types/AnomalyTypes';
+import {
+  AnomalyScoreFinalRequest,
+  AnomalyScoreFinalResponse,
+  AnomalyScoreSeriesRequest,
+  AnomalyScoreSeriesResponse,
+} from '@/types/AnomalyTypes';
 
 /**
  * 이상탐지 관련 서비스
@@ -27,7 +32,7 @@ export const anomalyService = {
   getSeries: async (
     request: AnomalyScoreSeriesRequest
   ): Promise<AnomalyScoreSeriesResponse> => {
-    const { venueId, instrumentId, from, to, timeframe, scoreVersion } = request;
+    const { venueId, instrumentId, from, to, timeframe, scoreVersion, windowDays } = request;
 
     const params: Record<string, string> = {
       from,
@@ -41,12 +46,48 @@ export const anomalyService = {
     if (scoreVersion) {
       params.scoreVersion = scoreVersion;
     }
+    if (windowDays !== undefined && windowDays !== null) {
+      params.windowDays = String(windowDays);
+    }
 
     const response = await apiClient.get<AnomalyScoreSeriesResponse>(
-      `/anomaly-scores/${venueId}/${instrumentId}/series`,
+      `/anomaly/scores/${venueId}/${instrumentId}/series`,
       {
         params,
       }
+    );
+
+    return response.data;
+  },
+
+  /**
+   * 최종 평가 API
+   * windowDays 30/60/90에 대한 데이터를 종합하여 최종 평가를 수행합니다.
+   *
+   * @param request - 요청 파라미터
+   * @returns 최종 평가 응답
+   */
+  getFinal: async (request: AnomalyScoreFinalRequest): Promise<AnomalyScoreFinalResponse> => {
+    const { venueId, instrumentId, timeframe, scoreVersion, mode, ts } = request;
+
+    const params: Record<string, string> = {};
+
+    if (timeframe) {
+      params.timeframe = timeframe;
+    }
+    if (scoreVersion) {
+      params.scoreVersion = scoreVersion;
+    }
+    if (mode) {
+      params.mode = mode;
+    }
+    if (ts) {
+      params.ts = ts;
+    }
+
+    const response = await apiClient.get<AnomalyScoreFinalResponse>(
+      `/anomaly/scores/${venueId}/${instrumentId}/final`,
+      { params }
     );
 
     return response.data;
