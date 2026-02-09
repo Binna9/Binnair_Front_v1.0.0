@@ -81,7 +81,7 @@ export default function MainPage() {
                   <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                 </button>
                 <button
-                  onClick={() => navigate('/ai-monitor')}
+                  onClick={() => navigate('/anomaly-monitor')}
                   className="px-4 py-2 text-sm bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
                 >
                   이상탐지

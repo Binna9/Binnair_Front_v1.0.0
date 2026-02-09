@@ -9,7 +9,7 @@ import {
   type AnomalySeriesDataset,
   type AnomalyWindowDays,
 } from '@/types/AnomalyTypes';
-import { Activity, Settings2 } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Eye, OctagonAlert, Settings2 } from 'lucide-react';
 import { RefreshCw } from 'lucide-react';
 import { getNextCandleStartTime, getTimeUntilNextCandle, toISO8601UTC } from '@/utils/timeframeUtils';
 import { buildFinalCardVM, buildFinalMarkerVM, buildSeriesDataset } from '@/utils/anomalyTransform';
@@ -52,6 +52,32 @@ const AnomalyDetection: React.FC = () => {
   const [nextRefreshTime, setNextRefreshTime] = useState<Date | null>(null);
   const autoRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const SERIES_LOOKBACK_DAYS = 90;
+
+  const levelMeta = useMemo(() => {
+    const level = (finalCard?.finalLevel ?? '').toUpperCase();
+
+    const base = {
+      Icon: CheckCircle2,
+      iconBg: 'bg-emerald-50',
+      iconFg: 'text-emerald-700',
+    };
+
+    if (level.includes('SEVERE')) {
+      return { Icon: OctagonAlert, iconBg: 'bg-rose-50', iconFg: 'text-rose-700' };
+    }
+    if (level.includes('ANOMALY') || level.includes('ALERT')) {
+      return { Icon: AlertTriangle, iconBg: 'bg-amber-50', iconFg: 'text-amber-700' };
+    }
+    if (level.includes('WATCH') || level.includes('WARN')) {
+      return { Icon: Eye, iconBg: 'bg-slate-50', iconFg: 'text-slate-700' };
+    }
+    if (level.includes('NORMAL') || level.includes('OK')) {
+      return base;
+    }
+
+    // 알 수 없는 상태라도 UI가 깨지지 않게 기본값
+    return { ...base, iconBg: 'bg-gray-50', iconFg: 'text-gray-700' };
+  }, [finalCard?.finalLevel]);
 
   // "현재시간 90일 전" 고정 from (한 번 정해지면 다음 갱신에서는 to만 움직임)
   // - 초기 로드시 "딱 1번"만 series/final을 호출하기 위해, fixedFromISO 변경이 fetch 트리거가 되지 않도록 구조를 분리합니다.
@@ -296,7 +322,7 @@ const AnomalyDetection: React.FC = () => {
         }}
       >
         {/* 헤더 영역 */}
-        <div className="relative px-4 py-3 bg-gradient-to-r from-gray-600 via-gray-800 to-gray-700 rounded-t-lg">
+        <div className="relative px-4 py-4 bg-gradient-to-r from-gray-600 via-gray-800 to-gray-700 rounded-t-lg">
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full blur-2xl"></div>
@@ -430,8 +456,8 @@ const AnomalyDetection: React.FC = () => {
                 </div>
 
                 <div className="ml-auto flex items-center gap-2 text-xs text-gray-500 pb-2">
-                  <span>{lastUpdateTime ? `업데이트: ${lastUpdateTime.toLocaleTimeString()}` : '업데이트: -'}</span>
-                  {nextRefreshTime ? <span>{`/ 다음: ${nextRefreshTime.toLocaleTimeString()}`}</span> : null}
+                  <span>{lastUpdateTime ? `• 업데이트: ${lastUpdateTime.toLocaleTimeString()}` : '업데이트: -'}</span>
+                  {nextRefreshTime ? <span>{`• 다음: ${nextRefreshTime.toLocaleTimeString()}`}</span> : null}
                 </div>
               </div>
 
@@ -452,7 +478,6 @@ const AnomalyDetection: React.FC = () => {
                     <span>{wd}d</span>
                   </label>
                 ))}
-                <span className="ml-auto text-xs text-gray-500">기본값: 90d만 ON</span>
               </div>
             </div>
 
@@ -460,20 +485,73 @@ const AnomalyDetection: React.FC = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               {finalCard ? (
                 <div className="flex flex-col md:flex-row gap-6 md:items-start md:justify-between">
-                  <div>
-                    <div className="text-xs text-gray-500">현재 상태</div>
-                    <div className="text-3xl font-bold text-gray-900 mt-1">
-                      {finalCard.finalLevel ?? 'N/A'}
+                  {/* 현재 상태 블록만 살짝 오른쪽으로 */}
+                  <div className="pl-2">
+                    <div className="text-sm text-gray-500">• STAUTS</div>
+                    <div className="mt-1 flex items-center gap-3">
+                      <span
+                        className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${levelMeta.iconBg}`}
+                        aria-hidden
+                      >
+                        <levelMeta.Icon className={`w-5 h-5 ${levelMeta.iconFg}`} />
+                      </span>
+                      <div className="text-4xl font-bold text-gray-900 tracking-tight">
+                        {finalCard.finalLevel ?? 'N/A'}
+                      </div>
                     </div>
-                    <div className="mt-2 text-sm text-gray-700 space-x-3">
+                    <div className="mt-3 text-base text-gray-700 space-x-4">
                       <span>
                         finalScore:{' '}
                         <strong>{finalCard.finalScore === null ? 'N/A' : finalCard.finalScore.toFixed(2)}</strong>
                       </span>
                       <span>basis: <strong>{finalCard.basis ?? '-'}</strong></span>
                     </div>
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-2 text-sm text-gray-500">
                       ts: {finalCard.ts ?? '-'} {finalMarker ? '' : '(마커 없음)'}
+                    </div>
+                  </div>
+
+                  {/* 상태 설명(가운데 빈 공간) */}
+                  <div className="hidden md:block flex-1 px-4 pt-1">
+                    <div className="text-xs font-semibold text-gray-700 mb-2">상태 기준</div>
+                    <div className="text-xs text-gray-600 leading-relaxed space-y-1">
+                      <div className="flex items-start gap-2">
+                        <span className="mt-[3px] inline-block h-2 w-2 rounded-full bg-emerald-500/70" />
+                        <div>
+                          <span className="font-semibold text-gray-800">NORMAL</span>
+                          <span className="ml-2">최종 점수가 낮아 정상 범위</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-[3px] inline-block h-2 w-2 rounded-full bg-slate-500/70" />
+                        <div>
+                          <span className="font-semibold text-gray-800">WATCH</span>
+                          <span className="ml-2">
+                            관찰 구간 (기준선 {DEFAULT_ANOMALY_SCORE_BANDS.watch} 이상)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-[3px] inline-block h-2 w-2 rounded-full bg-amber-500/70" />
+                        <div>
+                          <span className="font-semibold text-gray-800">ANOMALY</span>
+                          <span className="ml-2">
+                            이상 징후 (기준선 {DEFAULT_ANOMALY_SCORE_BANDS.anomaly} 이상)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="mt-[3px] inline-block h-2 w-2 rounded-full bg-rose-500/70" />
+                        <div>
+                          <span className="font-semibold text-gray-800">SEVERE</span>
+                          <span className="ml-2">
+                            강한 이상 (기준선 {DEFAULT_ANOMALY_SCORE_BANDS.severe} 이상)
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pt-1 text-[11px] text-gray-500">
+                        Tip: 차트를 클릭하면 해당 시점 상세가 고정되고, 차트 밖(또는 빈 공간)을 클릭하면 해제돼요.
+                      </div>
                     </div>
                   </div>
 

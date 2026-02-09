@@ -8,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   ReferenceLine,
   ReferenceArea,
 } from 'recharts';
@@ -39,6 +38,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chartWidth, setChartWidth] = useState<number>(0);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 900
+  );
 
   type TimeRange = { left: number; right: number };
   const [viewRange, setViewRange] = useState<TimeRange | null>(null);
@@ -52,6 +55,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const toggleSeries = useCallback((key: string) => {
     setHiddenSeries((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
+
+  // 차트 클릭으로 “상세(툴팁) 고정”
+  const [pinnedPoint, setPinnedPoint] = useState<AnomalySeriesChartPoint | null>(null);
+  const didDragRef = useRef(false);
 
   // 90d@5m면 포인트가 2~3만개까지 늘어 DOM 렌더링이 급격히 느려집니다.
   // 표시용으로만 다운샘플링해서 DOM 노드 수를 제한합니다(툴팁/렌더링 모두 이 표본을 사용).
@@ -179,6 +186,29 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     [displayPoints]
   );
 
+  const findNearestDisplayPointByT = useCallback(
+    (t: number): AnomalySeriesChartPoint | null => {
+      if (displayPoints.length === 0) return null;
+      // displayPoints는 오름차순 정렬되어 들어옵니다(buildSeriesDataset에서 정렬)
+      let lo = 0;
+      let hi = displayPoints.length - 1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        const mt = displayPoints[mid].t;
+        if (mt === t) return displayPoints[mid];
+        if (mt < t) lo = mid + 1;
+        else hi = mid - 1;
+      }
+      // lo는 삽입 위치, 양옆 후보 중 가까운 값을 선택
+      const leftIdx = Math.max(0, Math.min(displayPoints.length - 1, lo - 1));
+      const rightIdx = Math.max(0, Math.min(displayPoints.length - 1, lo));
+      const left = displayPoints[leftIdx];
+      const right = displayPoints[rightIdx];
+      return Math.abs(left.t - t) <= Math.abs(right.t - t) ? left : right;
+    },
+    [displayPoints]
+  );
+
   const formattedViewRangeLabel = useMemo(() => {
     if (!viewRange) return null;
     const left = Math.min(viewRange.left, viewRange.right);
@@ -294,6 +324,12 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
+  useEffect(() => {
+    const onResize = () => setViewportHeight(window.innerHeight);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // 차트 가로폭을 측정해서 X축 tick 밀도를 자동 조정
   useEffect(() => {
     const el = rootRef.current;
@@ -307,6 +343,28 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Recharts는 마운트 순간에 컨테이너가 “아직” 레이아웃이 안정화되지 않으면 width/height를 -1로 찍을 수 있습니다.
+  // 폭이 확보된 뒤 1~2프레임 기다렸다가 차트를 마운트해서 경고를 없앱니다.
+  useEffect(() => {
+    if (chartWidth <= 0) {
+      setLayoutReady(false);
+      return;
+    }
+
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        setLayoutReady(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+    };
+  }, [chartWidth]);
 
   const toggleFullscreen = useCallback(async () => {
     try {
@@ -344,6 +402,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     (state: any) => {
       const t = getActiveTFromEvent(state);
       if (t === null) return;
+      didDragRef.current = false;
       setDragRange({ left: t, right: t });
     },
     [getActiveTFromEvent]
@@ -354,6 +413,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
       if (dragRange.left === null) return;
       const t = getActiveTFromEvent(state);
       if (t === null) return;
+      if (t !== dragRange.left) didDragRef.current = true;
       setDragRange((prev) => ({ ...prev, right: t }));
     },
     [dragRange.left, getActiveTFromEvent]
@@ -367,9 +427,49 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     if (left === null || right === null) return;
     if (left === right) return; // 클릭만 한 경우는 무시
 
+    didDragRef.current = true;
     const next: TimeRange = { left: Math.min(left, right), right: Math.max(left, right) };
     setViewRange(next);
   }, [dragRange.left, dragRange.right]);
+
+  // 차트 클릭 시 해당 시점 “고정”, 빈 공간 클릭 시 해제
+  const handleChartClick = useCallback((state: any) => {
+    // 드래그로 확대 직후 발생하는 click은 무시(핀 고정 방지)
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
+
+    const t = getActiveTFromEvent(state);
+    if (t === null) {
+      setPinnedPoint(null);
+      return;
+    }
+
+    // activePayload가 비어있는 경우가 있어(클릭 시점에 hover가 없을 때),
+    // 시간값(activeLabel)을 기준으로 가장 가까운 포인트를 고정합니다.
+    const nearest = findNearestDisplayPointByT(t);
+    if (!nearest) {
+      setPinnedPoint(null);
+      return;
+    }
+    setPinnedPoint(nearest);
+  }, [findNearestDisplayPointByT, getActiveTFromEvent]);
+
+  // 차트 밖을 클릭하면 고정 해제
+  useEffect(() => {
+    if (!pinnedPoint) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const el = rootRef.current;
+      if (!el) return;
+      if (el.contains(e.target as Node)) return;
+      setPinnedPoint(null);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, { capture: true });
+    return () => document.removeEventListener('pointerdown', onPointerDown, { capture: true } as any);
+  }, [pinnedPoint]);
 
   const resetZoom = useCallback(() => {
     setViewRange(null);
@@ -428,41 +528,54 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     return TooltipView;
   }, []);
 
+  const pinnedVM = useMemo(() => (pinnedPoint ? buildTooltipVM(pinnedPoint) : null), [pinnedPoint]);
+
   const heights = useMemo(() => {
     // fullscreen: 브라우저 전체화면에서 공간을 최대 활용
     if (isFullscreen) {
       return {
-        main: 'calc(100vh - 340px)',
-        volume: '220px',
+        main: Math.max(360, viewportHeight - 340),
+        volume: 220,
       } as const;
     }
     // 기본 화면
     return {
-      main: '520px',
-      volume: '160px',
+      main: 520,
+      volume: 160,
     } as const;
-  }, [isFullscreen]);
+  }, [isFullscreen, viewportHeight]);
 
   const ChartsView = useCallback(
-    (props: { mainHeight: string; volumeHeight: string; denseLegend?: boolean }) => {
+    (props: { mainHeight: number; volumeHeight: number; denseLegend?: boolean }) => {
       const { mainHeight, volumeHeight } = props;
 
       // 두 차트의 X축 정렬을 위해 plot area(좌/우 마진)과 XAxis props를 동일하게 유지합니다.
       const commonMargin = { right: 90, left: 12 };
+      const isDragging = dragRange.left !== null;
+      const tooltipDisabled = isDragging || !!pinnedPoint;
       return (
-        <div className="w-full h-full space-y-2">
+        <div
+          className="w-full h-full space-y-2 min-w-0 select-none"
+          // 드래그 확대 중 브라우저 텍스트 선택(파란 하이라이트) 방지
+          onMouseDownCapture={(e) => {
+            if (e.button === 0) e.preventDefault();
+          }}
+          onDragStart={(e) => e.preventDefault()}
+        >
           {/* 상단: 가격 + Score */}
-          <div className="w-full" style={{ height: mainHeight }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart
-                syncId="anomalySeries"
-                syncMethod="value"
-                data={chartData}
-                margin={{ top: 16, right: commonMargin.right, left: commonMargin.left, bottom: 6 }}
-                onMouseDown={startDragSelect}
-                onMouseMove={moveDragSelect}
-                onMouseUp={finishDragSelect}
-              >
+          <div className="w-full min-w-0" style={{ height: mainHeight }}>
+            <ComposedChart
+              width={Math.max(1, chartWidth)}
+              height={mainHeight}
+              syncId="anomalySeries"
+              syncMethod="value"
+              data={chartData}
+              margin={{ top: 16, right: commonMargin.right, left: commonMargin.left, bottom: 6 }}
+              onMouseDown={startDragSelect}
+              onMouseMove={moveDragSelect}
+              onMouseUp={finishDragSelect}
+              onClick={handleChartClick}
+            >
                 <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
                 <XAxis
                   dataKey="t"
@@ -491,7 +604,66 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                   tick={{ fontSize: 12 }}
                 />
 
-                <Tooltip content={tooltipContent as any} />
+              {/* 드래그 중에는 tooltip 좌표가 0,0으로 튀는 경우가 있어 숨김 처리 */}
+              <Tooltip
+                content={tooltipContent as any}
+                wrapperStyle={tooltipDisabled ? { display: 'none' } : undefined}
+              />
+
+              {/* 클릭 고정 상세 */}
+              {pinnedPoint && pinnedVM ? (
+                <foreignObject x={12} y={12} width={320} height={220}>
+                  <div className="bg-white/95 border border-gray-200 rounded-xl p-3 shadow-lg">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-xs text-gray-500">
+                          {new Date(pinnedVM.t).toLocaleString('ko-KR')}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-700 tabular-nums">
+                          <span className="mr-2">O {pinnedPoint.o.toFixed(2)}</span>
+                          <span className="mr-2">H {pinnedPoint.h.toFixed(2)}</span>
+                          <span className="mr-2">L {pinnedPoint.l.toFixed(2)}</span>
+                          <span className="mr-2 font-semibold">C {pinnedPoint.c.toFixed(2)}</span>
+                          <span>V {pinnedPoint.v.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="shrink-0 text-xs font-semibold text-gray-600 hover:text-gray-900"
+                        onClick={() => setPinnedPoint(null)}
+                        title="고정 해제"
+                      >
+                        닫기
+                      </button>
+                    </div>
+
+                    <div className="mt-2 space-y-1">
+                      {pinnedVM.rows
+                        .filter((r) => visibleWindows[r.windowDays])
+                        .map((r) => (
+                          <div key={r.windowDays} className="text-xs flex items-center gap-2">
+                            <span className="w-[36px] text-gray-600">{r.windowDays}d</span>
+                            <span className="font-semibold text-gray-900 tabular-nums w-[56px]">
+                              {r.score === null ? 'N/A' : r.score.toFixed(2)}
+                            </span>
+                            <span className="text-gray-700">
+                              {r.driver ?? '-'}
+                              {r.zLabel && r.zValue !== null ? (
+                                <span className="ml-2 text-gray-600 tabular-nums">
+                                  {r.zLabel}={r.zValue.toFixed(2)}
+                                </span>
+                              ) : null}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-2 text-[11px] text-gray-500">
+                      차트 밖(또는 빈 공간)을 클릭하면 고정이 해제됩니다.
+                    </div>
+                  </div>
+                </foreignObject>
+              ) : null}
 
                 {/* 드래그 선택 영역(확대) */}
                 {dragRange.left !== null && dragRange.right !== null && dragRange.left !== dragRange.right ? (
@@ -604,22 +776,23 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                     label={{ value: 'FINAL', position: 'top', fill: '#111827' }}
                   />
                 ) : null}
-              </ComposedChart>
-            </ResponsiveContainer>
+            </ComposedChart>
           </div>
 
           {/* 하단: 거래량 (상단과 같은 plot area 폭/시간축 설정) */}
-          <div className="w-full" style={{ height: volumeHeight }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                syncId="anomalySeries"
-                syncMethod="value"
-                data={chartData}
-                margin={{ top: 0, right: commonMargin.right, left: commonMargin.left, bottom: 6 }}
-                onMouseDown={startDragSelect}
-                onMouseMove={moveDragSelect}
-                onMouseUp={finishDragSelect}
-              >
+          <div className="w-full min-w-0" style={{ height: volumeHeight }}>
+            <BarChart
+              width={Math.max(1, chartWidth)}
+              height={volumeHeight}
+              syncId="anomalySeries"
+              syncMethod="value"
+              data={chartData}
+              margin={{ top: 0, right: commonMargin.right, left: commonMargin.left, bottom: 6 }}
+              onMouseDown={startDragSelect}
+              onMouseMove={moveDragSelect}
+              onMouseUp={finishDragSelect}
+              onClick={handleChartClick}
+            >
                 <CartesianGrid stroke="#eee" strokeDasharray="5 5" />
                 <XAxis
                   dataKey="t"
@@ -651,7 +824,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                 />
 
                 {/* 하단 차트에서는 tooltip 박스를 숨기고, sync를 위해 이벤트만 유지 */}
-                <Tooltip content={() => null} />
+                <Tooltip content={() => null} wrapperStyle={tooltipDisabled ? { display: 'none' } : undefined} />
 
                 {dragRange.left !== null && dragRange.right !== null && dragRange.left !== dragRange.right ? (
                   <ReferenceArea
@@ -674,8 +847,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                   name="거래량(Volume)"
                   hide={!!hiddenSeries.v}
                 />
-              </BarChart>
-            </ResponsiveContainer>
+            </BarChart>
           </div>
 
           {/* 클릭 가능한 설명(레전드): 여기서만 토글 */}
@@ -685,9 +857,13 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     },
     [
       chartData,
+      chartWidth,
       finalMarker?.t,
       dragRange.left,
       dragRange.right,
+      handleChartClick,
+      pinnedPoint,
+      pinnedVM,
       xAxisStyle.axisHeight,
       renderXAxisTick,
       scoreBands.anomaly,
@@ -727,7 +903,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             <button
               type="button"
               onClick={resetZoom}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-800"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
               title="확대 해제"
             >
               <ZoomOut className="w-4 h-4" />
@@ -744,15 +920,37 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                 ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800 hover:shadow-md'
                 : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md'
             }`}
-            title={isFullscreen ? '전체화면 해제' : '전체화면'}
+            title={isFullscreen ? 'Full Off' : 'Full On'}
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            {isFullscreen ? '전체화면 해제' : '전체화면'}
+            {isFullscreen ? 'Full Off' : 'Full On'}
           </button>
         </div>
       </div>
 
-      <ChartsView mainHeight={heights.main} volumeHeight={heights.volume} />
+      {/*
+        Recharts 경고(width/height -1) 방지:
+        라우트 전환 직후 첫 프레임에 컨테이너 크기가 0/미측정일 수 있어
+        실제 폭을 한 번이라도 측정한 뒤에만 차트를 마운트합니다.
+      */}
+      {chartWidth > 0 && layoutReady ? (
+        <ChartsView mainHeight={heights.main} volumeHeight={heights.volume} />
+      ) : (
+        <div className="w-full space-y-2">
+          <div
+            className="w-full rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-sm text-gray-500"
+            style={{ height: heights.main }}
+          >
+            차트 로딩 중...
+          </div>
+          <div
+            className="w-full rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-500"
+            style={{ height: heights.volume }}
+          >
+            거래량 로딩 중...
+          </div>
+        </div>
+      )}
     </div>
   );
 };

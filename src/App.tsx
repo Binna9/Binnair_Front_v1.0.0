@@ -10,7 +10,7 @@ import Login from '@/pages/LoginPage';
 import Register from '@/pages/RegisterPage';
 import BoardPage from './pages/BoardPage';
 import ForgotPassword from '@/pages/PasswordChangePage';
-import AiMonitorPage from './pages/AiMonitorPage';
+import AnomalyMonitorPage from '@/pages/AnomalyMonitorPage';
 import HistoryPage from './pages/HistoryPage';
 import DashBoardPage from './pages/DashBoardPage';
 import TradePage from './pages/TradePage';
@@ -25,7 +25,7 @@ import { store, persistor, type AppDispatch } from './store/store';
 import { NotificationProvider } from './context/NotificationContext';
 import { useNotification } from './context/NotificationContext';
 import { setupNotificationInterceptor } from './utils/apiClient';
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
 import { ThemeProvider } from './context/Theme/ThemeProvider';
 import '@/index.css';
 import { routeTransitionFinished, routeTransitionStarted } from '@/store/slices/uiSlice';
@@ -34,7 +34,7 @@ import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
 function NotificationInterceptorSetup({ children }) {
   const { showToast } = useNotification();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const cleanupInterceptor = setupNotificationInterceptor(showToast);
 
     return () => {
@@ -93,10 +93,10 @@ function AppRoutes() {
             }
           />
           <Route
-            path="/ai-monitor"
+            path="/anomaly-monitor"
             element={
               <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
-                <AiMonitorPage />
+                <AnomalyMonitorPage />
               </ProtectedRoute>
             }
           />
