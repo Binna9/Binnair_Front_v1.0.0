@@ -3,6 +3,7 @@ import { store } from '@/store/store';
 import { setCredentials, logout } from '@/store/slices/authSlice';
 import { useNotification } from '@/context/NotificationContext';
 import { useEffect } from 'react';
+import { apiRequestFinished, apiRequestStarted } from '@/store/slices/uiSlice';
 
 // 기존 apiClient 유지
 const apiClient = axios.create({
@@ -16,20 +17,30 @@ const apiClient = axios.create({
 // ✅ 요청 인터셉터: 모든 요청에 accessToken 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
+    store.dispatch(apiRequestStarted());
     const { accessToken } = store.getState().auth;
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    store.dispatch(apiRequestFinished());
+    return Promise.reject(error);
+  }
 );
 
 export const setupNotificationInterceptor = (showToast) => {
   // 응답 인터셉터에 에러 표시 기능 추가
   const responseInterceptor = apiClient.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      store.dispatch(apiRequestFinished());
+      return response;
+    },
     async (error) => {
+      // 기본적으로 “요청 1개 종료”
+      // - 401 refresh retry는 apiClient(originalRequest)에서 다시 started/finished로 카운트됨
+      store.dispatch(apiRequestFinished());
       const originalRequest = error.config;
 
       // ✅ accessToken 만료 (401 에러) 시 처리

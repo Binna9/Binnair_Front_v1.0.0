@@ -261,3 +261,171 @@ export interface ChartDataTransformOptions {
   timezone?: string; // 타임존 (기본값: 'UTC')
 }
 
+// ============================================================================
+// 화면 렌더링(차트/툴팁/카드/마커)용 "정규화" 타입
+// - Series(A): 차트 데이터셋(캔들/거래량/score 라인 3개/밴드/툴팁 원본)
+// - Final(B): 현재 상태 카드 + (선택) 현재시각 마커
+// ============================================================================
+
+/**
+ * 화면에서 고정적으로 다루는 windowDays 집합.
+ * 서버 JSON의 key는 "30"/"60"/"90" 문자열이므로, 프론트에서 number로 normalize 후 사용.
+ */
+export type AnomalyWindowDays = 30 | 60 | 90;
+
+export const ANOMALY_WINDOW_DAYS: readonly AnomalyWindowDays[] = [30, 60, 90] as const;
+
+/**
+ * driver(원인) 키 (프론트에서는 대/소문자 차이를 제거해 소문자로 통일)
+ * - Series(A): 보통 "ret"/"vol"/"rng"
+ * - Final(B): 보통 "RET"/"VOL"/"RNG"
+ */
+export type AnomalyDriverKey = 'ret' | 'vol' | 'rng';
+
+export type AnomalyZLabel = 'zRet' | 'zVol' | 'zRng';
+
+/**
+ * Score threshold band
+ * - WATCH=2, ANOMALY=3, SEVERE=5
+ */
+export interface AnomalyScoreBands {
+  watch: number;
+  anomaly: number;
+  severe: number;
+}
+
+export const DEFAULT_ANOMALY_SCORE_BANDS: AnomalyScoreBands = {
+  watch: 2,
+  anomaly: 3,
+  severe: 5,
+};
+
+/**
+ * Series(A) 정규화된 1개 시점 데이터(차트 단일 x축 t로 통합)
+ * - 누락/NULL은 차트에서 "끊김" 처리 가능하도록 null 유지
+ */
+export interface AnomalySeriesChartPoint {
+  // 원본/축
+  ts: string; // ISO 8601 (+09:00 포함 가능)
+  t: number; // epoch ms (Date.parse(ts))
+
+  // 캔들/거래량
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+
+  // windowDays별 값(키는 number로 normalize)
+  scores: Partial<Record<AnomalyWindowDays, number | null>>;
+  drivers: Partial<Record<AnomalyWindowDays, AnomalyDriverKey | null>>;
+  z: Partial<Record<AnomalyWindowDays, AnomalyScoreZ | null>>;
+}
+
+export interface AnomalyCandlePoint {
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+}
+
+export interface AnomalyVolumePoint {
+  t: number;
+  v: number;
+}
+
+export interface AnomalyScoreLinePoint {
+  t: number;
+  y: number | null;
+}
+
+/**
+ * Series(A) -> 차트 데이터셋
+ * - points는 t 오름차순 정렬 보장(서버가 보장해도 프론트에서 1회 정렬)
+ */
+export interface AnomalySeriesDataset {
+  meta: AnomalyScoreMeta;
+  summary: AnomalyScoreSummary;
+  points: AnomalySeriesChartPoint[];
+
+  // 차트용 파생 시리즈(선택적으로 사용)
+  candles: AnomalyCandlePoint[];
+  volumes: AnomalyVolumePoint[];
+  scoreLines: Record<AnomalyWindowDays, AnomalyScoreLinePoint[]>;
+
+  // score 기준 밴드
+  scoreBands: AnomalyScoreBands;
+
+  // 기본 표시(추천): 90만 ON
+  defaultVisibleWindows: Record<AnomalyWindowDays, boolean>;
+
+  // 마커 렌더링/범위 체크용
+  extent: { tMin: number; tMax: number } | null;
+}
+
+/**
+ * 툴팁: hover 시점(t/ts)의 windowDays별 요약(Driver 중심)
+ * 예: 30d: 1.81 (ret, zRet=-1.81)
+ */
+export interface AnomalyTooltipWindowRow {
+  windowDays: AnomalyWindowDays;
+  score: number | null;
+  driver: AnomalyDriverKey | null;
+  zLabel: AnomalyZLabel | null;
+  zValue: number | null;
+}
+
+export interface AnomalyTooltipVM {
+  ts: string;
+  t: number;
+  rows: AnomalyTooltipWindowRow[]; // 30/60/90 순서 권장
+}
+
+/**
+ * Final(B) 카드: components를 30/60/90 행으로 표시
+ * - score + driver + (driver에 해당하는 z값만)
+ */
+export interface AnomalyFinalComponentRowVM {
+  windowDays: AnomalyWindowDays;
+  score: number | null;
+  driver: AnomalyDriverKey | null;
+
+  // Final(B)는 component에 zRet/zVol/zRng가 이미 포함되므로 화면에서 전부 표시 가능
+  zRet: number | null;
+  zVol: number | null;
+  zRng: number | null;
+}
+
+export interface AnomalyFinalCardVM {
+  ts: string | null; // ISO 8601
+  t: number | null; // epoch ms
+  mode: string;
+  finalScore: number | null;
+  finalLevel: string | null;
+  basis: string | null;
+  rows: AnomalyFinalComponentRowVM[]; // 30/60/90 정렬 권장
+}
+
+/**
+ * Final(B) 차트 마커(선택)
+ * - final.ts가 series 범위 밖이면 inRange=false로 처리(권장: 미표시)
+ */
+export interface AnomalyFinalMarkerVM {
+  ts: string;
+  t: number;
+  inRange: boolean;
+}
+
+/**
+ * 화면에서 바로 쓰는 통합 ViewModel
+ * - 렌더링 순서: series -> 차트, final -> 카드(+마커)
+ */
+export interface AnomalyScreenVM {
+  series: AnomalySeriesDataset;
+  final: {
+    card: AnomalyFinalCardVM;
+    marker: AnomalyFinalMarkerVM | null;
+  } | null;
+}
+

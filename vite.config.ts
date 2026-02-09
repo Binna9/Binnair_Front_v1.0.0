@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
           'users',      // /users/** - 사용자 이미지 포함
           'files',      // /files/** - 파일 업로드/다운로드
           'boards',     // /boards/**
+          'anomaly',    // /anomaly/** - 이상탐지(Series/Final/Filter)
           'roles',      // /roles/**
           'permissions', // /permissions/**
           'menus',      // /menus/**

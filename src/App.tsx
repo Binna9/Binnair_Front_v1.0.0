@@ -19,14 +19,17 @@ import AuthWrapper from './components/auth/AuthWrapper';
 import GoogleAuthHandler from './components/auth/GoogleAuthHandler';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { Provider } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './store/store';
+import { store, persistor, type AppDispatch } from './store/store';
 import { NotificationProvider } from './context/NotificationContext';
 import { useNotification } from './context/NotificationContext';
 import { setupNotificationInterceptor } from './utils/apiClient';
 import { useEffect } from 'react';
 import { ThemeProvider } from './context/Theme/ThemeProvider';
 import '@/index.css';
+import { routeTransitionFinished, routeTransitionStarted } from '@/store/slices/uiSlice';
+import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
 
 function NotificationInterceptorSetup({ children }) {
   const { showToast } = useNotification();
@@ -44,6 +47,16 @@ function NotificationInterceptorSetup({ children }) {
 
 function AppRoutes() {
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // 라우트 전환에도 로딩 딜레이(최소 유지)를 적용
+  useEffect(() => {
+    dispatch(routeTransitionStarted());
+    const t = window.setTimeout(() => {
+      dispatch(routeTransitionFinished());
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [dispatch, location.pathname]);
 
   return (
     // 화면 랜더링 전환
@@ -136,6 +149,7 @@ export default function App() {
             <Router>
               <NotificationInterceptorSetup>
                 <AuthWrapper>
+                  <GlobalLoadingOverlay showDelayMs={0} minVisibleMs={450} />
                   <AppRoutes />
                 </AuthWrapper>
               </NotificationInterceptorSetup>
