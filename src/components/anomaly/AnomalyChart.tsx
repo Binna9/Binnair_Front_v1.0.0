@@ -36,6 +36,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const scoreBands = dataset.scoreBands;
 
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const chartsAreaRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [chartWidth, setChartWidth] = useState<number>(0);
   const [layoutReady, setLayoutReady] = useState(false);
@@ -49,6 +50,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     left: null,
     right: null,
   });
+  const dragRangeRef = useRef(dragRange);
+  useEffect(() => {
+    dragRangeRef.current = dragRange;
+  }, [dragRange]);
 
   // Legend 클릭으로 각 시리즈 표시/숨김 토글
   const [hiddenSeries, setHiddenSeries] = useState<Record<string, boolean>>({});
@@ -60,6 +65,73 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const [pinnedPoint, setPinnedPoint] = useState<AnomalySeriesChartPoint | null>(null);
   const didDragRef = useRef(false);
 
+  // viewRange 변경(확대/해제/버튼/날짜) 시 차트가 “확” 바뀌는 느낌 완화: 짧은 페이드 전환
+  const prefersReducedMotion = useMemo(() => {
+    if (typeof window === 'undefined') return true;
+    const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    return mq?.matches ?? false;
+  }, []);
+
+  const [rangeFadePhase, setRangeFadePhase] = useState<'idle' | 'out' | 'in'>('idle');
+  const [rangeFadeSeq, setRangeFadeSeq] = useState(0);
+  const nextViewRangeRef = useRef<TimeRange | null>(null);
+  const fadeTimersRef = useRef<number[]>([]);
+
+  const clearFadeTimers = useCallback(() => {
+    fadeTimersRef.current.forEach((id) => window.clearTimeout(id));
+    fadeTimersRef.current = [];
+  }, []);
+
+  const setViewRangeSmooth = useCallback(
+    (next: TimeRange | null) => {
+      nextViewRangeRef.current = next;
+
+      if (prefersReducedMotion) {
+        setViewRange(next);
+        setRangeFadePhase('idle');
+        return;
+      }
+
+      // 동일한 상태(out/in)에서 다시 눌러도 확실히 재시작되도록 seq 기반으로 트리거
+      setRangeFadeSeq((s) => s + 1);
+    },
+    [prefersReducedMotion]
+  );
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    if (rangeFadeSeq === 0) return;
+
+    clearFadeTimers();
+    setRangeFadePhase('out');
+
+    const outId = window.setTimeout(() => {
+      setViewRange(nextViewRangeRef.current ?? null);
+      setRangeFadePhase('in');
+
+      const inId = window.setTimeout(() => {
+        setRangeFadePhase('idle');
+      }, 160);
+
+      fadeTimersRef.current.push(inId);
+    }, 120);
+
+    fadeTimersRef.current.push(outId);
+
+    return () => {
+      clearFadeTimers();
+    };
+  }, [clearFadeTimers, prefersReducedMotion, rangeFadeSeq]);
+
+  const applyViewRangeSmooth = useCallback(
+    (next: TimeRange | null) => {
+      setPinnedPoint(null);
+      setDragRange({ left: null, right: null });
+      setViewRangeSmooth(next);
+    },
+    [setViewRangeSmooth]
+  );
+
   // 90d@5m면 포인트가 2~3만개까지 늘어 DOM 렌더링이 급격히 느려집니다.
   // 표시용으로만 다운샘플링해서 DOM 노드 수를 제한합니다(툴팁/렌더링 모두 이 표본을 사용).
   const MAX_RENDER_POINTS = 1500;
@@ -70,6 +142,63 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     const right = Math.max(viewRange.left, viewRange.right);
     return points.filter((p) => p.t >= left && p.t <= right);
   }, [points, viewRange]);
+
+  const datasetExtent = useMemo(() => {
+    if (points.length === 0) return null;
+    const tMin = points[0]?.t;
+    const tMax = points[points.length - 1]?.t;
+    if (!Number.isFinite(tMin) || !Number.isFinite(tMax)) return null;
+    return { tMin, tMax };
+  }, [points]);
+
+  const formatDateInputValue = useCallback((t: number): string => {
+    const d = new Date(t);
+    const yyyy = String(d.getFullYear());
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
+  const parseDateInputToRange = useCallback((fromYmd: string, toYmd: string) => {
+    // 로컬 타임존 기준으로 하루 전체를 포함하도록 from=자정, to=해당일 23:59:59.999
+    const fromParts = fromYmd.split('-').map((v) => Number(v));
+    const toParts = toYmd.split('-').map((v) => Number(v));
+    if (fromParts.length !== 3 || toParts.length !== 3) return null;
+
+    const [fy, fm, fd] = fromParts;
+    const [ty, tm, td] = toParts;
+    if (!Number.isFinite(fy) || !Number.isFinite(fm) || !Number.isFinite(fd)) return null;
+    if (!Number.isFinite(ty) || !Number.isFinite(tm) || !Number.isFinite(td)) return null;
+
+    const from = new Date(fy, fm - 1, fd, 0, 0, 0, 0).getTime();
+    const to = new Date(ty, tm - 1, td, 23, 59, 59, 999).getTime();
+    if (!Number.isFinite(from) || !Number.isFinite(to)) return null;
+    return { left: Math.min(from, to), right: Math.max(from, to) } satisfies TimeRange;
+  }, []);
+
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+
+  // 데이터 범위가 정해지면 기본 날짜 입력값도 세팅(초기 1회 + 데이터 변경 시)
+  useEffect(() => {
+    if (!datasetExtent) {
+      setDateFrom('');
+      setDateTo('');
+      return;
+    }
+    setDateFrom((prev) => prev || formatDateInputValue(datasetExtent.tMin));
+    setDateTo((prev) => prev || formatDateInputValue(datasetExtent.tMax));
+  }, [datasetExtent, formatDateInputValue]);
+
+  // 드래그 확대/버튼/입력 등으로 viewRange가 바뀌면 날짜 input도 동기화
+  useEffect(() => {
+    if (!datasetExtent) return;
+    const r = viewRange ?? { left: datasetExtent.tMin, right: datasetExtent.tMax };
+    const left = Math.min(r.left, r.right);
+    const right = Math.max(r.left, r.right);
+    setDateFrom(formatDateInputValue(left));
+    setDateTo(formatDateInputValue(right));
+  }, [datasetExtent, formatDateInputValue, viewRange]);
 
   const displayPoints = useMemo(() => {
     const src = pointsInRange;
@@ -429,8 +558,8 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
 
     didDragRef.current = true;
     const next: TimeRange = { left: Math.min(left, right), right: Math.max(left, right) };
-    setViewRange(next);
-  }, [dragRange.left, dragRange.right]);
+    applyViewRangeSmooth(next);
+  }, [applyViewRangeSmooth, dragRange.left, dragRange.right]);
 
   // 차트 클릭 시 해당 시점 “고정”, 빈 공간 클릭 시 해제
   const handleChartClick = useCallback((state: any) => {
@@ -472,9 +601,45 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   }, [pinnedPoint]);
 
   const resetZoom = useCallback(() => {
-    setViewRange(null);
-    setDragRange({ left: null, right: null });
-  }, []);
+    applyViewRangeSmooth(null);
+  }, [applyViewRangeSmooth]);
+
+  const applyViewRange = useCallback((next: TimeRange | null) => {
+    applyViewRangeSmooth(next);
+  }, [applyViewRangeSmooth]);
+
+  const applyQuickRange = useCallback(
+    (days: number | 'full') => {
+      if (!datasetExtent) return;
+      if (days === 'full') {
+        applyViewRange(null);
+        return;
+      }
+
+      const D = 24 * 60 * 60 * 1000;
+      const right = datasetExtent.tMax;
+      const left = Math.max(datasetExtent.tMin, right - days * D);
+      applyViewRange({ left, right });
+    },
+    [applyViewRange, datasetExtent]
+  );
+
+  const onApplyDateInputs = useCallback(() => {
+    if (!datasetExtent) return;
+    if (!dateFrom || !dateTo) return;
+    const parsed = parseDateInputToRange(dateFrom, dateTo);
+    if (!parsed) return;
+
+    const left = Math.max(datasetExtent.tMin, Math.min(parsed.left, parsed.right));
+    const right = Math.min(datasetExtent.tMax, Math.max(parsed.left, parsed.right));
+    if (left >= right) {
+      // 같은 날만 선택한 경우도 확대가 되도록 최소 1ms라도 범위를 보장
+      applyViewRange({ left, right: Math.min(datasetExtent.tMax, left + 1) });
+      return;
+    }
+
+    applyViewRange({ left, right });
+  }, [applyViewRange, datasetExtent, dateFrom, dateTo, parseDateInputToRange]);
 
   const tooltipContent = useMemo(() => {
     const TooltipView: React.FC<{
@@ -545,6 +710,80 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     } as const;
   }, [isFullscreen, viewportHeight]);
 
+  // plot area(실제 그려지는 영역)에서의 x좌표를 시간값으로 변환해 드래그 범위를 끝까지 업데이트
+  const dragUpdateFromClientX = useCallback(
+    (clientX: number) => {
+      const leftT = dragRangeRef.current.left;
+      if (leftT === null) return;
+      if (!timeExtent) return;
+
+      const el = chartsAreaRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (!Number.isFinite(rect.width) || rect.width <= 0) return;
+
+      // ChartsView와 동일한 마진/축 폭을 기준으로 plot area 범위를 계산
+      const MARGIN_LEFT = 12;
+      const MARGIN_RIGHT = 90;
+      const AXIS_LEFT_W = 60;
+      const AXIS_RIGHT_W = 55;
+
+      const plotLeftPx = MARGIN_LEFT + AXIS_LEFT_W;
+      const plotRightPx = rect.width - MARGIN_RIGHT - AXIS_RIGHT_W;
+      const plotW = Math.max(1, plotRightPx - plotLeftPx);
+
+      const rawX = clientX - rect.left;
+      const clampedX = Math.min(plotRightPx, Math.max(plotLeftPx, rawX));
+      const ratio = (clampedX - plotLeftPx) / plotW;
+
+      const t = timeExtent.tMin + ratio * (timeExtent.tMax - timeExtent.tMin);
+      const nextT = Math.min(timeExtent.tMax, Math.max(timeExtent.tMin, t));
+
+      setDragRange((prev) => {
+        if (prev.left === null) return prev;
+        // 움직임이 느릴 때 불필요한 렌더를 줄이기 위해 값이 같으면 업데이트하지 않음
+        if (prev.right === nextT) return prev;
+        return { ...prev, right: nextT };
+      });
+    },
+    [timeExtent]
+  );
+
+  const commitDragRange = useCallback(() => {
+    const left = dragRangeRef.current.left;
+    const right = dragRangeRef.current.right;
+    setDragRange({ left: null, right: null });
+
+    if (left === null || right === null) return;
+    if (left === right) return;
+
+    didDragRef.current = true;
+    const next: TimeRange = { left: Math.min(left, right), right: Math.max(left, right) };
+    applyViewRangeSmooth(next);
+  }, [applyViewRangeSmooth]);
+
+  // 차트 영역을 벗어나도(축/여백/바깥) 드래그가 끝까지 이어지도록 전역 포인터 이벤트로 보정
+  useEffect(() => {
+    if (dragRange.left === null) return;
+
+    const onPointerMove = (e: PointerEvent) => {
+      dragUpdateFromClientX(e.clientX);
+    };
+    const onPointerUp = () => {
+      commitDragRange();
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { capture: true });
+    window.addEventListener('pointerup', onPointerUp, { capture: true });
+    window.addEventListener('pointercancel', onPointerUp, { capture: true });
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove, { capture: true } as any);
+      window.removeEventListener('pointerup', onPointerUp, { capture: true } as any);
+      window.removeEventListener('pointercancel', onPointerUp, { capture: true } as any);
+    };
+  }, [commitDragRange, dragRange.left, dragUpdateFromClientX]);
+
   const ChartsView = useCallback(
     (props: { mainHeight: number; volumeHeight: number; denseLegend?: boolean }) => {
       const { mainHeight, volumeHeight } = props;
@@ -607,7 +846,16 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
               {/* 드래그 중에는 tooltip 좌표가 0,0으로 튀는 경우가 있어 숨김 처리 */}
               <Tooltip
                 content={tooltipContent as any}
-                wrapperStyle={tooltipDisabled ? { display: 'none' } : undefined}
+                // Recharts Tooltip 기본 애니메이션(위치 이동) 때문에 “왼쪽에서 날아오는” 느낌이 날 수 있어 비활성화
+                animationDuration={0}
+                wrapperStyle={
+                  tooltipDisabled
+                    ? { display: 'none' }
+                    : {
+                        // wrapper 자체에 들어가는 transition/transform 애니메이션을 차단
+                        transition: 'none',
+                      }
+                }
               />
 
               {/* 클릭 고정 상세 */}
@@ -824,7 +1072,18 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                 />
 
                 {/* 하단 차트에서는 tooltip 박스를 숨기고, sync를 위해 이벤트만 유지 */}
-                <Tooltip content={() => null} wrapperStyle={tooltipDisabled ? { display: 'none' } : undefined} />
+                <Tooltip
+                  content={() => null}
+                  // 상단과 동일하게 위치 이동 애니메이션 차단
+                  animationDuration={0}
+                  wrapperStyle={
+                    tooltipDisabled
+                      ? { display: 'none' }
+                      : {
+                          transition: 'none',
+                        }
+                  }
+                />
 
                 {dragRange.left !== null && dragRange.right !== null && dragRange.left !== dragRange.right ? (
                   <ReferenceArea
@@ -885,7 +1144,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
       ref={rootRef}
       className={`w-full h-full ${isFullscreen ? 'bg-white p-4' : ''}`}
     >
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-gray-900">Series Chart</div>
           <div className="text-xs text-gray-500">
@@ -896,6 +1155,82 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
               확대 구간: {formattedViewRangeLabel}
             </div>
           ) : null}
+        </div>
+
+        {/* 빠른 범위 + 날짜 범위 설정 */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => applyQuickRange('full')}
+              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              title="전체 기간"
+              disabled={!datasetExtent}
+            >
+              Full
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickRange(30)}
+              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              title="최근 1개월"
+              disabled={!datasetExtent}
+            >
+              1M
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickRange(7)}
+              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              title="최근 1주"
+              disabled={!datasetExtent}
+            >
+              1W
+            </button>
+            <button
+              type="button"
+              onClick={() => applyQuickRange(1)}
+              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              title="최근 1일"
+              disabled={!datasetExtent}
+            >
+              1D
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
+            <div className="text-xs font-semibold text-gray-600">날짜</div>
+            <input
+              type="date"
+              value={dateFrom}
+              min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
+              max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
+              onChange={(e) => setDateFrom(e.target.value)}
+              onBlur={onApplyDateInputs}
+              className="text-sm border border-gray-200 rounded-md px-2 py-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              disabled={!datasetExtent}
+            />
+            <span className="text-xs text-gray-400">~</span>
+            <input
+              type="date"
+              value={dateTo}
+              min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
+              max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
+              onChange={(e) => setDateTo(e.target.value)}
+              onBlur={onApplyDateInputs}
+              className="text-sm border border-gray-200 rounded-md px-2 py-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              disabled={!datasetExtent}
+            />
+            <button
+              type="button"
+              onClick={onApplyDateInputs}
+              className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20 active:translate-y-[1px]"
+              disabled={!datasetExtent || !dateFrom || !dateTo}
+              title="날짜 적용"
+            >
+              적용
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -934,7 +1269,20 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
         실제 폭을 한 번이라도 측정한 뒤에만 차트를 마운트합니다.
       */}
       {chartWidth > 0 && layoutReady ? (
-        <ChartsView mainHeight={heights.main} volumeHeight={heights.volume} />
+        <div
+          ref={chartsAreaRef}
+          className="w-full h-full"
+          style={
+            prefersReducedMotion
+              ? undefined
+              : {
+                  opacity: rangeFadePhase === 'out' ? 0.18 : 1,
+                  transition: 'opacity 160ms ease',
+                }
+          }
+        >
+          <ChartsView mainHeight={heights.main} volumeHeight={heights.volume} />
+        </div>
       ) : (
         <div className="w-full space-y-2">
           <div
