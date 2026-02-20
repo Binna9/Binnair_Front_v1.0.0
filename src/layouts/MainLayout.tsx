@@ -1,6 +1,5 @@
 import Navbar from '@/components/main/Navbar';
 import Sidebar from '@/components/main/Sidebar';
-import Footer from '@/components/main/Footer';
 import { useLocation } from 'react-router-dom';
 
 export default function MainLayout({
@@ -36,8 +35,6 @@ export default function MainLayout({
           {children}
         </main>
       </div>
-
-      <Footer className="mt-auto" />
     </div>
   );
 }

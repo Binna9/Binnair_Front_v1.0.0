@@ -76,7 +76,6 @@ export default function Board() {
     handleDelete,
     handleSectionChange,
     handleFileChange,
-    removeFile,
     toggleFileSelection,
     toggleSelectAllFiles,
     removeSelectedFiles,
@@ -131,7 +130,7 @@ export default function Board() {
         >
           <div>
             <h1 className="text-base font-bold mb-4 text-white flex items-center">
-              <Headset className="w-5 h-5 mr-2 text-white" /> 고객센터
+              <Headset className="w-5 h-5 mr-2 text-white" /> 커뮤니티
             </h1>
             <div className="flex flex-col space-y-2">
               {sections.map((section) => (

@@ -8,7 +8,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useNavigate } from 'react-router-dom';
 import AuthLayout from '@/layouts/AuthLayout';
 import { useAuth } from '@/hooks/auth/useAuth';
-import GoogleLoginButton from '@/components/auth/GoogleLoginButton';
 
 export default function LoginPage() {
   const [loginId, setLoginId] = useState('');
@@ -97,7 +96,6 @@ export default function LoginPage() {
       {/* ✅ SSO 로그인 카드 */}
       <Card className="p-5 w-full max-w-md card-login relative z-10 border-none overflow-hidden">
         <div className="flex flex-col items-center space-y-2">
-          <GoogleLoginButton />
           <Button className="w-64 flex items-center justify-center space-x-2 bg-yellow-400 hover:bg-yellow-300 rounded-lg shadow-md py-2 border-none text-sm">
             <img src="/img/kakao-logo.png" alt="Kakao" className="h-4 w-4" />
             <span className="font-medium text-black text-xs">

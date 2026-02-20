@@ -17,6 +17,7 @@ interface HamburgerMenuProps {
   onItemClick?: (item: MenuItem) => void;
   icon?: React.ReactNode;
   className?: string;
+  triggerIconSizePx?: number;
 
   // ✅ 추가: 반응형용 Drawer 지원
   variant?: 'dropdown' | 'drawer';
@@ -33,6 +34,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onItemClick,
   icon,
   className,
+  triggerIconSizePx = 24,
 
   variant = 'dropdown',
   closeOnSelect = true,
@@ -88,8 +90,8 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             <input type="checkbox" checked={isOpen} readOnly className="hidden" />
             <svg
               viewBox="0 0 32 32"
-              width="32"
-              height="32"
+              width={triggerIconSizePx}
+              height={triggerIconSizePx}
               className="transition-transform duration-300 group-hover:scale-110"
             >
               <path
@@ -145,12 +147,12 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                 zIndex: -1,
               }}
             />
-            <ul className="py-1 text-center space-y-0.5 relative z-10">
+            <ul className="py-2 text-center space-y-1.5 relative z-10">
               {items.map((item) => (
                 <li
                   key={item.id}
                   onClick={() => handleSelect(item)}
-                  className="py-1 px-2 w-11/12 mx-auto transition cursor-pointer hover:bg-white/15 rounded-md flex items-center justify-center space-x-1.5 whitespace-nowrap text-xs"
+                  className="py-2 px-2 w-11/12 mx-auto transition cursor-pointer hover:bg-white/15 rounded-md flex items-center justify-center space-x-1.5 whitespace-nowrap text-xs"
                 >
                   {item.icon && (
                     <span className="flex items-center text-xs [&>svg]:w-3 [&>svg]:h-3">
@@ -200,13 +202,13 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                 </button>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {items.map((item) => (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => handleSelect(item)}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-white/10 text-left text-sm text-white"
+                    className="w-full flex items-center gap-2 px-3 py-2.5 rounded-md hover:bg-white/10 text-left text-sm text-white"
                   >
                     {item.icon}
                     <span className="truncate">{item.name}</span>
