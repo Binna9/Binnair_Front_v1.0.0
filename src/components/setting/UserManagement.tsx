@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -143,6 +143,39 @@ export default function UserManagement() {
       role.roleName.toLowerCase().includes(roleSearchTerm.toLowerCase()) ||
       (role.roleDescription?.toLowerCase() || '').includes(roleSearchTerm.toLowerCase())
   );
+
+  // 역할 부여(오른쪽 목록)에서: 선택된 사용자들이 "공통으로 이미 가진 역할"은 숨김
+  const commonAssignedRolesForSelectedUsers = useMemo(() => {
+    if (selectedRoleUsers.length === 0) return new Set<string>();
+
+    const selectedUsers = users.filter((u) => selectedRoleUsers.includes(u.userId));
+    if (selectedUsers.length === 0) return new Set<string>();
+
+    const firstRoles = selectedUsers[0].roles ?? [];
+    let common = new Set<string>(firstRoles);
+
+    for (const u of selectedUsers.slice(1)) {
+      const rolesSet = new Set(u.roles ?? []);
+      common = new Set(Array.from(common).filter((r) => rolesSet.has(r)));
+      if (common.size === 0) break;
+    }
+
+    return common;
+  }, [users, selectedRoleUsers]);
+
+  const assignableRoleList = useMemo(
+    () => filteredRoleList.filter((r) => !commonAssignedRolesForSelectedUsers.has(r.roleName)),
+    [filteredRoleList, commonAssignedRolesForSelectedUsers]
+  );
+
+  useEffect(() => {
+    // 숨겨진(이미 공통 부여된) 역할이 선택되어 있으면 자동 해제
+    if (selectedRoleNames.length === 0) return;
+    setSelectedRoleNames((prev) =>
+      prev.filter((name) => !commonAssignedRolesForSelectedUsers.has(name))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonAssignedRolesForSelectedUsers]);
 
   // 검색어에 따른 사용자 필터링 (역할 제거 다이얼로그용)
   const filteredRemoveRoleUsers = users.filter(
@@ -473,100 +506,106 @@ export default function UserManagement() {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-sm">사용자 역할 부여</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
-            {/* 사용자 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '45%' }}>
-              <Label className="text-xs mb-2 block flex-shrink-0">
-                사용자 선택 ({selectedRoleUsers.length}명 선택됨)
-              </Label>
-              <Input
-                placeholder="사용자 검색 (이름, 이메일, 닉네임)..."
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-                className="mb-2 text-xs flex-shrink-0"
-              />
-              <div className="border rounded-lg flex-1 overflow-y-auto min-h-0">
-                {filteredRoleUsers.length === 0 ? (
-                  <div className="p-2 text-xs text-gray-500 text-center">
-                    검색 결과가 없습니다
-                  </div>
-                ) : (
-                  filteredRoleUsers.map((user) => (
-                    <div
-                      key={user.userId}
-                      onClick={() => toggleUserSelection(user.userId)}
-                      className={`p-2.5 cursor-pointer transition-all border-b last:border-b-0 ${
-                        selectedRoleUsers.includes(user.userId)
-                          ? 'bg-blue-100 border-blue-400 border-l-4 border-l-blue-600'
-                          : 'hover:bg-gray-100 border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="text-xs font-medium">{user.userName}</div>
-                          <div className="text-xs text-gray-500">{user.email || '-'}</div>
-                          {user.roles && user.roles.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {user.roles.map((role) => (
-                                <span
-                                  key={role}
-                                  className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary/10 text-primary"
-                                >
-                                  {role}
-                                </span>
-                              ))}
-                            </div>
+          <div className="py-4 flex-1 min-h-0">
+            <div className="flex flex-col md:flex-row gap-4 h-full min-h-0">
+              {/* 사용자 선택 (왼쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
+                <Label className="text-xs mb-2 block flex-shrink-0">
+                  사용자 선택 ({selectedRoleUsers.length}명 선택됨)
+                </Label>
+                <Input
+                  placeholder="사용자 검색 (이름, 이메일, 닉네임)..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="mb-2 text-xs flex-shrink-0"
+                />
+                <div className="border rounded-lg flex-1 overflow-y-auto min-h-0">
+                  {filteredRoleUsers.length === 0 ? (
+                    <div className="p-2 text-xs text-gray-500 text-center">
+                      검색 결과가 없습니다
+                    </div>
+                  ) : (
+                    filteredRoleUsers.map((user) => (
+                      <div
+                        key={user.userId}
+                        onClick={() => toggleUserSelection(user.userId)}
+                        className={`p-2.5 cursor-pointer transition-all border-b last:border-b-0 ${
+                          selectedRoleUsers.includes(user.userId)
+                            ? 'bg-blue-100 border-blue-400 border-l-4 border-l-blue-600'
+                            : 'hover:bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="text-xs font-medium">{user.userName}</div>
+                            <div className="text-xs text-gray-500">{user.email || '-'}</div>
+                            {user.roles && user.roles.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {user.roles.map((role) => (
+                                  <span
+                                    key={role}
+                                    className="px-1.5 py-0.5 text-[10px] rounded-full bg-primary/10 text-primary"
+                                  >
+                                    {role}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {selectedRoleUsers.includes(user.userId) && (
+                            <div className="ml-2 text-blue-600 font-bold">✓</div>
                           )}
                         </div>
-                        {selectedRoleUsers.includes(user.userId) && (
-                          <div className="ml-2 text-blue-600 font-bold">✓</div>
-                        )}
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* 역할 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '45%' }}>
-              <Label className="text-xs mb-2 block flex-shrink-0">
-                역할 선택 ({selectedRoleNames.length}개 선택됨)
-              </Label>
-              <Input
-                placeholder="역할 검색 (역할명, 설명)..."
-                value={roleSearchTerm}
-                onChange={(e) => setRoleSearchTerm(e.target.value)}
-                className="mb-2 text-xs flex-shrink-0"
-              />
-              <div className="border rounded-lg flex-1 overflow-y-auto min-h-0">
-                {filteredRoleList.length === 0 ? (
-                  <div className="p-2 text-xs text-gray-500 text-center">
-                    {roles.length === 0 ? '역할이 없습니다' : '검색 결과가 없습니다'}
-                  </div>
-                ) : (
-                  filteredRoleList.map((role) => (
-                    <div
-                      key={role.roleId}
-                      onClick={() => toggleRoleSelection(role.roleName)}
-                      className={`p-2.5 cursor-pointer transition-all border-b last:border-b-0 ${
-                        selectedRoleNames.includes(role.roleName)
-                          ? 'bg-blue-100 border-blue-400 border-l-4 border-l-blue-600'
-                          : 'hover:bg-gray-100 border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="text-xs font-medium">{role.roleName}</div>
-                          <div className="text-xs text-gray-500">{role.roleDescription || '-'}</div>
-                        </div>
-                        {selectedRoleNames.includes(role.roleName) && (
-                          <div className="ml-2 text-blue-600 font-bold">✓</div>
-                        )}
-                      </div>
+              {/* 역할 선택 (오른쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
+                <Label className="text-xs mb-2 block flex-shrink-0">
+                  역할 선택 ({selectedRoleNames.length}개 선택됨)
+                </Label>
+                <Input
+                  placeholder="역할 검색 (역할명, 설명)..."
+                  value={roleSearchTerm}
+                  onChange={(e) => setRoleSearchTerm(e.target.value)}
+                  className="mb-2 text-xs flex-shrink-0"
+                />
+                <div className="border rounded-lg flex-1 overflow-y-auto min-h-0">
+                  {filteredRoleList.length === 0 ? (
+                    <div className="p-2 text-xs text-gray-500 text-center">
+                      {roles.length === 0 ? '역할이 없습니다' : '검색 결과가 없습니다'}
                     </div>
-                  ))
-                )}
+                  ) : assignableRoleList.length === 0 ? (
+                    <div className="p-2 text-xs text-gray-500 text-center">
+                      선택한 사용자에게 이미 부여된 역할입니다
+                    </div>
+                  ) : (
+                    assignableRoleList.map((role) => (
+                      <div
+                        key={role.roleId}
+                        onClick={() => toggleRoleSelection(role.roleName)}
+                        className={`p-2.5 cursor-pointer transition-all border-b last:border-b-0 ${
+                          selectedRoleNames.includes(role.roleName)
+                            ? 'bg-blue-100 border-blue-400 border-l-4 border-l-blue-600'
+                            : 'hover:bg-gray-100 border-gray-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="text-xs font-medium">{role.roleName}</div>
+                            <div className="text-xs text-gray-500">{role.roleDescription || '-'}</div>
+                          </div>
+                          {selectedRoleNames.includes(role.roleName) && (
+                            <div className="ml-2 text-blue-600 font-bold">✓</div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -595,9 +634,10 @@ export default function UserManagement() {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-sm">사용자 역할 제거</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
-            {/* 사용자 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '45%' }}>
+          <div className="py-4 flex-1 min-h-0">
+            <div className="flex flex-col md:flex-row gap-4 h-full min-h-0">
+              {/* 사용자 선택 (왼쪽, 단일) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 사용자 선택 {selectedRemoveRoleUser && `(${users.find((u) => u.userId === selectedRemoveRoleUser)?.userName})`}
               </Label>
@@ -665,8 +705,8 @@ export default function UserManagement() {
               </div>
             </div>
 
-            {/* 역할 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '45%' }}>
+              {/* 역할 선택 (오른쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 역할 선택 ({selectedRemoveRoleNames.length}개 선택됨)
               </Label>
@@ -714,6 +754,7 @@ export default function UserManagement() {
                     </div>
                   ))
                 )}
+              </div>
               </div>
             </div>
           </div>

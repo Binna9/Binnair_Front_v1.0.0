@@ -99,7 +99,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="bg-white rounded-2xl shadow-xl w-[600px] max-w-full max-h-[80vh] p-6 relative flex flex-col"
+        className="bg-white rounded-2xl shadow-xl w-[560px] max-w-full max-h-[80vh] p-5 relative flex flex-col text-sm"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
@@ -112,8 +112,8 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
 
         {/* 헤더 */}
         <div className="flex items-center gap-3 mb-4">
-          <StarIcon className="w-7 h-7 text-yellow-500" />
-          <h2 className="text-xl font-semibold">Bookmark</h2>
+          <StarIcon className="w-6 h-6 text-yellow-500" />
+          <h2 className="text-lg font-semibold">Bookmark</h2>
         </div>
 
         {!isLoggedIn ? (
@@ -133,13 +133,13 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
                   onChange={handleSelectAll}
                   className="w-4 h-4 cursor-pointer"
                 />
-                <label className="text-sm cursor-pointer">전체 선택</label>
+                <label className="text-xs cursor-pointer">전체 선택</label>
               </div>
 
               {selectedItems.length > 0 && (
                 <button
                   onClick={() => deleteSelectedItems()}
-                  className="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+                  className="text-xs px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
                 >
                   선택 삭제 ({selectedItems.length})
                 </button>
@@ -147,7 +147,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
             </div>
 
             {/* 상품 리스트 */}
-            <div className="flex-1 overflow-y-auto space-y-4 custom-scroll p-4">
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scroll p-3">
               {bookmarkItems.length > 0 ? (
                 bookmarkItems.map((item) => (
                   <div
@@ -167,21 +167,21 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
                       <img
                         src={item.imageUrl || '/default-product.png'}
                         alt={item.productName}
-                        className="w-16 h-16 object-cover rounded-md border"
+                        className="w-14 h-14 object-cover rounded-md border"
                       />
 
                       <div>
-                        <p className="text-gray-800 font-semibold">
+                        <p className="text-gray-800 font-semibold text-sm">
                           {item.productName}
                         </p>
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-500 text-xs">
                           {item.productDescription}
                         </p>
                       </div>
                     </div>
 
                     {/* 가격 */}
-                    <p className="text-gray-700 font-semibold">
+                    <p className="text-gray-700 font-semibold text-sm">
                       {typeof item.price === 'number'
                         ? `${item.price.toLocaleString()} 원`
                         : '가격 정보 없음'}
@@ -198,7 +198,7 @@ const BookmarkPopup: React.FC<BookmarkPopupProps> = ({
                           await deleteBookmarkItem(item.bookmarkId);
                         }
                       }}
-                      className="text-red-500 hover:text-red-700 ml-4"
+                      className="text-red-500 hover:text-red-700 ml-4 text-sm"
                     >
                       삭제
                     </button>

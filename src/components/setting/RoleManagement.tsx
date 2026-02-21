@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -221,6 +221,42 @@ export default function RoleManagement() {
       permission.permissionName.toLowerCase().includes(permissionSearchTerm.toLowerCase()) ||
       permission.permissionDescription.toLowerCase().includes(permissionSearchTerm.toLowerCase())
   );
+
+  // 권한 부여(오른쪽 목록)에서: 선택된 역할들이 "공통으로 이미 가진 권한"은 숨김
+  const commonAssignedPermissionsForSelectedRoles = useMemo(() => {
+    if (selectedPermissionRoles.length === 0) return new Set<string>();
+
+    const selectedRoles = roles.filter((r) => selectedPermissionRoles.includes(r.roleId));
+    if (selectedRoles.length === 0) return new Set<string>();
+
+    const firstPerms = selectedRoles[0].permissions ?? [];
+    let common = new Set<string>(firstPerms);
+
+    for (const r of selectedRoles.slice(1)) {
+      const permsSet = new Set(r.permissions ?? []);
+      common = new Set(Array.from(common).filter((p) => permsSet.has(p)));
+      if (common.size === 0) break;
+    }
+
+    return common;
+  }, [roles, selectedPermissionRoles]);
+
+  const assignablePermissionList = useMemo(
+    () =>
+      filteredPermissionList.filter(
+        (p) => !commonAssignedPermissionsForSelectedRoles.has(p.permissionName)
+      ),
+    [filteredPermissionList, commonAssignedPermissionsForSelectedRoles]
+  );
+
+  useEffect(() => {
+    // 숨겨진(이미 공통 부여된) 권한이 선택되어 있으면 자동 해제
+    if (selectedPermissionNames.length === 0) return;
+    setSelectedPermissionNames((prev) =>
+      prev.filter((name) => !commonAssignedPermissionsForSelectedRoles.has(name))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commonAssignedPermissionsForSelectedRoles]);
 
   // 권한 제거용 역할 필터링
   const filteredRemovePermissionRoles = roles.filter(
@@ -504,13 +540,14 @@ export default function RoleManagement() {
 
       {/* 권한 부여 다이얼로그 */}
       <Dialog open={isPermissionDialogOpen} onOpenChange={setIsPermissionDialogOpen}>
-        <DialogContent className="max-w-xl h-[80vh] flex flex-col">
+        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-sm">역할에 권한 부여</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
-            {/* 역할 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '35%' }}>
+          <div className="py-4 flex-1 min-h-0">
+            <div className="flex flex-col md:flex-row gap-4 h-full min-h-0">
+              {/* 역할 선택 (왼쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 역할 선택 ({selectedPermissionRoles.length}개 선택됨)
               </Label>
@@ -574,8 +611,8 @@ export default function RoleManagement() {
               </div>
             </div>
 
-            {/* 권한 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '50%' }}>
+              {/* 권한 선택 (오른쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 권한 선택 ({selectedPermissionNames.length}개 선택됨)
               </Label>
@@ -586,12 +623,16 @@ export default function RoleManagement() {
                 className="mb-2 text-xs flex-shrink-0"
               />
               <div className="border rounded-lg flex-1 overflow-y-auto min-h-0">
-                {filteredPermissionList.length === 0 ? (
+                  {filteredPermissionList.length === 0 ? (
                   <div className="p-2 text-xs text-gray-500 text-center">
                     {permissions.length === 0 ? '권한이 없습니다' : '검색 결과가 없습니다'}
                   </div>
+                  ) : assignablePermissionList.length === 0 ? (
+                    <div className="p-2 text-xs text-gray-500 text-center">
+                      선택한 역할에 이미 부여된 권한입니다
+                    </div>
                 ) : (
-                  filteredPermissionList.map((permission) => (
+                    assignablePermissionList.map((permission) => (
                     <div
                       key={permission.permissionId}
                       onClick={() =>
@@ -622,6 +663,7 @@ export default function RoleManagement() {
                   ))
                 )}
               </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="flex-shrink-0">
@@ -645,13 +687,14 @@ export default function RoleManagement() {
 
       {/* 권한 제거 다이얼로그 */}
       <Dialog open={isRemovePermissionDialogOpen} onOpenChange={setIsRemovePermissionDialogOpen}>
-        <DialogContent className="max-w-xl h-[80vh] flex flex-col">
+        <DialogContent className="max-w-2xl h-[80vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="text-sm">역할 권한 제거</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col min-h-0">
-            {/* 역할 선택 (단일) */}
-            <div className="flex flex-col min-h-0" style={{ height: '35%' }}>
+          <div className="py-4 flex-1 min-h-0">
+            <div className="flex flex-col md:flex-row gap-4 h-full min-h-0">
+              {/* 역할 선택 (왼쪽, 단일) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 역할 선택{' '}
                 {selectedRemovePermissionRole &&
@@ -719,8 +762,8 @@ export default function RoleManagement() {
               </div>
             </div>
 
-            {/* 권한 선택 */}
-            <div className="flex flex-col min-h-0" style={{ height: '50%' }}>
+              {/* 권한 선택 (오른쪽) */}
+              <div className="flex flex-col min-h-0 md:w-1/2">
               <Label className="text-xs mb-2 block flex-shrink-0">
                 권한 선택 ({selectedRemovePermissionNames.length}개 선택됨)
               </Label>
@@ -768,6 +811,7 @@ export default function RoleManagement() {
                     </div>
                   ))
                 )}
+              </div>
               </div>
             </div>
           </div>

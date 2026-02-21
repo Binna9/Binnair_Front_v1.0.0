@@ -25,12 +25,14 @@ interface AnomalyChartProps {
   dataset: AnomalySeriesDataset;
   visibleWindows: Record<AnomalyWindowDays, boolean>;
   finalMarker?: AnomalyFinalMarkerVM | null;
+  onToggleWindow?: (wd: AnomalyWindowDays) => void;
 }
 
 const AnomalyChart: React.FC<AnomalyChartProps> = ({
   dataset,
   visibleWindows,
   finalMarker,
+  onToggleWindow,
 }) => {
   const points = dataset.points;
   const scoreBands = dataset.scoreBands;
@@ -403,46 +405,55 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   }, [timeExtent, xAxisStyle]);
 
   const seriesDefs = useMemo(() => {
-    const defs: Array<{ key: string; label: string; color: string }> = [
-      { key: 'c', label: 'Close[종가]', color: '#2563eb' },
-      { key: 'v', label: '거래량(Volume)', color: 'rgba(100, 74, 74, 0.75)' },
+    const defs: Array<
+      | { kind: 'series'; key: 'c' | 'v'; label: string; color: string }
+      | { kind: 'score'; windowDays: AnomalyWindowDays; key: 'score30' | 'score60' | 'score90'; label: string; color: string }
+    > = [
+      { kind: 'series', key: 'c', label: 'Close[종가]', color: '#2563eb' },
+      { kind: 'series', key: 'v', label: '거래량(Volume)', color: 'rgba(100, 74, 74, 0.75)' },
+      // Score 레전드는 항상 노출(초기에는 30/60이 “미선택”이라도 항목 자체는 보여서 나중에 켤 수 있게)
+      { kind: 'score', windowDays: 30, key: 'score30', label: 'Score 30d', color: '#60a5fa' },
+      { kind: 'score', windowDays: 60, key: 'score60', label: 'Score 60d', color: '#f59e0b' },
+      { kind: 'score', windowDays: 90, key: 'score90', label: 'Score 90d', color: '#dc2626' },
     ];
-
-    if (visibleWindows[30]) defs.push({ key: 'score30', label: 'Score 30d', color: '#60a5fa' });
-    if (visibleWindows[60]) defs.push({ key: 'score60', label: 'Score 60d', color: '#f59e0b' });
-    if (visibleWindows[90]) defs.push({ key: 'score90', label: 'Score 90d', color: '#dc2626' });
-
     return defs;
-  }, [visibleWindows]);
+  }, []);
 
   const ToggleLegend = useCallback(() => {
     return (
       <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
         {seriesDefs.map((s) => {
-          const isHidden = !!hiddenSeries[s.key];
+          const isScore = s.kind === 'score';
+          const isSelected = isScore ? !!visibleWindows[s.windowDays] : !hiddenSeries[s.key];
           return (
             <button
               key={s.key}
               type="button"
-              onClick={() => toggleSeries(s.key)}
+              onClick={() => {
+                if (isScore) {
+                  onToggleWindow?.(s.windowDays);
+                  return;
+                }
+                toggleSeries(s.key);
+              }}
               className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                isHidden
-                  ? 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
-                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                isSelected
+                  ? 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  : 'border-gray-200 bg-white text-gray-400 hover:bg-gray-50'
               }`}
-              title={isHidden ? '표시하기' : '숨기기'}
+              title={isSelected ? '숨기기' : '표시하기'}
             >
               <span
                 className="inline-block h-2 w-2 rounded-full"
-                style={{ backgroundColor: isHidden ? '#d1d5db' : s.color }}
+                style={{ backgroundColor: isSelected ? s.color : '#d1d5db' }}
               />
-              <span className={isHidden ? 'line-through' : ''}>{s.label}</span>
+              <span className={isSelected ? '' : 'line-through'}>{s.label}</span>
             </button>
           );
         })}
       </div>
     );
-  }, [hiddenSeries, seriesDefs, toggleSeries]);
+  }, [hiddenSeries, onToggleWindow, seriesDefs, toggleSeries, visibleWindows]);
 
   useEffect(() => {
     const onFsChange = () => {
@@ -936,48 +947,42 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
                   hide={!!hiddenSeries.c}
                 />
 
-                {visibleWindows[30] && (
-                  <Line
-                    yAxisId="score"
-                    type="linear"
-                    dataKey="score30"
-                    stroke="#60a5fa"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                    isAnimationActive={false}
-                    name="Score 30d"
-                    hide={!!hiddenSeries.score30}
-                  />
-                )}
-                {visibleWindows[60] && (
-                  <Line
-                    yAxisId="score"
-                    type="linear"
-                    dataKey="score60"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                    isAnimationActive={false}
-                    name="Score 60d"
-                    hide={!!hiddenSeries.score60}
-                  />
-                )}
-                {visibleWindows[90] && (
-                  <Line
-                    yAxisId="score"
-                    type="linear"
-                    dataKey="score90"
-                    stroke="#dc2626"
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                    isAnimationActive={false}
-                    name="Score 90d"
-                    hide={!!hiddenSeries.score90}
-                  />
-                )}
+                <Line
+                  yAxisId="score"
+                  type="linear"
+                  dataKey="score30"
+                  stroke="#60a5fa"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                  name="Score 30d"
+                  hide={!visibleWindows[30]}
+                />
+                <Line
+                  yAxisId="score"
+                  type="linear"
+                  dataKey="score60"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                  name="Score 60d"
+                  hide={!visibleWindows[60]}
+                />
+                <Line
+                  yAxisId="score"
+                  type="linear"
+                  dataKey="score90"
+                  stroke="#dc2626"
+                  strokeWidth={2}
+                  dot={false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                  name="Score 90d"
+                  hide={!visibleWindows[90]}
+                />
 
                 <ReferenceLine
                   yAxisId="score"

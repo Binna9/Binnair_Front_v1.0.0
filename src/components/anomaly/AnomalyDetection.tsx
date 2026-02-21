@@ -9,8 +9,7 @@ import {
   type AnomalySeriesDataset,
   type AnomalyWindowDays,
 } from '@/types/AnomalyTypes';
-import { Activity, AlertTriangle, CheckCircle2, Eye, OctagonAlert, Settings2 } from 'lucide-react';
-import { RefreshCw } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Eye, OctagonAlert, RefreshCw, Settings2, Star } from 'lucide-react';
 import { getNextCandleStartTime, getTimeUntilNextCandle, toISO8601UTC } from '@/utils/timeframeUtils';
 import { buildFinalCardVM, buildFinalMarkerVM, buildSeriesDataset } from '@/utils/anomalyTransform';
 
@@ -40,6 +39,7 @@ const AnomalyDetection: React.FC = () => {
   const [finalCard, setFinalCard] = useState<AnomalyFinalCardVM | null>(null);
   const [finalMarker, setFinalMarker] = useState<AnomalyFinalMarkerVM | null>(null);
 
+  // 초기에는 90d만 보이되, 레전드에서 30/60도 나중에 켤 수 있게 상태는 유지합니다.
   const [visibleWindows, setVisibleWindows] = useState<Record<AnomalyWindowDays, boolean>>({
     30: false,
     60: false,
@@ -289,9 +289,46 @@ const AnomalyDetection: React.FC = () => {
     };
   }, [filtersReady, fetchSeriesThenFinal, instrumentId, mode, timeframe, venueId]);
 
-  const toggleWindow = (wd: AnomalyWindowDays) => {
+  const toggleWindow = useCallback((wd: AnomalyWindowDays) => {
     setVisibleWindows((prev) => ({ ...prev, [wd]: !prev[wd] }));
-  };
+  }, []);
+
+  const currentVenueLabel = useMemo(() => {
+    return venueOptions.find((v) => v.id === venueId)?.label ?? String(venueId);
+  }, [venueId, venueOptions]);
+
+  const currentInstrumentLabel = useMemo(() => {
+    return instrumentOptions.find((i) => i.id === instrumentId)?.label ?? String(instrumentId);
+  }, [instrumentId, instrumentOptions]);
+
+  // 이 화면 전용 즐겨찾기(venue/instrument) - 로컬 저장
+  const ANOMALY_FAVORITES_STORAGE_KEY = 'anomaly.favorites.v1';
+  const currentFavoriteId = useMemo(() => `${venueId}:${instrumentId}`, [venueId, instrumentId]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const raw = window.localStorage.getItem(ANOMALY_FAVORITES_STORAGE_KEY);
+      const parsed = raw ? (JSON.parse(raw) as unknown) : [];
+      return Array.isArray(parsed) ? parsed.filter((x) => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const isFavorited = favoriteIds.includes(currentFavoriteId);
+  const toggleFavorite = useCallback(() => {
+    setFavoriteIds((prev) => {
+      const next = prev.includes(currentFavoriteId)
+        ? prev.filter((id) => id !== currentFavoriteId)
+        : [...prev, currentFavoriteId];
+      try {
+        window.localStorage.setItem(ANOMALY_FAVORITES_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // storage가 막혀도 UI는 동작
+      }
+      return next;
+    });
+  }, [currentFavoriteId]);
 
   const headerSubtitle = useMemo(() => {
     const nowISO = toISO8601UTC(new Date());
@@ -339,16 +376,27 @@ const AnomalyDetection: React.FC = () => {
                 </div>
               </div>
 
-              {/* 새로고침: 최상단 오른쪽 끝 아이콘 */}
-              <button
-                type="button"
-                onClick={handleRefresh}
-                disabled={loading || !filtersReady}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/15 disabled:opacity-50"
-                title="새로고침"
-              >
-                <RefreshCw className={`w-4 h-4 text-white ${loading ? 'animate-spin' : ''}`} />
-              </button>
+              {/* 우측: 업데이트/다음 + 새로고침 */}
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 text-xs text-white/85">
+                  <span>
+                    {lastUpdateTime
+                      ? `업데이트: ${lastUpdateTime.toLocaleTimeString()}`
+                      : '업데이트: -'}
+                  </span>
+                  {nextRefreshTime ? <span>{`다음: ${nextRefreshTime.toLocaleTimeString()}`}</span> : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRefresh}
+                  disabled={loading || !filtersReady}
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/15 disabled:opacity-50"
+                  title="새로고침"
+                >
+                  <RefreshCw className={`w-4 h-4 text-white ${loading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -357,11 +405,11 @@ const AnomalyDetection: React.FC = () => {
         <div className="p-6">
           <div className="space-y-6">
             {/* 설정 패널 */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative pb-20">
               {/* 1줄: 셀렉박스 + mode(옆에 붙임) */}
               <div className="flex flex-wrap items-end gap-3">
                 <div className="w-full sm:w-[200px]">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">venueId</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">venue</label>
                   <select
                     value={draftVenueId}
                     onChange={(e) => setDraftVenueId(Number(e.target.value))}
@@ -376,7 +424,7 @@ const AnomalyDetection: React.FC = () => {
                 </div>
 
                 <div className="w-full sm:w-[240px]">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">instrumentId</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">instrument</label>
                   <select
                     value={draftInstrumentId}
                     onChange={(e) => setDraftInstrumentId(Number(e.target.value))}
@@ -455,30 +503,48 @@ const AnomalyDetection: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="ml-auto flex items-center gap-2 text-xs text-gray-500 pb-2">
-                  <span>{lastUpdateTime ? `• 업데이트: ${lastUpdateTime.toLocaleTimeString()}` : '업데이트: -'}</span>
-                  {nextRefreshTime ? <span>{`• 다음: ${nextRefreshTime.toLocaleTimeString()}`}</span> : null}
-                </div>
+                {/* 업데이트/다음 문구는 헤더(새로고침 아이콘 옆)로 이동 */}
               </div>
 
               {/* 밑: 설정 버튼 */}
               <div className="mt-2 text-xs text-gray-500">{headerSubtitle}</div>
 
-              {/* Score 라인 토글 (항상 노출: API 재호출 없이 on/off만 변경) */}
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-                <span className="text-gray-700 font-medium">Score 라인</span>
-                {[30, 60, 90].map((wd) => (
-                  <label key={wd} className="flex items-center gap-2 text-gray-700">
-                    <input
-                      type="checkbox"
-                      checked={visibleWindows[wd as AnomalyWindowDays]}
-                      onChange={() => toggleWindow(wd as AnomalyWindowDays)}
-                      className="h-4 w-4"
-                    />
-                    <span>{wd}d</span>
-                  </label>
-                ))}
-              </div>
+              {/* 우하단 고정: 즐겨찾기 + 현재 심볼(venue/instrument) */}
+              <button
+                type="button"
+                onClick={toggleFavorite}
+                aria-pressed={isFavorited}
+                className={`absolute bottom-3 right-3 group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm transition-all select-none ${
+                  isFavorited
+                    ? 'border-amber-200 bg-amber-50 hover:bg-amber-100/70 hover:shadow-md'
+                    : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-md'
+                }`}
+                title={isFavorited ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+              >
+                <span
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-[1.03] ${
+                    isFavorited ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  <Star
+                    className="w-5 h-5"
+                    fill={isFavorited ? 'currentColor' : 'none'}
+                  />
+                </span>
+
+                <span className="min-w-0 text-left">
+                  <span className={`block text-[11px] font-bold tracking-wide ${
+                    isFavorited ? 'text-amber-700' : 'text-gray-500'
+                  }`}>
+                    FAVORITE
+                  </span>
+                  <span className="block text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight truncate max-w-[360px]">
+                    {currentVenueLabel}
+                    <span className="mx-2 text-gray-300">/</span>
+                    {currentInstrumentLabel}
+                  </span>
+                </span>
+              </button>
             </div>
 
             {/* 상단 현재 상태 카드 */}
@@ -587,7 +653,12 @@ const AnomalyDetection: React.FC = () => {
               ) : !series ? (
                 <div className="text-gray-500">{loading ? 'Series 로딩 중...' : '표시할 데이터가 없습니다.'}</div>
               ) : (
-                <AnomalyChart dataset={series} visibleWindows={visibleWindows} finalMarker={finalMarker} />
+                <AnomalyChart
+                  dataset={series}
+                  visibleWindows={visibleWindows}
+                  onToggleWindow={toggleWindow}
+                  finalMarker={finalMarker}
+                />
               )}
             </div>
           </div>
