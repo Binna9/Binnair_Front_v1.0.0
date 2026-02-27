@@ -352,7 +352,7 @@ const AnomalyDetection: React.FC = () => {
     <div className="container mx-auto p-4 flex justify-center mt-24 min-h-[700px]">
       {/* 메인 컨테이너 */}
       <div
-        className="w-full max-w-[1400px] bg-white rounded-lg flex flex-col h-auto"
+        className="w-full max-w-[1300px] bg-white rounded-lg flex flex-col h-auto"
         style={{
           boxShadow:
             '0 0 20px 10px rgba(0, 0, 0, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',

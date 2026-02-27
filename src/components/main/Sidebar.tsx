@@ -1,38 +1,32 @@
 import { useState, useEffect } from 'react';
 import {
   StarIcon,
-  CurrencyDollarIcon,
   ChatBubbleLeftRightIcon,
   ChatBubbleOvalLeftIcon,
 } from '@heroicons/react/24/solid';
 import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopup from '../popup/ChatPopup';
 import RealTimeChatPopup from '../popup/RealTimeChatPopup';
-import CoinPricePopup from '../popup/CoinPricePopup';
 import { useLocation } from 'react-router-dom';
 
-type PopupId = 'bookmark' | 'coin' | 'chat' | 'realtime-chat';
+type PopupId = 'bookmark' | 'chat' | 'realtime-chat';
 
 const Sidebar = () => {
   const location = useLocation();
   const isMainPage = location.pathname === '/';
 
-  const [selected, setSelected] = useState<PopupId[]>(isMainPage ? ['coin'] : []);
+  const [selected, setSelected] = useState<PopupId[]>([]);
 
-  // 메인 페이지로 이동할 때 코인 팝업을 자동으로 열기
   useEffect(() => {
-    if (isMainPage) {
-      setSelected(['coin']);
-    } else {
+    if (!isMainPage) {
       setSelected([]);
     }
   }, [isMainPage]);
 
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
-    { id: 'chat', icon: ChatBubbleLeftRightIcon, label: '채팅' },
+    { id: 'chat', icon: ChatBubbleLeftRightIcon, label: '문의' },
     { id: 'realtime-chat', icon: ChatBubbleOvalLeftIcon, label: '실시간 채팅' },
-    { id: 'coin', icon: CurrencyDollarIcon, label: '코인' },
   ];
 
   const togglePopup = (id: PopupId) => {
@@ -94,13 +88,6 @@ const Sidebar = () => {
         <RealTimeChatPopup
           isOpen={selected.includes('realtime-chat')}
           closePopup={() => togglePopup('realtime-chat')}
-        />
-      )}
-      {/* 코인 가격 팝업 */}
-      {selected.includes('coin') && (
-        <CoinPricePopup
-          isOpen={selected.includes('coin')}
-          closePopup={() => togglePopup('coin')}
         />
       )}
     </>

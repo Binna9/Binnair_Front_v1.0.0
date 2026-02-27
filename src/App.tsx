@@ -49,6 +49,11 @@ function AppRoutes() {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
+  // 페이지 이동 시 스크롤 맨 위로
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname, location.state?.refresh]);
+
   // 라우트 전환에도 로딩 딜레이(최소 유지)를 적용
   useEffect(() => {
     dispatch(routeTransitionStarted());
@@ -62,7 +67,7 @@ function AppRoutes() {
     // 화면 랜더링 전환
     <AnimatePresence>
       <motion.div
-        key={location.pathname}
+        key={location.pathname + (location.state?.refresh ?? '')}
         initial={{ opacity: 0, scale: 1 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 1 }}

@@ -4,8 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useRegister } from '@/hooks/user/useRegister';
 import AuthLayout from '@/layouts/AuthLayout';
+import { useNavigate } from 'react-router-dom';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const {
     loginId,
     setLoginId,
@@ -194,7 +196,7 @@ export default function RegisterPage() {
           {/* ✅ 로그인 페이지로 이동 버튼 */}
           <div className="flex justify-center space-x-3 mt-3">
             <Button
-              onClick={() => (window.location.href = '/login')}
+              onClick={() => navigate('/login')}
               variant="outline"
               size="sm"
               className="text-xs px-2 py-0.5"

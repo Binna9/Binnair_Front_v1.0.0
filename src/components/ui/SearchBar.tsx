@@ -1,14 +1,40 @@
 import { Search, X } from 'lucide-react';
 import { Input } from './input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SearchBarProps {
     isOpen: boolean;
     onToggle: () => void;
 }
 
+/** 스크롤 이만큼만 내려도 바로 숨김 */
+const HIDE_THRESHOLD = 25;
+/** 거의 맨 위(이 값 이하)로 올라와야만 다시 표시 */
+const SHOW_THRESHOLD = 20;
+
 export default function SearchBar({ isOpen, onToggle }: SearchBarProps) {
     const [searchQuery, setSearchQuery] = useState('');
+    const [isVisible, setIsVisible] = useState(true);
+
+    useEffect(() => {
+        let lastScrollY = window.scrollY;
+        setIsVisible(window.scrollY <= SHOW_THRESHOLD);
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY <= SHOW_THRESHOLD) {
+                setIsVisible(true);
+            } else if (currentScrollY > lastScrollY && currentScrollY > HIDE_THRESHOLD) {
+                setIsVisible(false);
+            } else if (currentScrollY < lastScrollY) {
+                setIsVisible(currentScrollY <= SHOW_THRESHOLD);
+            }
+            lastScrollY = currentScrollY;
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,7 +42,11 @@ export default function SearchBar({ isOpen, onToggle }: SearchBarProps) {
     };
 
     return (
-        <div className="fixed top-[4.75rem] left-1/2 -translate-x-1/2 h-14 z-[39] flex items-center justify-center gap-2">
+        <div
+            className={`fixed top-[4.15rem] left-1/2 -translate-x-1/2 h-14 z-[39] flex items-center justify-center gap-2 transition-all duration-300 ease-out ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+        >
             {isOpen && (
                 <button
                     onClick={onToggle}

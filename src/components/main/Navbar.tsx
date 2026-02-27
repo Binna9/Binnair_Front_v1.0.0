@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Search,
-  User,
   LogOut,
   LogIn,
   UserPlus,
@@ -17,12 +15,11 @@ import {
 import { useState } from 'react';
 import HamburgerMenu from '../ui/HamburgerMenu';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import UserProfilePopup from '../popup/UserProfilePopup';
 import { useProfile } from '@/hooks/user/useUserProfile';
 import { UserUpdateRequest } from '@/types/UserTypes';
 import { useUserImage } from '@/hooks/user/useUserImage';
-import ExchangeBar from '../ui/ExchangeBar';
 import SearchBar from '../ui/SearchBar';
 
 export default function Navbar() {
@@ -31,6 +28,7 @@ export default function Navbar() {
   const { user: profileUser, updateUser } = useProfile(user?.userId || '');
   const { profileImage } = useUserImage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(true);
 
@@ -47,6 +45,15 @@ export default function Navbar() {
   };
 
   const closeProfilePopup = () => setIsProfileOpen(false);
+
+  /** 같은 경로면 state로 리마운트 유도, 다르면 navigate (전체 새로고침 시 403 방지) */
+  const handleMenuNavigate = (path: string) => {
+    if (location.pathname === path) {
+      navigate(path, { state: { refresh: Date.now() }, replace: true });
+    } else {
+      navigate(path);
+    }
+  };
 
   const navItems = [
     { name: '실시간 트레이딩', id: 'trade', icon: <Activity size={14} />, to: '/trade' },
@@ -78,7 +85,7 @@ export default function Navbar() {
               src="/img/binnair_logo_white.png"
               alt="BinnAIR"
               className="sm:h-24 md:h-28 lg:h-32 xl:h-36 2xl:h-40 w-auto cursor-pointer object-contain transition-transform duration-200 hover:scale-105 flex-shrink-0"
-              onClick={() => navigate('/')}
+              onClick={() => handleMenuNavigate('/')}
             />
           </div>
 
@@ -89,7 +96,7 @@ export default function Navbar() {
               items={[{ name: '실시간 트레이딩', id: 'trade-arena', icon: <Activity size={14} /> }]}
               isOpen={openMenu === 'Trade Arena'}
               onClick={() => handleMenuClick('Trade Arena')}
-              onItemClick={() => navigate('/trade')}
+              onItemClick={() => handleMenuNavigate('/trade')}
               className="shrink-0"
             />
             <HamburgerMenu
@@ -97,7 +104,7 @@ export default function Navbar() {
               items={[{ name: '이상탐지', id: 'anomaly-monitor', icon: <MonitorPlay size={14} /> }]}
               isOpen={openMenu === '이상탐지'}
               onClick={() => handleMenuClick('이상탐지')}
-              onItemClick={() => navigate('/anomaly-monitor')}
+              onItemClick={() => handleMenuNavigate('/anomaly-monitor')}
               className="shrink-0"
             />
             <HamburgerMenu
@@ -105,7 +112,7 @@ export default function Navbar() {
               items={[{ name: '트레이딩 내역 / 기록', id: 'history', icon: <History size={14} /> }]}
               isOpen={openMenu === 'Trade History'}
               onClick={() => handleMenuClick('Trade History')}
-              onItemClick={() => navigate('/history')}
+              onItemClick={() => handleMenuNavigate('/history')}
               className="shrink-0"
             />
             <HamburgerMenu
@@ -113,7 +120,7 @@ export default function Navbar() {
               items={[{ name: '대시보드', id: 'dashboard', icon: <BarChart2 size={14} /> }]}
               isOpen={openMenu === 'Dashboard'}
               onClick={() => handleMenuClick('Dashboard')}
-              onItemClick={() => navigate('/dashboard')}
+              onItemClick={() => handleMenuNavigate('/dashboard')}
               className="shrink-0"
             />
             <HamburgerMenu
@@ -121,7 +128,7 @@ export default function Navbar() {
               items={[{ name: '고객센터', id: 'service', icon: <HelpCircle size={14} /> }]}
               isOpen={openMenu === 'Customer Service'}
               onClick={() => handleMenuClick('Customer Service')}
-              onItemClick={() => navigate('/board')}
+              onItemClick={() => handleMenuNavigate('/board')}
               className="shrink-0"
             />
           </div>
@@ -136,7 +143,7 @@ export default function Navbar() {
               onClick={() => handleMenuClick('Menu')}
               onItemClick={(item) => {
                 const target = navItems.find((x) => x.id === item.id);
-                if (target) navigate(target.to);
+                if (target) handleMenuNavigate(target.to);
               }}
               variant="drawer"
               side="right"
@@ -144,67 +151,50 @@ export default function Navbar() {
           </div>
 
           {/* ✅ Right: 계정/액션 (항상 우측 고정) */}
-          <div className="ml-auto mr-4 flex items-center gap-4 flex-shrink-0">
+          <div className="ml-auto mr-4 flex items-center gap-2 sm:gap-4 flex-shrink-0">
             {user ? (
               <>
-                {/* 프로필 카드: sm 이상에서만 */}
+                {/* 프로필 카드 */}
                 <button
                   type="button"
                   onClick={() => setIsProfileOpen(true)}
-                  className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-md py-1 px-2 rounded-lg border border-white/20
-                             shadow-[0_4px_16px_0_rgba(255,255,255,0.08)] hover:bg-white/15 transition-all duration-200 max-w-[240px]"
+                  className="group flex items-center gap-1.5 sm:gap-2.5 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-md py-1.5 px-2.5 sm:px-3 rounded-xl border border-white/30
+                             shadow-[0_4px_20px_0_rgba(255,255,255,0.12)] hover:from-white/25 hover:to-white/15 hover:border-white/50
+                             hover:shadow-[0_6px_28px_0_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-[0.98]
+                             transition-all duration-300 ease-out max-w-[200px] sm:max-w-[240px]"
                 >
-                  <img
-                    src={profileImage || '/default-profile.png'}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full border border-white/60 shadow"
-                  />
-                  <div className="min-w-0 text-left">
-                    <div className="text-sm font-bold text-white truncate">
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={profileImage || '/default-profile.png'}
+                      alt="Profile"
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-white/70 shadow-lg group-hover:border-white group-hover:shadow-[0_0_12px_rgba(255,255,255,0.4)] transition-all duration-300"
+                    />
+                  </div>
+                  <div className="min-w-0 text-left hidden sm:block">
+                    <div className="text-xs sm:text-sm font-bold text-white truncate group-hover:text-white">
                       {profileUser?.nickName || 'User'}{' '}
-                      <span className="text-xs font-normal text-white/80">님</span>
+                      <span className="text-[10px] sm:text-xs font-normal text-white/90">님</span>
                     </div>
-                    <div className="text-[10px] text-white/70 truncate">{profileUser?.email || ''}</div>
+                    <div className="text-[10px] text-white/75 truncate group-hover:text-white/90 transition-colors">{profileUser?.email || ''}</div>
                   </div>
                 </button>
 
-                {/* md 이상: 액션 버튼 유지 */}
-                <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    className="p-1.5 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[60px]"
-                    onClick={() => setIsProfileOpen(true)}
-                  >
-                    <User className="text-white w-5 h-5 cursor-pointer" />
-                    <span className="text-xs text-gray-300">My Page</span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="p-1.5 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[60px]"
-                    onClick={() => navigate('/setting')}
-                  >
-                    <Settings className="text-white w-5 h-5 cursor-pointer" />
-                    <span className="text-xs text-gray-300">Setting</span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    className="p-1.5 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[60px]"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="text-white w-5 h-5 cursor-pointer" />
-                    <span className="text-xs text-gray-300">Logout</span>
-                  </Button>
-                </div>
-
-                {/* md 미만: 아이콘 1개로 축약 */}
                 <Button
                   variant="ghost"
-                  className="p-2 md:hidden hover:bg-gray-700/50"
-                  onClick={() => setIsProfileOpen(true)}
+                  className="p-1.5 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[50px] sm:w-[60px]"
+                  onClick={() => handleMenuNavigate('/setting')}
                 >
-                  <User className="text-white w-5 h-5" />
+                  <Settings className="text-white w-5 h-5 cursor-pointer" />
+                  <span className="text-xs text-gray-300">Setting</span>
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  className="p-1.5 hover:bg-gray-700/50 flex flex-col items-center gap-y-0.5 w-[50px] sm:w-[60px]"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="text-white w-5 h-5 cursor-pointer" />
+                  <span className="text-xs text-gray-300">Logout</span>
                 </Button>
               </>
             ) : (
@@ -244,7 +234,13 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-      <ExchangeBar />
+      {/* 네브바 밑 흰색 그라데이션 라인 */}
+      <div
+        className="fixed top-12 left-0 w-full h-[8px] z-40 pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.15) 80%, transparent 100%)',
+        }}
+      />
       <SearchBar isOpen={isSearchOpen} onToggle={() => setIsSearchOpen(!isSearchOpen)} />
     </>
   );

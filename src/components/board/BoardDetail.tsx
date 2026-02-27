@@ -15,6 +15,7 @@ import {
 import { CommentResponse } from '@/types/CommentTypes';
 import { useBoardDetail } from '@/hooks/board/useBoardDetail';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 type BoardDetailProps = {
   boardId: string;
@@ -328,10 +329,11 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
           </div>
         </div>
 
-        {/* 본문 내용 */}
-        <div className="min-h-[150px] mb-4 whitespace-pre-wrap text-sm">
-          {board.content}
-        </div>
+        {/* 본문 내용 (HTML 리치 텍스트 지원) */}
+        <div
+          className="min-h-[150px] mb-4 text-sm [&_p]:my-2 [&_p]:leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(board.content || '') }}
+        />
       </div>
       {/* 첨부파일 목록 */}
       {board.files && board.files.length > 0 && (

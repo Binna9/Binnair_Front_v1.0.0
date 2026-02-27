@@ -24,6 +24,7 @@ import { useAllBoard, BoardContentPreview } from '@/hooks/board/useAllBoard';
 import { useNotification } from '@/context/NotificationContext';
 import BoardDetail from './BoardDetail';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { RichTextEditor } from '@/components/ui/RichTextEditor';
 
 // ✅ 섹션 배열 (아이콘 추가)
 const sections: { id: BoardType; title: string; icon: React.ReactNode }[] = [
@@ -111,7 +112,7 @@ export default function Board() {
     <div className="container mx-auto p-4 flex justify-center mt-24 min-h-[700px]">
       {/* 흰색 네모 박스 */}
       <div
-        className="w-full max-w-[1200px] bg-white rounded-lg flex h-auto"
+        className="w-full max-w-[1300px] bg-white rounded-lg flex h-auto"
         style={{
           boxShadow:
             '0 0 20px 10px rgba(0, 0, 0, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -119,55 +120,70 @@ export default function Board() {
       >
         {/* 왼쪽 메뉴 (탭) */}
         <div
-          className="w-1/5 border-r p-4 rounded-l-lg flex flex-col justify-between"
+          className="w-1/5 min-w-[200px] border-r border-zinc-200 p-5 rounded-l-lg flex flex-col relative overflow-hidden"
           style={{
-            backgroundImage: "url('/img/board_image.jpg')",
-            backgroundBlendMode: 'overlay',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backgroundSize: 'cover',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: '0% 80%',
+            background: 'linear-gradient(160deg, #fafafa 0%, #f4f4f5 35%, #e4e4e7 70%, #d4d4d8 100%)',
+            boxShadow: 'inset 1px 1px 3px rgba(255,255,255,0.8), inset -2px -2px 4px rgba(0,0,0,0.06), 4px 0 12px -4px rgba(0,0,0,0.08)',
           }}
         >
-          <div>
-            <h1 className="text-base font-bold mb-4 text-white flex items-center">
-              <Headset className="w-5 h-5 mr-2 text-white" /> 고객센터
-            </h1>
-            <div className="flex flex-col space-y-2">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => {
-                    setActiveSection(section.id);
-                    if (isWriting) {
-                      handleSectionChange({
-                        target: { value: section.id },
-                      } as React.ChangeEvent<HTMLSelectElement>);
-                    }
-                    // 상세 페이지 보기 중이었다면 해제
-                    if (isViewingDetail) {
-                      handleBackToList();
-                    }
-                  }}
-                  className={`w-full flex items-center text-left px-3 py-2 rounded-lg transition text-sm ${activeSection === section.id
-                    ? 'bg-zinc-500 text-white font-semibold'
-                    : 'bg-zinc-50 text-gray-900 hover:bg-zinc-300'
-                    }`}
-                >
-                  {section.icon} {section.title}
-                </button>
-              ))}
+          <div className="flex items-center gap-2 mb-6 pb-4 border-b border-zinc-200">
+            <div className="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center">
+              <Headset className="w-5 h-5 text-white" />
             </div>
-            {/* ✅ 글쓰기 버튼을 메뉴 리스트 아래(중앙)로 이동 */}
-            {!isWriting && (
+            <div>
+              <h1 className="text-base font-bold text-zinc-800">고객센터</h1>
+              <p className="text-xs text-zinc-500">Customer Service</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {sections.map((section) => (
               <button
-                className="w-full mt-8 px-3 py-3 bg-white text-gray-900 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-zinc-200 transition text-sm"
-                onClick={() => requireLogin(toggleWriteMode)}
-                disabled={loading}
+                key={section.id}
+                onClick={async () => {
+                  if (isWriting) {
+                    const isConfirmed = await notification.showConfirm(
+                      'CANCEL',
+                      '취소하시겠습니까?'
+                    );
+                    if (!isConfirmed) return;
+                    toggleWriteMode();
+                  }
+                  setActiveSection(section.id);
+                  if (isViewingDetail) {
+                    handleBackToList();
+                  }
+                }}
+                className={`w-full flex items-center text-left px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+                  activeSection === section.id && !isWriting
+                    ? 'bg-zinc-800 text-white font-semibold shadow-sm'
+                    : 'text-zinc-700 hover:bg-zinc-200/80 hover:text-zinc-900'
+                }`}
               >
-                <Pencil className="w-4 h-4" /> 글 쓰기
+                {section.icon} {section.title}
               </button>
-            )}
+            ))}
+            {/* 글쓰기 버튼 */}
+            <button
+              className={`w-full mt-4 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+                isWriting
+                  ? 'bg-blue-600 text-white font-semibold shadow-md'
+                  : 'bg-blue-500 text-white hover:bg-blue-600 font-medium shadow-md'
+              }`}
+              onClick={async () => {
+                if (isWriting) {
+                  const isConfirmed = await notification.showConfirm(
+                    'CANCEL',
+                    '취소하시겠습니까?'
+                  );
+                  if (isConfirmed) toggleWriteMode();
+                } else {
+                  requireLogin(toggleWriteMode);
+                }
+              }}
+              disabled={loading}
+            >
+              <Pencil className="w-4 h-4" /> 글 쓰기
+            </button>
           </div>
         </div>
 
@@ -212,13 +228,12 @@ export default function Board() {
               <label className="block text-gray-900 font-semibold mb-1 text-sm">
                 내용
               </label>
-              {/* 내용 입력 */}
-              <textarea
-                placeholder="내용을 입력하세요"
+              <RichTextEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full p-2 h-32 border border-gray-300 rounded-lg text-sm"
-              ></textarea>
+                onChange={setContent}
+                placeholder="내용을 입력하세요"
+                minHeight="25rem"
+              />
 
               {/* ✅ 기존 파일 목록 (수정 모드에서만 표시) */}
               {isEditing && existingFiles.length > 0 && (

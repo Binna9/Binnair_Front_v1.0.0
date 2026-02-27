@@ -361,7 +361,10 @@ export default function RoleManagement() {
           className="max-w-sm text-xs"
         />
         <div className="flex gap-2">
-          <Button onClick={handlePermissionDialogOpen} className="text-xs" variant="default">
+          <Button
+            onClick={handlePermissionDialogOpen}
+            className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
+          >
             <ShieldPlus className="h-4 w-4 mr-1" />
             권한 부여
           </Button>
@@ -677,7 +680,7 @@ export default function RoleManagement() {
             <Button
               onClick={handleAssignPermissions}
               disabled={selectedPermissionRoles.length === 0 || selectedPermissionNames.length === 0}
-              className="text-xs"
+              className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
             >
               권한 부여 ({selectedPermissionRoles.length}개 × {selectedPermissionNames.length}개)
             </Button>

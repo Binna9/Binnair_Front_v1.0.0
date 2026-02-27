@@ -7,9 +7,8 @@ interface SettingsLayoutProps {
 
 export default function SettingLayout({ children }: SettingsLayoutProps) {
   return (
-    <div className="w-full h-full">
-      <div className="container mx-auto flex justify-center py-4">
-        <div className="w-full mt-24 max-w-6xl relative">
+    <div className="container mx-auto p-4 flex justify-center mt-24 min-h-[700px]">
+      <div className="w-full max-w-[1300px] relative">
           {/* Glassmorphism Background */}
           <div
             className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden"
@@ -155,7 +154,6 @@ export default function SettingLayout({ children }: SettingsLayoutProps) {
             className="absolute -bottom-3 -left-3 w-5 h-5 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full opacity-20 blur-sm animate-pulse"
             style={{ animationDelay: '1s' }}
           ></div>
-        </div>
       </div>
     </div>
   );

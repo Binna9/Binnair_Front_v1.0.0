@@ -335,8 +335,7 @@ export default function UserManagement() {
         <div className="flex gap-2">
           <Button
             onClick={handleRoleDialogOpen}
-            className="text-xs"
-            variant="default"
+            className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
           >
             <UserPlus className="h-4 w-4 mr-1" />
             역할 부여
@@ -620,7 +619,7 @@ export default function UserManagement() {
             <Button
               onClick={handleAssignRole}
               disabled={selectedRoleUsers.length === 0 || selectedRoleNames.length === 0}
-              className="text-xs"
+              className="text-xs bg-blue-500 hover:bg-blue-600 text-white"
             >
               역할 부여 ({selectedRoleUsers.length}명 × {selectedRoleNames.length}개)
             </Button>

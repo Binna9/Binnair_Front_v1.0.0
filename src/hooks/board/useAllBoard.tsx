@@ -15,30 +15,29 @@ import { boardService } from '@/services/BoardService';
 import { fileService } from '@/services/FileService';
 import { TargetType } from '@/types/TargetEnum';
 import { FileResponse } from '@/types/File';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
-// 게시글 내용 미리보기 컴포넌트 (3줄 제한 + 그라데이션)
+// 게시글 내용 미리보기 컴포넌트 (3줄 제한 + 그라데이션, HTML 지원)
 export const BoardContentPreview = ({ content }: { content: string }) => {
-  const textRef = useRef<HTMLParagraphElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const [showGradient, setShowGradient] = useState(false);
+  const sanitized = sanitizeHtml(content || '');
 
   useEffect(() => {
     if (textRef.current) {
-      // 실제 텍스트의 스크롤 높이와 클라이언트 높이를 비교
       const scrollHeight = textRef.current.scrollHeight;
       const clientHeight = textRef.current.clientHeight;
-      // 스크롤이 필요하면 (텍스트가 잘렸으면) 그라데이션 표시
       setShowGradient(scrollHeight > clientHeight);
     }
   }, [content]);
 
   return (
     <div className="relative mt-1">
-      <p
+      <div
         ref={textRef}
-        className="text-gray-800 text-sm line-clamp-3"
-      >
-        {content}
-      </p>
+        className="text-gray-800 text-sm line-clamp-3 [&_p]:my-0.5 [&_p]:leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: sanitized }}
+      />
       {showGradient && (
         <div
           className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
