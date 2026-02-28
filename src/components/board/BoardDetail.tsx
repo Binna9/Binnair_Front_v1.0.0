@@ -329,9 +329,9 @@ const BoardDetail: React.FC<BoardDetailProps> = ({
           </div>
         </div>
 
-        {/* 본문 내용 (HTML 리치 텍스트 지원) */}
+        {/* 본문 내용 (HTML 리치 텍스트 지원, 이미지 포함) */}
         <div
-          className="min-h-[150px] mb-4 text-sm [&_p]:my-2 [&_p]:leading-relaxed"
+          className="min-h-[150px] mb-4 text-sm [&_p]:my-2 [&_p]:leading-relaxed [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-2"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(board.content || '') }}
         />
       </div>

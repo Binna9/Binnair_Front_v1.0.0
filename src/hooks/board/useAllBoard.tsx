@@ -15,13 +15,13 @@ import { boardService } from '@/services/BoardService';
 import { fileService } from '@/services/FileService';
 import { TargetType } from '@/types/TargetEnum';
 import { FileResponse } from '@/types/File';
-import { sanitizeHtml } from '@/utils/sanitizeHtml';
+import { sanitizeHtmlForPreview } from '@/utils/sanitizeHtml';
 
 // 게시글 내용 미리보기 컴포넌트 (3줄 제한 + 그라데이션, HTML 지원)
 export const BoardContentPreview = ({ content }: { content: string }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [showGradient, setShowGradient] = useState(false);
-  const sanitized = sanitizeHtml(content || '');
+  const sanitized = sanitizeHtmlForPreview(content || '');
 
   useEffect(() => {
     if (textRef.current) {
@@ -285,6 +285,14 @@ export function useAllBoard() {
       setFiles((prevFiles) => [...prevFiles, ...newFiles]);
       setSelectedFileIndices(new Set()); // 새 파일 추가 시 선택 초기화
     }
+  };
+
+  // ✅ 파일 드래그 앤 드롭 핸들러 (새 파일 추가 영역에 드롭 시)
+  const handleFilesDrop = (files: File[]) => {
+    if (files.length === 0) return;
+    setFile(files[0]);
+    setFiles((prevFiles) => [...prevFiles, ...files]);
+    setSelectedFileIndices(new Set());
   };
 
   // ✅ 파일 제거 (단일)
@@ -567,6 +575,7 @@ export function useAllBoard() {
     handleDelete,
     handleSectionChange,
     handleFileChange,
+    handleFilesDrop,
     removeFile,
     toggleFileSelection,
     toggleSelectAllFiles,

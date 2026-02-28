@@ -10,6 +10,22 @@ export function sanitizeHtml(html: string): string {
     ALLOWED_TAGS: [
       'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
+      'a', 'span', 'div', 'img',
+    ],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'style', 'class', 'src', 'alt', 'title'],
+  });
+}
+
+/**
+ * 목록 미리보기용 - img 태그 제거 후 sanitize (텍스트만 표시, 자연스럽게 잘림)
+ */
+export function sanitizeHtmlForPreview(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  const withoutImages = html.replace(/<img[^>]*>/gi, '');
+  return DOMPurify.sanitize(withoutImages, {
+    ALLOWED_TAGS: [
+      'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'ul', 'ol', 'li',
+      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'pre', 'code',
       'a', 'span', 'div',
     ],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'style', 'class'],

@@ -77,6 +77,7 @@ export default function Board() {
     handleDelete,
     handleSectionChange,
     handleFileChange,
+    handleFilesDrop,
     removeFile,
     toggleFileSelection,
     toggleSelectAllFiles,
@@ -331,7 +332,25 @@ export default function Board() {
                 <label className="block text-gray-900 font-semibold mb-1 text-sm">
                   {isEditing ? '새 파일 추가' : '파일 첨부'}
                 </label>
-                <label className="block w-full p-4 border-2 border-dashed border-gray-300 rounded-lg bg-transparent hover:border-gray-400 transition cursor-pointer">
+                <label
+                  className="block w-full p-4 border-2 border-dashed border-gray-300 rounded-lg bg-transparent hover:border-gray-400 transition cursor-pointer"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('border-gray-500', 'bg-gray-50');
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('border-gray-500', 'bg-gray-50');
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove('border-gray-500', 'bg-gray-50');
+                    const droppedFiles = e.dataTransfer?.files;
+                    if (droppedFiles && droppedFiles.length > 0) {
+                      handleFilesDrop(Array.from(droppedFiles));
+                    }
+                  }}
+                >
                   <input
                     type="file"
                     onChange={handleFileChange}

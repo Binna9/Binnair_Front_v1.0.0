@@ -1,6 +1,8 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
+import Image from '@tiptap/extension-image';
+import { FileHandler } from '@tiptap/extension-file-handler';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bold,
@@ -17,6 +19,7 @@ import {
   Code,
   Minus,
   GripVertical,
+  ImagePlus,
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -75,11 +78,43 @@ export function RichTextEditor({
     [height, minHeightPx]
   );
 
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const insertImageFromFile = useCallback((editorInstance: { chain: () => { focus: () => { setImage: (a: { src: string }) => { run: () => boolean } } } }, file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      editorInstance.chain().focus().setImage({ src: reader.result as string }).run();
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+      }),
+      Image.configure({
+        allowBase64: true,
+        HTMLAttributes: { class: 'max-w-full h-auto rounded-lg' },
+        resize: {
+          enabled: true,
+          directions: ['bottom-left', 'bottom-right', 'top-left', 'top-right'],
+          minWidth: 50,
+          minHeight: 50,
+          alwaysPreserveAspectRatio: true,
+        },
+      }),
+      FileHandler.configure({
+        allowedMimeTypes: undefined,
+        onDrop: (editorInstance, files) => {
+          const imageFile = files.find((f) => f.type.startsWith('image/'));
+          if (imageFile) insertImageFromFile(editorInstance, imageFile);
+        },
+        onPaste: (editorInstance, files) => {
+          const imageFile = files.find((f) => f.type.startsWith('image/'));
+          if (imageFile) insertImageFromFile(editorInstance, imageFile);
+        },
       }),
     ],
     content: value || '',
@@ -87,9 +122,22 @@ export function RichTextEditor({
       attributes: {
         class: 'focus:outline-none min-h-[6rem] p-3 text-sm text-gray-900',
       },
+      handleDOMEvents: {
+        dragover: (view, event) => {
+          if (event.dataTransfer?.types.includes('Files')) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+          }
+        },
+        dragenter: (view, event) => {
+          if (event.dataTransfer?.types.includes('Files')) {
+            event.preventDefault();
+          }
+        },
+      },
     },
-    onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+    onUpdate: ({ editor: ed }) => {
+      onChange(ed.getHTML());
     },
   });
 
@@ -100,6 +148,26 @@ export function RichTextEditor({
       editor.commands.setContent(value || '', { emitUpdate: false });
     }
   }, [value, editor]);
+
+  const handleImageUpload = useCallback(() => {
+    imageInputRef.current?.click();
+  }, []);
+
+  const handleImageChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !editor) return;
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        editor.chain().focus().setImage({ src: dataUrl }).run();
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    },
+    [editor]
+  );
 
   const ToolbarButton = useCallback(
     ({
@@ -129,6 +197,26 @@ export function RichTextEditor({
 
   if (!editor) return null;
 
+  const handleContainerDrop = useCallback(
+    (e: React.DragEvent) => {
+      const files = e.dataTransfer?.files;
+      if (!files?.length || !editor) return;
+      if (!e.target || (e.target as Element).closest?.('.ProseMirror')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const imageFile = Array.from(files).find((f) => f.type.startsWith('image/'));
+      if (imageFile) insertImageFromFile(editor, imageFile);
+    },
+    [editor, insertImageFromFile]
+  );
+
+  const handleContainerDragOver = useCallback((e: React.DragEvent) => {
+    if (e.dataTransfer?.types.includes('Files')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -137,6 +225,9 @@ export function RichTextEditor({
         minHeight,
         ...(height !== null && { height: `${height}px` }),
       }}
+      onDragOver={handleContainerDragOver}
+      onDragEnter={handleContainerDragOver}
+      onDrop={handleContainerDrop}
     >
       {/* 툴바 */}
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-zinc-50">
@@ -247,9 +338,36 @@ export function RichTextEditor({
         >
           <Minus className="w-4 h-4" />
         </ToolbarButton>
+        <div className="w-px h-5 bg-gray-300 mx-1" />
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="hidden"
+        />
+        <ToolbarButton
+          onClick={handleImageUpload}
+          title="이미지 삽입"
+        >
+          <ImagePlus className="w-4 h-4" />
+        </ToolbarButton>
       </div>
-      {/* 에디터 영역 */}
-      <div className="flex-1 min-h-[6rem] overflow-auto">
+      {/* 에디터 영역 - dragover/dragenter preventDefault로 파일 드롭 시 새 탭 열림 방지 */}
+      <div
+        className="flex-1 min-h-[6rem] overflow-auto"
+        onDragOver={(e) => {
+          if (e.dataTransfer?.types.includes('Files')) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+          }
+        }}
+        onDragEnter={(e) => {
+          if (e.dataTransfer?.types.includes('Files')) {
+            e.preventDefault();
+          }
+        }}
+      >
         <EditorContent editor={editor} />
       </div>
       {/* 오른쪽 하단 리사이즈 핸들 */}
@@ -273,6 +391,21 @@ export function RichTextEditor({
         }
         .tiptap p { margin: 0.25em 0; }
         .tiptap { font-size: 0.875rem; }
+        .tiptap img { max-width: 100%; height: auto; border-radius: 0.5rem; }
+        /* 이미지 리사이즈 핸들 스타일 */
+        .tiptap [data-resize-handle] {
+          width: 10px;
+          height: 10px;
+          background: #3b82f6;
+          border: 1px solid white;
+          border-radius: 2px;
+          cursor: nwse-resize;
+          z-index: 10;
+        }
+        .tiptap [data-resize-handle="bottom-right"] { cursor: nwse-resize; }
+        .tiptap [data-resize-handle="bottom-left"] { cursor: nesw-resize; }
+        .tiptap [data-resize-handle="top-right"] { cursor: nesw-resize; }
+        .tiptap [data-resize-handle="top-left"] { cursor: nwse-resize; }
       `}</style>
     </div>
   );
