@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AuthLayout from '@/layouts/AuthLayout';
 import axios from 'axios';
+
+const inputClassName =
+  'bg-white border border-gray-300 p-2.5 pl-4 rounded-lg transition-all duration-200 hover:border-green-700 hover:ring-2 hover:ring-green-800/30 hover:shadow-[0_0_0_3px_rgba(21,128,61,0.2)] focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-green-700 focus:shadow-[0_0_0_3px_rgba(21,128,61,0.3)]';
 
 export default function PasswordChangePage() {
   const [email, setEmail] = useState('');
@@ -13,7 +15,6 @@ export default function PasswordChangePage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // 🔹 비밀번호 재설정 요청
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -21,7 +22,7 @@ export default function PasswordChangePage() {
 
     try {
       const response = await axios.post('/api/auth/forgot-password', {
-        email, // 백엔드 API에 전달할 데이터
+        email,
       });
 
       if (response.status === 200) {
@@ -37,52 +38,114 @@ export default function PasswordChangePage() {
 
   return (
     <AuthLayout>
-      <Card className="px-5 pt-0 pb-5 w-full max-w-md card-login relative z-50 border-none overflow-visible">
-        <div className="flex justify-start -mt-14 -mb-20 mr-6 pointer-events-none">
-          <img src="/img/binnair_logo_black.png" alt="BinnAIR" className="h-80 w-auto block leading-none scale-x-150" />
-        </div>
-        {submitted ? (
-          <div className="text-center text-gray-700 relative z-10">
-            <p className="text-sm">비밀번호 재설정 링크를 이메일로 보냈습니다.</p>
-            <p className="text-xs opacity-75 mt-1">이메일을 확인해주세요.</p>
-            <Button onClick={() => navigate('/login')} className="mt-4 w-full py-2 text-sm">
-              로그인 화면으로 이동
-            </Button>
+      <div className="w-full flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+        {/* 왼쪽: 로고(뒤) + 비밀번호 찾기 폼(앞) - 넓게 */}
+        <div className="flex-1 md:flex-[1.05] relative order-2 md:order-1 min-h-0">
+          {/* 로고 영역 (폼 뒤에 배치) */}
+          <div className="absolute -top-12 -left-20 md:-top-12 md:-left-16 z-0 pointer-events-none">
+            <img
+              src="/img/binnair_logo_black.png"
+              alt="BinnAIR"
+              className="h-36 md:h-44 w-auto"
+            />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-3 relative z-10">
-            <div className="space-y-2">
-              <label className="block text-xs font-bold text-gray-700">
-                이메일 주소
-              </label>
-              <Input
-                type="email"
-                placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="bg-white/90 border border-gray-300 p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-              />
+
+          {/* 비밀번호 찾기 폼 영역 (앞에 배치) */}
+          <div className="relative z-10 flex-1 flex flex-col justify-center overflow-auto px-6 md:px-8 pt-10 md:pt-20 pb-10 md:pb-12 min-h-0">
+            <div className="w-full max-w-[380px] mx-auto">
+              <h2 className="text-2xl md:text-4xl font-extrabold mb-5 py-2 overflow-visible bg-gradient-to-r from-gray-700 via-green-600 to-green-500 bg-clip-text text-transparent leading-tight">
+                Forgot Password
+              </h2>
+
+              {submitted ? (
+                <div className="space-y-6">
+                  <div className="text-center text-gray-700">
+                    <p className="text-sm">
+                      비밀번호 재설정 링크를 이메일로 보냈습니다.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      이메일을 확인해주세요.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/login')}
+                    className="w-full py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg"
+                  >
+                    로그인 화면으로 이동
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={inputClassName}
+                  />
+
+                  {error && (
+                    <p className="text-red-500 text-sm">{error}</p>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full py-2.5 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg"
+                    disabled={loading}
+                  >
+                    {loading ? '요청 중...' : '비밀번호 재설정 요청'}
+                  </Button>
+                </form>
+              )}
+
+              <p className="mt-6 text-center text-sm text-gray-600">
+                Remember your password?{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="text-green-600 hover:text-green-700 font-semibold"
+                >
+                  Log in
+                </button>
+              </p>
+              <div className="flex justify-center mt-3">
+                <Button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-green-600 hover:text-green-700"
+                >
+                  로그인 페이지로 돌아가기
+                </Button>
+              </div>
+              <p className="mt-auto pt-8 pb-2 text-center text-xs text-gray-400">
+                © 2025 ALL RIGHTS RESERVED
+              </p>
             </div>
-
-            {error && <p className="text-red-500 text-xs">{error}</p>}
-
-            <Button type="submit" className="w-full py-2 font-sans text-sm" disabled={loading}>
-              {loading ? '요청 중...' : '비밀번호 재설정 요청'}
-            </Button>
-          </form>
-        )}
-        <div className="flex justify-center space-x-3 mt-3 relative z-10">
-          <Button
-            onClick={() => navigate('/login')}
-            variant="outline"
-            size="sm"
-            className="text-xs px-2 py-0.5"
-          >
-            로그인으로 돌아가기
-          </Button>
+          </div>
         </div>
-      </Card>
+
+        {/* 오른쪽: login_image.jpg 이미지 + 텍스트 오버레이 - 좁게 */}
+        <div className="flex-1 md:flex-[0.95] min-h-[200px] md:min-h-0 order-1 md:order-2 flex items-center justify-center p-6 md:p-8 overflow-hidden">
+          <div className="relative w-full h-full min-h-[180px] rounded-3xl overflow-hidden shadow-[8px_0_30px_-8px_rgba(0,0,0,0.35),0_20px_40px_-10px_rgba(0,0,0,0.4),0_0_0_1px_rgba(0,0,0,0.06)]">
+            <img
+              src="/img/login_image.jpg"
+              alt="Welcome"
+              className="w-full h-full object-cover rounded-3xl"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 rounded-3xl">
+              <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+                BinnAIR
+              </h2>
+              <p className="mt-2 text-sm md:text-base text-white/95 font-medium">
+                We make comfortable investing for you
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </AuthLayout>
   );
 }

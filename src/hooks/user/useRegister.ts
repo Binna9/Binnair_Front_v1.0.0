@@ -12,7 +12,10 @@ export const useRegister = () => {
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [emailSubscription, setEmailSubscription] = useState(true);
+  const [agreeAll, setAgreeAll] = useState(false);
+  const [agreeServiceTerms, setAgreeServiceTerms] = useState(false);
+  const [agreePrivacyPolicy, setAgreePrivacyPolicy] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const notification = useNotification();
   const navigate = useNavigate();
@@ -39,11 +42,32 @@ export const useRegister = () => {
     };
   }, [profilePreview]);
 
+  // 전체동의 시 개별 약관 동기화
+  const handleAgreeAllChange = (checked: boolean | 'indeterminate') => {
+    const value = checked === true;
+    setAgreeAll(value);
+    setAgreeServiceTerms(value);
+    setAgreePrivacyPolicy(value);
+  };
+
+  // 개별 약관 변경 시 전체동의 동기화
+  const handleServiceTermsChange = (checked: boolean | 'indeterminate') => {
+    const value = checked === true;
+    setAgreeServiceTerms(value);
+    setAgreeAll(value && agreePrivacyPolicy);
+  };
+
+  const handlePrivacyPolicyChange = (checked: boolean | 'indeterminate') => {
+    const value = checked === true;
+    setAgreePrivacyPolicy(value);
+    setAgreeAll(value && agreeServiceTerms);
+  };
+
   // 회원가입
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreeTerms) {
-      notification.showAlert('AGREE', '약관에 동의해야 합니다.');
+    if (!agreeServiceTerms || !agreePrivacyPolicy) {
+      notification.showAlert('AGREE', '필수 약관에 동의해야 합니다.');
       return;
     }
 
@@ -84,8 +108,14 @@ export const useRegister = () => {
     setPhoneNumber,
     profilePreview,
     files,
-    agreeTerms,
-    setAgreeTerms,
+    emailSubscription,
+    setEmailSubscription,
+    agreeAll,
+    agreeServiceTerms,
+    agreePrivacyPolicy,
+    handleAgreeAllChange,
+    handleServiceTermsChange,
+    handlePrivacyPolicyChange,
     handleImageUpload,
     handleRegister,
   };

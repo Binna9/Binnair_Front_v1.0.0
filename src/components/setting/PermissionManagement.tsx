@@ -22,7 +22,7 @@ import {
   PermissionResponse,
   PagedPermissionResponse,
 } from '@/types/PermissionTypes';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNotification } from '@/context/NotificationContext';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
@@ -176,7 +176,13 @@ export default function PermissionManagement() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm text-xs"
         />
-        <Button onClick={() => handleFormOpen()} className="text-xs">권한 추가</Button>
+        <Button
+          onClick={() => handleFormOpen()}
+          className="text-xs bg-black hover:bg-gray-800 text-white flex items-center gap-1"
+        >
+          <Plus className="h-4 w-4" />
+          권한 추가
+        </Button>
       </div>
 
       <LoadingOverlay isLoading={isLoading} message="권한 목록을 불러오는 중...">

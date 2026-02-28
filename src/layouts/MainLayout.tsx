@@ -11,7 +11,7 @@ export default function MainLayout({
     <div className="relative w-screen min-h-screen flex flex-col z-50">
       {/* 배경 이미지 */}
       <div
-        className="absolute inset-0 bg-cover bg-center bg-fixed before:absolute before:inset-0 before:bg-black/30 z-0"
+        className="absolute inset-0 bg-cover bg-center bg-fixed before:absolute before:inset-0 before:bg-black/15 z-0"
         style={{
           backgroundImage: "url('/img/MainBackGround.jpg')",
           backgroundPosition: '100% center',

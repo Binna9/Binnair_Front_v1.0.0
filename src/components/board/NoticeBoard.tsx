@@ -28,37 +28,32 @@ const NoticeBoard = () => {
   const visibleNotices =
     notices.filter((notice) => !hiddenNotices.includes(notice.boardId)) ?? [];
 
-  // ✅ 공지판 닫기 버튼 클릭 시
-  if (!isVisible) {
-    return (
+  return (
+    <>
+      {/* 열기 버튼 (닫혀 있을 때만 보임) */}
       <button
-        className="fixed left-0 top-1/2 transform -translate-y-1/2
-             bg-white/90 text-gray px-2 py-2 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)]
-             flex items-center justify-center w-12 
-             transition-transform duration-300 hover:scale-110 active:scale-95"
         onClick={() => setIsVisible(true)}
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-30
+          bg-white/90 text-gray px-2 py-2 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)]
+          flex items-center justify-center w-12
+          transition-all duration-500 ease-in-out hover:scale-110 active:scale-95
+          ${isVisible ? 'opacity-0 pointer-events-none translate-x-[-12px]' : 'opacity-100 translate-x-0'}`}
       >
         <ChevronRightIcon className="w-5 h-5" />
       </button>
-    );
-  }
 
-  return (
-    <div
-      className="fixed left-4 top-[56%] transform -translate-y-1/2 w-[280px] h-[500px] 
-      bg-cover bg-center border border-white/50 transition-all duration-300
-      shadow-2xl rounded-xl p-3 overflow-hidden text-gray-900 z-30"
+      {/* 공지판 (열려 있을 때 보임) */}
+      <div
+        className={`fixed left-4 top-[56%] -translate-y-1/2 w-[280px] h-[500px] z-30
+          bg-cover bg-center border border-white/50 shadow-2xl rounded-xl p-3 overflow-hidden text-gray-900
+          transition-all duration-500 ease-in-out
+          ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none -translate-x-[320px]'}`}
       style={{
         backgroundImage: "url('/img/noticeboard_image.jpg')",
         backgroundPosition: '40% center',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
       }} // ✅ 배경 이미지 추가
     >
-      {!isScrolled && (
-        <span className="absolute top-1.5 left-2 text-white text-sm font-semibold transition-opacity duration-300">
-          공지사항
-        </span>
-      )}
       {/* ✅ 공지판 닫기 버튼 (상단 오른쪽) */}
       <button
         onClick={() => setIsVisible(false)}
@@ -124,6 +119,7 @@ const NoticeBoard = () => {
         </ul>
       </div>
     </div>
+    </>
   );
 };
 

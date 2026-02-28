@@ -127,7 +127,7 @@ export default function Board() {
           }}
         >
           <div className="flex items-center gap-2 mb-6 pb-4 border-b border-zinc-200">
-            <div className="w-9 h-9 rounded-lg bg-zinc-800 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-stone-700 flex items-center justify-center">
               <Headset className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -135,7 +135,7 @@ export default function Board() {
               <p className="text-xs text-zinc-500">Customer Service</p>
             </div>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-3">
             {sections.map((section) => (
               <button
                 key={section.id}
@@ -155,19 +155,20 @@ export default function Board() {
                 }}
                 className={`w-full flex items-center text-left px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
                   activeSection === section.id && !isWriting
-                    ? 'bg-zinc-800 text-white font-semibold shadow-sm'
-                    : 'text-zinc-700 hover:bg-zinc-200/80 hover:text-zinc-900'
+                    ? 'bg-stone-700 text-white font-semibold shadow-sm'
+                    : 'text-zinc-700 hover:bg-stone-200 hover:text-zinc-900'
                 }`}
               >
                 {section.icon} {section.title}
               </button>
             ))}
+            <div className="my-4 border-t border-zinc-200" />
             {/* 글쓰기 버튼 */}
             <button
-              className={`w-full mt-4 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-200 text-sm ${
                 isWriting
-                  ? 'bg-blue-600 text-white font-semibold shadow-md'
-                  : 'bg-blue-500 text-white hover:bg-blue-600 font-medium shadow-md'
+                  ? 'bg-stone-700 text-white font-semibold shadow-md'
+                  : 'bg-stone-500 text-white hover:bg-stone-600 font-medium shadow-md'
               }`}
               onClick={async () => {
                 if (isWriting) {
@@ -192,9 +193,45 @@ export default function Board() {
           {isWriting ? (
             // ✅ 글쓰기/수정 모드일 때 (폼)
             <div className="bg-zinc-50 p-4 rounded-lg shadow-lg border">
-              <h2 className="text-lg font-bold mb-4">
-                {isEditing ? '게시글 수정' : '새 게시글 작성'}
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold">
+                  {isEditing ? '게시글 수정' : '새 게시글 작성'}
+                </h2>
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={async () => {
+                      const isConfirmed = await notification.showConfirm(
+                        'UPDATE',
+                        `${isEditing ? '수정' : '등록'}하시겠습니까?`
+                      );
+                      if (isConfirmed) {
+                        handlePostSubmit();
+                      }
+                    }}
+                    className="px-4 py-2 bg-gradient-to-b from-blue-500 to-blue-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 active:scale-[0.98] transition-all duration-200 text-sm flex items-center gap-1.5 border border-blue-400/30"
+                    disabled={loading}
+                  >
+                    <Check className="w-4 h-4" />
+                    {loading ? '처리 중...' : isEditing ? '수정' : '등록'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const isConfirmed = await notification.showConfirm(
+                        'CANCEL',
+                        '취소하시겠습니까?'
+                      );
+                      if (isConfirmed) {
+                        toggleWriteMode();
+                      }
+                    }}
+                    className="px-4 py-2 bg-gradient-to-b from-red-500 to-red-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-[0.98] transition-all duration-200 text-sm flex items-center gap-1.5 border border-red-400/30"
+                    disabled={loading}
+                  >
+                    <X className="w-4 h-4" />
+                    취소
+                  </button>
+                </div>
+              </div>
 
               {/* ✅ 섹션 선택 */}
               <div className="mb-3">
@@ -361,43 +398,6 @@ export default function Board() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="flex justify-between mt-3">
-                {/* 취소 버튼 */}
-                <button
-                  onClick={async () => {
-                    const isConfirmed = await notification.showConfirm(
-                      'CANCEL',
-                      '취소하시겠습니까?'
-                    );
-                    if (isConfirmed) {
-                      toggleWriteMode();
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-zinc-500 text-white rounded-lg hover:bg-zinc-600 transition text-sm flex items-center gap-1.5"
-                  disabled={loading}
-                >
-                  <X className="w-4 h-4" />
-                  취소
-                </button>
-                {/* 등록/수정 버튼 */}
-                <button
-                  onClick={async () => {
-                    const isConfirmed = await notification.showConfirm(
-                      'UPDATE',
-                      `${isEditing ? '수정' : '등록'}하시겠습니까?`
-                    );
-                    if (isConfirmed) {
-                      handlePostSubmit();
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-zinc-300 text-zinc-900 rounded-lg hover:bg-zinc-500 transition text-sm flex items-center gap-1.5"
-                  disabled={loading}
-                >
-                  <Check className="w-4 h-4" />
-                  {loading ? '처리 중...' : isEditing ? '수정' : '등록'}
-                </button>
               </div>
             </div>
           ) : isViewingDetail && currentBoard ? (

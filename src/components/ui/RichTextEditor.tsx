@@ -1,7 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Bold,
   Italic,
@@ -16,6 +16,7 @@ import {
   Quote,
   Code,
   Minus,
+  GripVertical,
 } from 'lucide-react';
 
 interface RichTextEditorProps {
@@ -26,6 +27,13 @@ interface RichTextEditorProps {
   minHeight?: string;
 }
 
+function parseHeightToPx(s: string): number {
+  const match = s.match(/^(\d+(?:\.\d+)?)(rem|px)$/);
+  if (!match) return 400;
+  const val = parseFloat(match[1]);
+  return match[2] === 'rem' ? val * 16 : val;
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -33,6 +41,40 @@ export function RichTextEditor({
   className = '',
   minHeight = '8rem',
 }: RichTextEditorProps) {
+  const minHeightPx = parseHeightToPx(minHeight);
+  const [height, setHeight] = useState<number | null>(null);
+  const startYRef = useRef(0);
+  const startHeightRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const rect = containerRef.current?.getBoundingClientRect();
+      const currentHeight = height ?? rect?.height ?? minHeightPx;
+      startYRef.current = e.clientY;
+      startHeightRef.current = currentHeight;
+
+      const onMove = (moveEvent: MouseEvent) => {
+        const delta = moveEvent.clientY - startYRef.current;
+        const newHeight = Math.max(minHeightPx, startHeightRef.current + delta);
+        setHeight(newHeight);
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      };
+
+      document.body.style.cursor = 'ns-resize';
+      document.body.style.userSelect = 'none';
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    },
+    [height, minHeightPx]
+  );
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -89,8 +131,12 @@ export function RichTextEditor({
 
   return (
     <div
-      className={`border border-gray-300 rounded-lg overflow-hidden bg-white ${className}`}
-      style={{ minHeight }}
+      ref={containerRef}
+      className={`border border-gray-300 rounded-lg overflow-hidden bg-white relative flex flex-col ${className}`}
+      style={{
+        minHeight,
+        ...(height !== null && { height: `${height}px` }),
+      }}
     >
       {/* 툴바 */}
       <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 bg-zinc-50">
@@ -203,7 +249,20 @@ export function RichTextEditor({
         </ToolbarButton>
       </div>
       {/* 에디터 영역 */}
-      <EditorContent editor={editor} />
+      <div className="flex-1 min-h-[6rem] overflow-auto">
+        <EditorContent editor={editor} />
+      </div>
+      {/* 오른쪽 하단 리사이즈 핸들 */}
+      <div
+        role="button"
+        tabIndex={0}
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-8 h-8 flex items-center justify-center cursor-ns-resize hover:bg-zinc-200/80 rounded-tl-lg transition-colors"
+        title="드래그하여 높이 조절"
+        aria-label="에디터 높이 조절"
+      >
+        <GripVertical className="w-4 h-4 text-zinc-500 rotate-90" />
+      </div>
       <style>{`
         .tiptap p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);

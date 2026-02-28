@@ -40,7 +40,7 @@ export default function MainPage() {
         <div
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.6) 40%, transparent 80%)'
+            background: 'radial-gradient(ellipse at center, rgba(0, 0, 0, 0.3) 40%, transparent 80%)'
           }}
         />
       </div>

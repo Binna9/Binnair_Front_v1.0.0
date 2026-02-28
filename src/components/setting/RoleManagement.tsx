@@ -21,7 +21,7 @@ import { roleService } from '@/services/RoleService';
 import { permissionService } from '@/services/PermissionService';
 import { RoleResponse } from '@/types/RoleTypes';
 import { PermissionResponse } from '@/types/PermissionTypes';
-import { Pencil, Trash2, ShieldPlus, ShieldMinus } from 'lucide-react';
+import { Pencil, Trash2, ShieldPlus, ShieldMinus, Plus } from 'lucide-react';
 import { useNotification } from '@/context/NotificationContext';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
@@ -372,7 +372,11 @@ export default function RoleManagement() {
             <ShieldMinus className="h-4 w-4 mr-1" />
             권한 제거
           </Button>
-          <Button onClick={() => handleFormOpen()} className="text-xs">
+          <Button
+            onClick={() => handleFormOpen()}
+            className="text-xs bg-black hover:bg-gray-800 text-white"
+          >
+            <Plus className="h-4 w-4 mr-1" />
             역할 추가
           </Button>
         </div>
