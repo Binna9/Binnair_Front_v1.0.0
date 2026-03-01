@@ -28,7 +28,7 @@ interface AnomalyChartProps {
   onToggleWindow?: (wd: AnomalyWindowDays) => void;
 }
 
-const AnomalyChart: React.FC<AnomalyChartProps> = ({
+const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   dataset,
   visibleWindows,
   finalMarker,
@@ -136,7 +136,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
 
   // 90d@5m면 포인트가 2~3만개까지 늘어 DOM 렌더링이 급격히 느려집니다.
   // 표시용으로만 다운샘플링해서 DOM 노드 수를 제한합니다(툴팁/렌더링 모두 이 표본을 사용).
-  const MAX_RENDER_POINTS = 1500;
+  const MAX_RENDER_POINTS = 800;
 
   const pointsInRange = useMemo(() => {
     if (!viewRange) return points;
@@ -465,23 +465,48 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   }, []);
 
   useEffect(() => {
-    const onResize = () => setViewportHeight(window.innerHeight);
+    let throttleId: ReturnType<typeof setTimeout> | null = null;
+    const onResize = () => {
+      if (throttleId) return;
+      throttleId = setTimeout(() => {
+        throttleId = null;
+        setViewportHeight(window.innerHeight);
+      }, 100);
+    };
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => {
+      if (throttleId) clearTimeout(throttleId);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   // 차트 가로폭을 측정해서 X축 tick 밀도를 자동 조정
+  // ResizeObserver는 리사이즈 중 수십~수백 번 호출 → 100ms throttle로 렌더 부하 감소
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
 
+    let throttleId: ReturnType<typeof setTimeout> | null = null;
+    let lastW = 0;
+
     const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect?.width ?? 0;
-      if (Number.isFinite(w) && w > 0) setChartWidth(w);
+      const w = Math.round(entries[0]?.contentRect?.width ?? 0);
+      if (!Number.isFinite(w) || w <= 0) return;
+      if (w === lastW) return;
+
+      if (throttleId) return;
+      throttleId = setTimeout(() => {
+        throttleId = null;
+        lastW = w;
+        setChartWidth(w);
+      }, 100);
     });
 
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      if (throttleId) clearTimeout(throttleId);
+      ro.disconnect();
+    };
   }, []);
 
   // Recharts는 마운트 순간에 컨테이너가 “아직” 레이아웃이 안정화되지 않으면 width/height를 -1로 찍을 수 있습니다.
@@ -548,18 +573,35 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     [getActiveTFromEvent]
   );
 
+  const moveDragSelectRafRef = useRef<number | null>(null);
+  const moveDragSelectPendingRef = useRef<number | null>(null);
   const moveDragSelect = useCallback(
     (state: any) => {
       if (dragRange.left === null) return;
       const t = getActiveTFromEvent(state);
       if (t === null) return;
       if (t !== dragRange.left) didDragRef.current = true;
-      setDragRange((prev) => ({ ...prev, right: t }));
+
+      moveDragSelectPendingRef.current = t;
+      if (moveDragSelectRafRef.current !== null) return;
+      moveDragSelectRafRef.current = window.requestAnimationFrame(() => {
+        moveDragSelectRafRef.current = null;
+        const pendingT = moveDragSelectPendingRef.current;
+        moveDragSelectPendingRef.current = null;
+        if (pendingT === null) return;
+        setDragRange((prev) => (prev.left === null ? prev : { ...prev, right: pendingT }));
+      });
     },
     [dragRange.left, getActiveTFromEvent]
   );
 
   const finishDragSelect = useCallback(() => {
+    if (moveDragSelectRafRef.current !== null) {
+      window.cancelAnimationFrame(moveDragSelectRafRef.current);
+      moveDragSelectRafRef.current = null;
+    }
+    moveDragSelectPendingRef.current = null;
+
     const left = dragRange.left;
     const right = dragRange.right;
     setDragRange({ left: null, right: null });
@@ -638,7 +680,9 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   const onApplyDateInputs = useCallback(() => {
     if (!datasetExtent) return;
     if (!dateFrom || !dateTo) return;
-    const parsed = parseDateInputToRange(dateFrom, dateTo);
+    const from = dateFrom.trim().replace(/[.\/]/g, '-');
+    const to = dateTo.trim().replace(/[.\/]/g, '-');
+    const parsed = parseDateInputToRange(from, to);
     if (!parsed) return;
 
     const left = Math.max(datasetExtent.tMin, Math.min(parsed.left, parsed.right));
@@ -722,39 +766,44 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   }, [isFullscreen, viewportHeight]);
 
   // plot area(실제 그려지는 영역)에서의 x좌표를 시간값으로 변환해 드래그 범위를 끝까지 업데이트
+  // throttle: pointermove가 초당 수백 번 호출되어 렌더 버벅임 유발 → rAF로 60fps로 제한
+  const dragUpdateRafRef = useRef<number | null>(null);
   const dragUpdateFromClientX = useCallback(
     (clientX: number) => {
       const leftT = dragRangeRef.current.left;
       if (leftT === null) return;
       if (!timeExtent) return;
 
-      const el = chartsAreaRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      if (!Number.isFinite(rect.width) || rect.width <= 0) return;
+      if (dragUpdateRafRef.current !== null) return;
+      dragUpdateRafRef.current = window.requestAnimationFrame(() => {
+        dragUpdateRafRef.current = null;
 
-      // ChartsView와 동일한 마진/축 폭을 기준으로 plot area 범위를 계산
-      const MARGIN_LEFT = 12;
-      const MARGIN_RIGHT = 90;
-      const AXIS_LEFT_W = 60;
-      const AXIS_RIGHT_W = 55;
+        const el = chartsAreaRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        if (!Number.isFinite(rect.width) || rect.width <= 0) return;
 
-      const plotLeftPx = MARGIN_LEFT + AXIS_LEFT_W;
-      const plotRightPx = rect.width - MARGIN_RIGHT - AXIS_RIGHT_W;
-      const plotW = Math.max(1, plotRightPx - plotLeftPx);
+        const MARGIN_LEFT = 12;
+        const MARGIN_RIGHT = 90;
+        const AXIS_LEFT_W = 60;
+        const AXIS_RIGHT_W = 55;
 
-      const rawX = clientX - rect.left;
-      const clampedX = Math.min(plotRightPx, Math.max(plotLeftPx, rawX));
-      const ratio = (clampedX - plotLeftPx) / plotW;
+        const plotLeftPx = MARGIN_LEFT + AXIS_LEFT_W;
+        const plotRightPx = rect.width - MARGIN_RIGHT - AXIS_RIGHT_W;
+        const plotW = Math.max(1, plotRightPx - plotLeftPx);
 
-      const t = timeExtent.tMin + ratio * (timeExtent.tMax - timeExtent.tMin);
-      const nextT = Math.min(timeExtent.tMax, Math.max(timeExtent.tMin, t));
+        const rawX = clientX - rect.left;
+        const clampedX = Math.min(plotRightPx, Math.max(plotLeftPx, rawX));
+        const ratio = (clampedX - plotLeftPx) / plotW;
 
-      setDragRange((prev) => {
-        if (prev.left === null) return prev;
-        // 움직임이 느릴 때 불필요한 렌더를 줄이기 위해 값이 같으면 업데이트하지 않음
-        if (prev.right === nextT) return prev;
-        return { ...prev, right: nextT };
+        const t = timeExtent.tMin + ratio * (timeExtent.tMax - timeExtent.tMin);
+        const nextT = Math.min(timeExtent.tMax, Math.max(timeExtent.tMin, t));
+
+        setDragRange((prev) => {
+          if (prev.left === null) return prev;
+          if (prev.right === nextT) return prev;
+          return { ...prev, right: nextT };
+        });
       });
     },
     [timeExtent]
@@ -781,6 +830,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
       dragUpdateFromClientX(e.clientX);
     };
     const onPointerUp = () => {
+      if (dragUpdateRafRef.current !== null) {
+        window.cancelAnimationFrame(dragUpdateRafRef.current);
+        dragUpdateRafRef.current = null;
+      }
       commitDragRange();
     };
 
@@ -789,6 +842,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
     window.addEventListener('pointercancel', onPointerUp, { capture: true });
 
     return () => {
+      if (dragUpdateRafRef.current !== null) {
+        window.cancelAnimationFrame(dragUpdateRafRef.current);
+        dragUpdateRafRef.current = null;
+      }
       window.removeEventListener('pointermove', onPointerMove, { capture: true } as any);
       window.removeEventListener('pointerup', onPointerUp, { capture: true } as any);
       window.removeEventListener('pointercancel', onPointerUp, { capture: true } as any);
@@ -1149,26 +1206,22 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
       ref={rootRef}
       className={`w-full h-full ${isFullscreen ? 'bg-white p-4' : ''}`}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="min-w-0">
+      <div className="flex flex-nowrap items-center justify-between gap-4 mb-3 min-w-0 overflow-x-auto pr-6">
+        {/* 왼쪽: 제목 */}
+        <div className="shrink-0">
           <div className="text-sm font-semibold text-gray-900">Series Chart</div>
-          <div className="text-xs text-gray-500">
-            드래그해서 구간을 지정하면 해당 구간으로 확대됩니다. (표본 {displayPoints.length.toLocaleString()} / 전체 {points.length.toLocaleString()})
+          <div className="text-xs text-gray-500 truncate max-w-[200px]">
+            표본 {displayPoints.length.toLocaleString()} / 전체 {points.length.toLocaleString()}
           </div>
-          {formattedViewRangeLabel ? (
-            <div className="mt-1 text-xs text-blue-700 font-semibold truncate">
-              확대 구간: {formattedViewRangeLabel}
-            </div>
-          ) : null}
         </div>
 
-        {/* 빠른 범위 + 날짜 범위 설정 */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <div className="flex flex-wrap items-center gap-2">
+        {/* 가운데: Full/1M/1W/1D + 날짜 지정 */}
+        <div className="flex flex-nowrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 shrink-0">
+          <div className="flex flex-nowrap items-center gap-2">
             <button
               type="button"
               onClick={() => applyQuickRange('full')}
-              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
               title="전체 기간"
               disabled={!datasetExtent}
             >
@@ -1177,7 +1230,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             <button
               type="button"
               onClick={() => applyQuickRange(30)}
-              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
               title="최근 1개월"
               disabled={!datasetExtent}
             >
@@ -1186,7 +1239,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             <button
               type="button"
               onClick={() => applyQuickRange(7)}
-              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
               title="최근 1주"
               disabled={!datasetExtent}
             >
@@ -1195,7 +1248,7 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             <button
               type="button"
               onClick={() => applyQuickRange(1)}
-              className="inline-flex items-center px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
               title="최근 1일"
               disabled={!datasetExtent}
             >
@@ -1203,33 +1256,32 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-sm">
-            <div className="text-xs font-semibold text-gray-600">날짜</div>
+          <div className="w-px h-8 bg-gray-200" />
+
+          <div className="flex flex-nowrap items-center gap-2">
             <input
               type="date"
               value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
               min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
               max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-              onChange={(e) => setDateFrom(e.target.value)}
-              onBlur={onApplyDateInputs}
-              className="text-sm border border-gray-200 rounded-md px-2 py-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              className="w-[120px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
               disabled={!datasetExtent}
             />
-            <span className="text-xs text-gray-400">~</span>
+            <span className="text-sm text-gray-400">~</span>
             <input
               type="date"
               value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
               min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
               max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-              onChange={(e) => setDateTo(e.target.value)}
-              onBlur={onApplyDateInputs}
-              className="text-sm border border-gray-200 rounded-md px-2 py-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+              className="w-[120px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
               disabled={!datasetExtent}
             />
             <button
               type="button"
               onClick={onApplyDateInputs}
-              className="inline-flex items-center px-3 py-1.5 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20 active:translate-y-[1px]"
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-800 border border-gray-200 bg-white transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none"
               disabled={!datasetExtent || !dateFrom || !dateTo}
               title="날짜 적용"
             >
@@ -1238,12 +1290,13 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        {/* 오른쪽: 확대해제 + Full */}
+        <div className="flex flex-nowrap items-center gap-2 shrink-0">
           {viewRange ? (
             <button
               type="button"
               onClick={resetZoom}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 shadow-sm transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px]"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
               title="확대 해제"
             >
               <ZoomOut className="w-4 h-4" />
@@ -1255,10 +1308,10 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
             type="button"
             onClick={toggleFullscreen}
             aria-pressed={isFullscreen}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-semibold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/20 focus:ring-offset-2 active:translate-y-[1px] ${
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/20 ${
               isFullscreen
-                ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800 hover:shadow-md'
-                : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900 hover:shadow-md'
+                ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800'
+                : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900'
             }`}
             title={isFullscreen ? 'Full Off' : 'Full On'}
           >
@@ -1267,6 +1320,12 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
           </button>
         </div>
       </div>
+
+      {formattedViewRangeLabel ? (
+        <div className="mb-2 text-xs text-blue-700 font-semibold truncate">
+          확대 구간: {formattedViewRangeLabel}
+        </div>
+      ) : null}
 
       {/*
         Recharts 경고(width/height -1) 방지:
@@ -1308,5 +1367,6 @@ const AnomalyChart: React.FC<AnomalyChartProps> = ({
   );
 };
 
+const AnomalyChart = React.memo(AnomalyChartInner);
 export default AnomalyChart;
 

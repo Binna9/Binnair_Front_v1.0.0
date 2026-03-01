@@ -51,12 +51,8 @@ export default function PasswordChangePage() {
           </div>
 
           {/* 비밀번호 찾기 폼 영역 (앞에 배치) */}
-          <div className="relative z-10 flex-1 flex flex-col justify-center overflow-auto px-6 md:px-8 pt-10 md:pt-20 pb-10 md:pb-12 min-h-0">
+          <div className="relative z-10 flex-1 flex flex-col justify-center overflow-auto px-6 md:px-8 pt-40 md:pt-52 pb-10 md:pb-12 min-h-0">
             <div className="w-full max-w-[380px] mx-auto">
-              <h2 className="text-2xl md:text-4xl font-extrabold mb-5 py-2 overflow-visible bg-gradient-to-r from-gray-700 via-green-600 to-green-500 bg-clip-text text-transparent leading-tight">
-                Forgot Password
-              </h2>
-
               {submitted ? (
                 <div className="space-y-6">
                   <div className="text-center text-gray-700">
@@ -101,13 +97,6 @@ export default function PasswordChangePage() {
 
               <p className="mt-6 text-center text-sm text-gray-600">
                 Remember your password?{' '}
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="text-green-600 hover:text-green-700 font-semibold"
-                >
-                  Log in
-                </button>
               </p>
               <div className="flex justify-center mt-3">
                 <Button

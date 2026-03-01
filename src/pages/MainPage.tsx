@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import MainLayout from '@/layouts/MainLayout';
-import OptionsList from '@/components/ui/OptionsList';
 import NoticeBoard from '@/components/board/NoticeBoard';
 import SubscriptionCard from '@/components/ui/SubscriptionCard';
 import PopularCard from '@/components/ui/PopularCard';
+import AnomalyTopList from '@/components/anomaly/AnomalyTopList';
 
 export default function MainPage() {
   const navigate = useNavigate();
@@ -45,16 +44,16 @@ export default function MainPage() {
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-[96rem] mx-auto">
+      <div className="relative z-10 w-full max-w-[62rem] mx-auto px-4 overflow-visible">
         <NoticeBoard />
         <div className="flex flex-col gap-16 py-16">
-          {/* OptionsList 섹션 */}
-          <div className="w-full">
-            <div className="w-full text-center mt-16 mb-8">
-              <h2 className="text-5xl font-bold text-white mb-8 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-3 ">
+          {/* 이상 리스트 4개 영역 - 흰색 카드 */}
+          <div className="w-full mt-16 relative">
+            <div className="w-full text-center mb-6">
+              <h2 className="text-4xl font-bold text-white mb-6 font-['Orbitron'] tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-500 flex items-center justify-center gap-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-12 w-12"
+                  className="h-10 w-10"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#ffffff"
@@ -66,30 +65,47 @@ export default function MainPage() {
                 </svg>
                 BinnAIR Trading Solution
               </h2>
-              <p className="text-lg text-white mb-4 custom-text-shadow">
-                Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션{' '}
-                <br />
-                실시간 인사이트부터 전략 분석까지, 성공적인 투자를 위한 모든
-                기능을 한 곳에 담았습니다.
+              <p className="text-base text-white/90 custom-text-shadow">
+                Deep Running AI와 자동화 기술이 결합된 혁신적인 트레이딩 솔루션
               </p>
-              <div className="flex justify-center gap-3 mt-8">
-                <button
-                  onClick={() => navigate('/trade')}
-                  className="px-4 py-2 text-sm bg-gradient-to-r from-red-400 via-red-600 to-red-900 hover:from-red-500 hover:to-red-800 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
-                >
-                  실시간 자동 매매
-                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => navigate('/anomaly-monitor')}
-                  className="px-4 py-2 text-sm bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold rounded-lg transition-all duration-300 flex items-center gap-1.5 shadow-lg hover:shadow-xl"
-                >
-                  이상탐지
-                  <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
-                </button>
+            </div>
+            <div className="relative w-full">
+              <AnomalyTopList />
+              {/* 점수 등급 안내 - absolute로 옆에 배치, 리스트 공간 침범 안 함 */}
+              <div
+                className="absolute top-0 left-full rounded-lg shadow-md ml-3"
+                style={{
+                  width: 160,
+                  padding: '16px 12px',
+                  background: '#ffffff',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  marginTop: 0,
+                }}
+              >
+                <div className="text-[10px] font-bold text-gray-800 mb-2 tracking-wide">
+                  점수 등급 안내
+                </div>
+                <div className="flex flex-col gap-2">
+                  {[
+                    { key: 'SEVERE', fg: '#dc2626', label: '위험', desc: '5 이상' },
+                    { key: 'ANOMALY', fg: '#ea580c', label: '이상', desc: '3 이상 ~ 5 미만' },
+                    { key: 'WATCH', fg: '#d97706', label: '주의', desc: '2 이상 ~ 3 미만' },
+                    { key: 'NORMAL', fg: '#64748b', label: '정상', desc: '2 미만' },
+                  ].map(({ key, fg, label, desc }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <span
+                        className="flex-shrink-0 rounded-sm"
+                        style={{ width: 6, height: 6, background: fg }}
+                      />
+                      <div>
+                        <div className="text-[10px] font-semibold" style={{ color: fg }}>{label}</div>
+                        <div className="text-[8px] text-gray-500">{desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <OptionsList />
           </div>
           {/* PopularCard 섹션 */}
           <div

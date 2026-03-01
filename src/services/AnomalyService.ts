@@ -5,6 +5,11 @@ import {
   AnomalyScoreSeriesRequest,
   AnomalyScoreSeriesResponse,
 } from '@/types/AnomalyTypes';
+import type {
+  AnomalyScoreTopRequest,
+  AnomalyScoreTopFilterRequest,
+  AnomalyScoreTopResponse,
+} from '@/types/AnomalyListTypes';
 
 /**
  * 이상탐지 관련 서비스
@@ -92,7 +97,70 @@ export const anomalyService = {
 
     return response.data;
   },
+
+  /**
+   * 지금 가장 이상한 종목 Top N (종합 이상, finalScore 기준)
+   */
+  getTop: async (request?: AnomalyScoreTopRequest): Promise<AnomalyScoreTopResponse> => {
+    const params = buildTopParams(request);
+    const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * 거래량 이상 Top N (z_vol 기반 정렬)
+   */
+  getTopVol: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+    const params = buildTopFilterParams(request);
+    const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/vol', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * 변동폭 이상 Top N (z_rng 기반 정렬)
+   */
+  getTopRng: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+    const params = buildTopFilterParams(request);
+    const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/rng', {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * 급등/급락 Top N (|z_ret| 기반 정렬 + direction)
+   */
+  getTopRet: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+    const params = buildTopFilterParams(request);
+    const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/ret', {
+      params,
+    });
+    return response.data;
+  },
 };
+
+function buildTopParams(request?: AnomalyScoreTopRequest): Record<string, string | number> {
+  const params: Record<string, string | number> = {};
+  if (request?.timeframe) params.timeframe = request.timeframe;
+  if (request?.mode) params.mode = request.mode;
+  if (request?.limit != null) params.limit = request.limit;
+  if (request?.deltaBars != null) params.deltaBars = request.deltaBars;
+  return params;
+}
+
+function buildTopFilterParams(
+  request?: AnomalyScoreTopFilterRequest
+): Record<string, string | number> {
+  const params = buildTopParams(request);
+  if (request?.minLevel) params.minLevel = request.minLevel;
+  if (request?.driver) params.driver = request.driver;
+  if (request?.minDeltaAbs != null) params.minDeltaAbs = request.minDeltaAbs;
+  return params;
+}
 
 export default anomalyService;
 

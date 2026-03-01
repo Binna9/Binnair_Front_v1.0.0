@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AnomalyChart from './AnomalyChart';
 import anomalyService from '@/services/AnomalyService';
 import filterService from '@/services/FilterService';
@@ -18,6 +19,10 @@ import { buildFinalCardVM, buildFinalMarkerVM, buildSeriesDataset } from '@/util
  * - 단일 화면: Series(A)로 차트 데이터셋 구성 → Final(B)로 상태 카드/마커 구성
  */
 const AnomalyDetection: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const urlVenueId = searchParams.get('venueId');
+  const urlInstrumentId = searchParams.get('instrumentId');
+
   // 화면에서 설정하는 4개: venueId / instrumentId / timeframe / mode
   const [venueOptions, setVenueOptions] = useState<Array<{ id: number; label: string }>>([]);
   const [instrumentOptions, setInstrumentOptions] = useState<Array<{ id: number; label: string }>>([]);
@@ -118,15 +123,19 @@ const AnomalyDetection: React.FC = () => {
         setVenueOptions(vOpts);
         setInstrumentOptions(iOpts);
 
-        // 기본 선택값 보정: draft/applied 모두 유효한 값으로 맞춤
-        const nextVenueId = vOpts[0]?.id ?? 1;
-        const nextInstrumentId = iOpts[0]?.id ?? 100;
+        // URL 파라미터 우선: /anomaly-monitor?venueId=1&instrumentId=100 형태로 진입 시 해당 종목 표시
+        const paramVenueId = urlVenueId ? parseInt(urlVenueId, 10) : null;
+        const paramInstrumentId = urlInstrumentId ? parseInt(urlInstrumentId, 10) : null;
+        const hasValidUrlVenue = paramVenueId != null && !isNaN(paramVenueId) && vOpts.some((x) => x.id === paramVenueId);
+        const hasValidUrlInstrument = paramInstrumentId != null && !isNaN(paramInstrumentId) && iOpts.some((x) => x.id === paramInstrumentId);
 
-        setDraftVenueId((prev) => (vOpts.some((x) => x.id === prev) ? prev : nextVenueId));
-        setDraftInstrumentId((prev) => (iOpts.some((x) => x.id === prev) ? prev : nextInstrumentId));
+        const nextVenueId = hasValidUrlVenue ? paramVenueId! : (vOpts[0]?.id ?? 1);
+        const nextInstrumentId = hasValidUrlInstrument ? paramInstrumentId! : (iOpts[0]?.id ?? 100);
 
-        setVenueId((prev) => (vOpts.some((x) => x.id === prev) ? prev : nextVenueId));
-        setInstrumentId((prev) => (iOpts.some((x) => x.id === prev) ? prev : nextInstrumentId));
+        setDraftVenueId(nextVenueId);
+        setDraftInstrumentId(nextInstrumentId);
+        setVenueId(nextVenueId);
+        setInstrumentId(nextInstrumentId);
       } catch (e) {
         // 필터 로드는 실패해도 화면 자체는 동작 가능(기본값으로 series/final 호출)
         console.error('❌ 필터(venues/instruments) 로드 실패:', e);
@@ -139,7 +148,7 @@ const AnomalyDetection: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // 처음 1회 로드
+    // URL params는 마운트 시점에만 반영 (리스트에서 클릭 후 진입 시)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

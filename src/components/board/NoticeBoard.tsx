@@ -4,6 +4,12 @@ import { useNoticeBoard } from '@/hooks/board/useNoticeBoard';
 import { XCircleIcon, ChevronRightIcon } from '@heroicons/react/24/solid';
 import { BoardType } from '@/types/BoardEnum';
 
+/** HTML 태그 제거 후 순수 텍스트만 반환 */
+function stripHtml(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+}
+
 const NoticeBoard = () => {
   const { boards: notices, loading, error } = useNoticeBoard(BoardType.NOTICE);
   const [hiddenNotices, setHiddenNotices] = useState<string[]>([]);
@@ -35,19 +41,19 @@ const NoticeBoard = () => {
         onClick={() => setIsVisible(true)}
         className={`fixed left-0 top-1/2 -translate-y-1/2 z-30
           bg-white/90 text-gray px-2 py-2 rounded-r-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)]
-          flex items-center justify-center w-12
+          flex items-center justify-center w-10
           transition-all duration-500 ease-in-out hover:scale-110 active:scale-95
-          ${isVisible ? 'opacity-0 pointer-events-none translate-x-[-12px]' : 'opacity-100 translate-x-0'}`}
+          ${isVisible ? 'opacity-0 pointer-events-none translate-x-[-10px]' : 'opacity-100 translate-x-0'}`}
       >
-        <ChevronRightIcon className="w-5 h-5" />
+        <ChevronRightIcon className="w-4 h-4" />
       </button>
 
       {/* 공지판 (열려 있을 때 보임) */}
       <div
-        className={`fixed left-4 top-[56%] -translate-y-1/2 w-[280px] h-[500px] z-30
-          bg-cover bg-center border border-white/50 shadow-2xl rounded-xl p-3 overflow-hidden text-gray-900
+        className={`fixed left-3 top-[56%] -translate-y-1/2 w-[250px] h-[440px] z-30
+          bg-cover bg-center border border-white/50 shadow-2xl rounded-xl p-2.5 overflow-hidden text-gray-900
           transition-all duration-500 ease-in-out
-          ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none -translate-x-[320px]'}`}
+          ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 pointer-events-none -translate-x-[280px]'}`}
       style={{
         backgroundImage: "url('/img/noticeboard_image.jpg')",
         backgroundPosition: '40% center',
@@ -57,7 +63,7 @@ const NoticeBoard = () => {
       {/* ✅ 공지판 닫기 버튼 (상단 오른쪽) */}
       <button
         onClick={() => setIsVisible(false)}
-        className="absolute top-1.5 right-1.5 text-zinc-100 hover:text-zinc-300"
+        className="absolute top-1 right-1 text-zinc-100 hover:text-zinc-300"
       >
         <XCircleIcon className="w-5 h-5" />
       </button>
@@ -71,7 +77,7 @@ const NoticeBoard = () => {
           <img
             src="/img/notice.png"
             alt="Notice"
-            className="w-16 h-auto filter invert"
+            className="w-14 h-auto filter invert"
           />
         </div>
         {/* ✅ 에러 메시지 */}
@@ -96,7 +102,7 @@ const NoticeBoard = () => {
                   }}
                   className="absolute top-1 right-1 text-zinc-700 hover:text-zinc-900 z-10"
                 >
-                  <XCircleIcon className="w-3.5 h-3.5" />
+                  <XCircleIcon className="w-4 h-4" />
                 </button>
 
                 <strong className="block text-sm font-semibold">
@@ -105,13 +111,13 @@ const NoticeBoard = () => {
                 <strong className="text-xs">
                   {notice.createDatetime.split('.')[0]}
                 </strong>
-                <p className="text-xs opacity-80 mt-0.5 line-clamp-2">{notice.content}</p>
+                <p className="text-xs opacity-80 mt-0.5 line-clamp-2">{stripHtml(notice.content)}</p>
               </li>
             ))
           ) : (
             // ✅ 모든 공지가 닫히면 환영 메시지 표시
             <li className="text-center text-gray-700 font-semibold text-base mt-8">
-              <span className="text-white text-xl font-bold mb-2">
+              <span className="text-white text-lg font-bold mb-2">
                 BinnAIR
               </span>
             </li>
