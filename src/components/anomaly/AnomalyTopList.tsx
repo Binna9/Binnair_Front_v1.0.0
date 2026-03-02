@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BarChart2, Gauge, Radar, TrendingUp } from 'lucide-react';
+import { Activity, BarChart2, Gauge, HelpCircle, Radar, TrendingUp } from 'lucide-react';
 import anomalyService from '@/services/AnomalyService';
 import type {
   AnomalyScoreTopResponse,
@@ -16,27 +16,27 @@ const CARD_ICONS = {
 
 const CARD_CONFIG = {
   agg: {
-    accent: '#0891b2',
-    accentDim: 'rgba(8,145,178,0.18)',
-    accentGlow: 'rgba(8,145,178,0.4)',
+    accent: '#2563eb',
+    accentDim: 'rgba(37,99,235,0.12)',
+    accentGlow: 'rgba(37,99,235,0.35)',
     label: 'AGG',
   },
   vol: {
-    accent: '#059669',
-    accentDim: 'rgba(5,150,105,0.18)',
-    accentGlow: 'rgba(5,150,105,0.4)',
+    accent: '#3b82f6',
+    accentDim: 'rgba(59,130,246,0.12)',
+    accentGlow: 'rgba(59,130,246,0.35)',
     label: 'VOL',
   },
   rng: {
-    accent: '#d97706',
-    accentDim: 'rgba(217,119,6,0.18)',
-    accentGlow: 'rgba(217,119,6,0.4)',
+    accent: '#64748b',
+    accentDim: 'rgba(100,116,139,0.12)',
+    accentGlow: 'rgba(100,116,139,0.3)',
     label: 'RNG',
   },
   ret: {
     accent: '#dc2626',
-    accentDim: 'rgba(220,38,38,0.18)',
-    accentGlow: 'rgba(220,38,38,0.4)',
+    accentDim: 'rgba(220,38,38,0.12)',
+    accentGlow: 'rgba(220,38,38,0.35)',
     label: 'RET',
   },
 } as const;
@@ -49,6 +49,20 @@ const MAIN_TOP_DEFAULTS = {
 } as const;
 
 const MAIN_TOP_FILTER_DEFAULTS = { ...MAIN_TOP_DEFAULTS } as const;
+
+const DRIVER_DESC: Record<string, string> = {
+  VOL: '거래량(Volume) 이상이 종합 점수에 가장 크게 기여했습니다. |z_vol| 기준.',
+  RET: '수익률/급등급락(Return) 이상이 종합 점수에 가장 크게 기여했습니다. |z_ret| 기준.',
+  RNG: '변동폭(Range) 이상이 종합 점수에 가장 크게 기여했습니다. |z_rng| 기준.',
+};
+
+const COL_WIDTH = {
+  rank: 16,
+  barHint: 56,
+  bar: 48,
+  score: 40,
+  meta: 52,
+} as const;
 
 const TOP_LIST_CONFIG = [
   { key: 'agg' as const, title: '종합 이상', sub: 'finalScore (mode 합성)', fetch: () => anomalyService.getTop(MAIN_TOP_DEFAULTS) },
@@ -76,16 +90,15 @@ function getMetricLevel(val: number | null): 'low' | 'mid' | 'high' | 'extreme' 
   return 'extreme';
 }
 
-function ScoreBar({ val, max = 5, accent }: { val: number | null; max?: number; accent: string }) {
+function ScoreBar({ val, max = 5 }: { val: number | null; max?: number }) {
   const pct = val == null ? 0 : Math.min((val / max) * 100, 100);
   return (
-    <div style={{ width: 48, height: 4, background: 'rgba(0,0,0,0.08)', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+    <div style={{ width: COL_WIDTH.bar, height: 4, background: 'rgba(0,0,0,0.08)', borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
       <div style={{
         height: '100%',
         width: `${pct}%`,
-        background: accent,
+        background: '#111827',
         borderRadius: 2,
-        boxShadow: `0 0 6px ${accent}`,
         transition: 'width 0.6s ease',
       }} />
     </div>
@@ -93,9 +106,9 @@ function ScoreBar({ val, max = 5, accent }: { val: number | null; max?: number; 
 }
 
 const LEVEL_CONFIG: Record<string, { bg: string; fg: string; label: string }> = {
-  SEVERE:  { bg: 'rgba(239,68,68,0.2)',   fg: '#dc2626', label: '위험' },
-  ANOMALY: { bg: 'rgba(249,115,22,0.2)',   fg: '#ea580c', label: '이상' },
-  WATCH:   { bg: 'rgba(251,191,36,0.18)',  fg: '#d97706', label: '주의' },
+  SEVERE:  { bg: 'rgba(220,38,38,0.18)',   fg: '#dc2626', label: '위험' },
+  ANOMALY: { bg: 'rgba(220,38,38,0.15)',   fg: '#dc2626', label: '이상' },
+  WATCH:   { bg: 'rgba(249,115,22,0.18)',  fg: '#ea580c', label: '주의' },
   NORMAL:  { bg: 'rgba(100,116,139,0.12)', fg: '#64748b', label: '정상' },
 };
 
@@ -116,43 +129,98 @@ function FinalLevelPill({ level, showNormal = false }: { level: string; showNorm
   );
 }
 
-function DirectionChip({ direction }: { direction?: string }) {
-  if (!direction) return null;
-  const map: Record<string, { icon: string; color: string }> = {
-    UP:    { icon: '▲', color: '#f87171' },
-    DOWN:  { icon: '▼', color: '#60a5fa' },
-    MIXED: { icon: '◆', color: '#fbbf24' },
-    FLAT:  { icon: '─', color: '#6b7280' },
-  };
-  const m = map[direction] ?? { icon: direction, color: '#9ca3af' };
+function DriverWithTooltip({ driver }: { driver: string }) {
+  const desc = DRIVER_DESC[driver.toUpperCase()] ?? `${driver} 지표가 종합 점수에 기여했습니다.`;
   return (
-    <span style={{ color: m.color, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
-      {m.icon} {direction}
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+      <span style={{ fontSize: 9, color: '#6b7280' }}>{driver}</span>
+      <span title={desc} style={{ display: 'inline-flex', cursor: 'help' }}>
+        <HelpCircle size={10} color="#94a3b8" strokeWidth={2} />
+      </span>
     </span>
   );
 }
 
-function DeltaChip({ delta }: { delta: number | null }) {
-  if (delta == null) return <span style={{ color: '#4b5563', fontSize: 10 }}>—</span>;
-  const abs = Math.abs(delta);
-  const isUp = delta > 0;
-  const color = isUp ? '#34d399' : '#60a5fa';
-  const badge = abs >= 2 ? '폭발' : abs >= 1 ? '급변' : null;
+const DIRECTION_DESC: Record<string, string> = {
+  UP: '급등 방향: 수익률이 급격히 상승한 이상 구간입니다.',
+  DOWN: '급락 방향: 수익률이 급격히 하락한 이상 구간입니다.',
+  MIXED: '상하 혼재: 상승과 하락이 혼재된 구간입니다.',
+  FLAT: '횡보: 변동이 미미한 구간입니다.',
+};
+
+function DirectionChip({ direction }: { direction?: string }) {
+  if (!direction) return null;
+  const map: Record<string, { icon: string; color: string }> = {
+    UP:    { icon: '▲', color: '#dc2626' },
+    DOWN:  { icon: '▼', color: '#2563eb' },
+    MIXED: { icon: '◆', color: '#64748b' },
+    FLAT:  { icon: '─', color: '#94a3b8' },
+  };
+  const m = map[direction] ?? { icon: direction, color: '#9ca3af' };
+  const desc = DIRECTION_DESC[direction];
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, flexShrink: 0 }}>
-      {badge && (
-        <span style={{
-          fontSize: 8, padding: '1px 4px', borderRadius: 2, fontWeight: 700,
-          background: abs >= 2 ? 'rgba(239,68,68,0.2)' : 'rgba(251,191,36,0.18)',
-          color: abs >= 2 ? '#f87171' : '#fbbf24',
-          border: `1px solid ${abs >= 2 ? '#f87171' : '#fbbf24'}44`,
-        }}>
-          {badge}
-        </span>
-      )}
-      <span style={{ color, fontWeight: 600 }}>
-        {isUp ? '↑' : '↓'} {delta.toFixed(2)}
-      </span>
+    <span
+      title={desc}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        color: m.color,
+        fontSize: 10,
+        fontWeight: 700,
+        flexShrink: 0,
+        cursor: desc ? 'help' : 'default',
+      }}
+    >
+      {m.icon} {direction}
+      {desc && <HelpCircle size={9} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />}
+    </span>
+  );
+}
+
+function RapidChangeBadge({ delta }: { delta: number | null }) {
+  if (delta == null) return null;
+  const abs = Math.abs(delta);
+  const isExplosive = abs >= 2;
+  const isRapid = abs >= 1;
+  if (!isExplosive && !isRapid) return null;
+
+  const badge = isExplosive ? '폭발' : '급변';
+  const badgeStyle = isExplosive
+    ? {
+        fontSize: 9,
+        padding: '2px 6px',
+        borderRadius: 4,
+        fontWeight: 800,
+        letterSpacing: '0.06em',
+        background: 'linear-gradient(135deg, rgba(220,38,38,0.25), rgba(239,68,68,0.2))',
+        color: '#dc2626',
+        border: '1px solid rgba(220,38,38,0.5)',
+        boxShadow: '0 0 8px rgba(220,38,38,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+        animation: 'deltaPulse 1.5s ease-in-out infinite',
+      }
+    : {
+        fontSize: 9,
+        padding: '2px 5px',
+        borderRadius: 3,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        background: 'linear-gradient(135deg, rgba(249,115,22,0.25), rgba(234,88,12,0.18))',
+        color: '#ea580c',
+        border: '1px solid rgba(249,115,22,0.45)',
+        boxShadow: '0 0 6px rgba(249,115,22,0.25)',
+      };
+
+  return <span style={badgeStyle as React.CSSProperties}>{badge}</span>;
+}
+
+function DeltaChip({ delta }: { delta: number | null }) {
+  if (delta == null) return <span style={{ color: '#64748b', fontSize: 10 }}>—</span>;
+  const isUp = delta > 0;
+  const color = isUp ? '#dc2626' : '#2563eb';
+  return (
+    <span style={{ color, fontWeight: 600, fontSize: 10, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+      {isUp ? '↑' : '↓'} {delta.toFixed(2)}
     </span>
   );
 }
@@ -169,11 +237,6 @@ function CardRow({ keyType, item, onClick, accent }: {
     ? (item.finalScore ?? null)
     : (item.metricValue ?? null);
 
-  const level = getMetricLevel(metricVal);
-  const levelColors: Record<string, string> = {
-    low: '#4b5563', mid: '#fbbf24', high: '#f97316', extreme: '#ef4444'
-  };
-  const valColor = keyType === 'agg' ? accent : levelColors[level];
   const valStr = metricVal != null ? metricVal.toFixed(2) : '—';
 
   return (
@@ -195,41 +258,44 @@ function CardRow({ keyType, item, onClick, accent }: {
       }}
     >
       {/* Rank */}
-      <span style={{ fontSize: 10, color: '#6b7280', width: 16, flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ fontSize: 10, color: '#6b7280', width: COL_WIDTH.rank, flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
         {item.rank}
       </span>
 
-      {/* Symbol */}
-      <span style={{
-        fontSize: 12, fontWeight: 700, color: '#1f2937',
-        flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        letterSpacing: '0.02em',
-      }}>
-        {item.symbol}
-      </span>
+      {/* Symbol + 정상/급변 배지 */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+        <span style={{
+          fontSize: 12, fontWeight: 700, color: '#1f2937',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          letterSpacing: '0.02em',
+        }}>
+          {item.symbol}
+        </span>
+        <FinalLevelPill level={item.finalLevel} showNormal={keyType === 'agg'} />
+        <RapidChangeBadge delta={item.delta} />
+      </div>
+
+      {/* Bar 왼쪽: 고정 너비로 그리드 정렬 */}
+      <div style={{ width: COL_WIDTH.barHint, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        {keyType === 'ret' && <DirectionChip direction={item.direction} />}
+        {keyType === 'agg' && item.driver && (
+          <DriverWithTooltip driver={item.driver} />
+        )}
+      </div>
 
       {/* Score bar */}
-      <ScoreBar val={metricVal} accent={accent} />
+      <ScoreBar val={metricVal} />
 
       {/* Value */}
       <span style={{
-        fontSize: 12, fontWeight: 700, color: valColor,
-        fontVariantNumeric: 'tabular-nums', flexShrink: 0, minWidth: 36, textAlign: 'right',
-        textShadow: hovered ? `0 0 8px ${valColor}` : 'none',
-        transition: 'text-shadow 0.15s',
+        fontSize: 12, fontWeight: 700, color: '#111827',
+        fontVariantNumeric: 'tabular-nums', flexShrink: 0, width: COL_WIDTH.score, textAlign: 'right',
       }}>
         {valStr}
       </span>
 
-      {/* Badges */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        <FinalLevelPill level={item.finalLevel} showNormal={keyType === 'agg'} />
-        {keyType === 'ret' && <DirectionChip direction={item.direction} />}
-        {keyType === 'agg' && item.driver && (
-          <span style={{ fontSize: 9, color: '#6b7280', flexShrink: 0 }}>
-            {item.driver}
-          </span>
-        )}
+      {/* META */}
+      <div style={{ width: COL_WIDTH.meta, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
         <DeltaChip delta={item.delta} />
       </div>
     </div>
@@ -260,21 +326,22 @@ export default function AnomalyTopList() {
 
   return (
     <div style={{
-      background: '#ffffff',
+      background: '#f8fafc',
       borderRadius: 10,
       overflow: 'hidden',
       maxWidth: 1100,
       margin: '0 auto',
-      boxShadow: '0 0 0 1px rgba(0,0,0,0.06), 0 4px 24px rgba(0,0,0,0.08)',
+      boxShadow: '0 0 0 1px rgba(15,23,42,0.08), 0 4px 24px rgba(15,23,42,0.1)',
       position: 'relative',
+      border: '1px solid rgba(100,116,139,0.12)',
     }}>
 
       {/* Header */}
       <div style={{
-        background: '#ffffff',
+        background: 'linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%)',
         padding: '16px 24px',
-        borderBottom: '1px solid rgba(0,0,0,0.06)',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        borderBottom: '1px solid rgba(100,116,139,0.12)',
+        boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -287,19 +354,19 @@ export default function AnomalyTopList() {
           {/* Header icon */}
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'rgba(8,145,178,0.12)',
-            border: '1px solid rgba(8,145,178,0.3)',
+            background: 'rgba(100,116,139,0.12)',
+            border: '1px solid rgba(100,116,139,0.25)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <Radar size={20} color="#0891b2" strokeWidth={2.5} />
+            <Radar size={20} color="#64748b" strokeWidth={2.5} />
           </div>
 
           <div>
-            <div style={{ fontSize: 10, color: '#64748b', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 2 }}>
-              Anomaly Detection System
+            <div style={{ fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 2, fontWeight: 600 }}>
+              이상 탐지 리스트
             </div>
-            <div style={{ fontSize: 13, color: '#1e293b', fontWeight: 700, letterSpacing: '0.04em' }}>
+            <div style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em' }}>
               {formatTsFull(displayTs)}
             </div>
           </div>
@@ -320,9 +387,9 @@ export default function AnomalyTopList() {
               title={title}
               style={{
                 fontSize: 10, padding: '3px 8px', borderRadius: 4,
-                background: 'rgba(0,0,0,0.06)',
-                border: '1px solid rgba(0,0,0,0.12)',
-                color: '#334155',
+                background: 'rgba(100,116,139,0.08)',
+                border: '1px solid rgba(100,116,139,0.2)',
+                color: '#475569',
                 fontWeight: 600,
                 letterSpacing: '0.05em',
               }}
@@ -345,18 +412,18 @@ export default function AnomalyTopList() {
               key={key}
               style={{
                 background: '#ffffff',
-                border: '1px solid rgba(0,0,0,0.08)',
+                border: '1px solid rgba(15,23,42,0.08)',
                 borderRadius: 10,
                 overflow: 'hidden',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                boxShadow: '0 1px 3px rgba(15,23,42,0.05)',
                 position: 'relative',
               }}
             >
               {/* Card accent top bar */}
               <div style={{
                 height: 2,
-                background: `linear-gradient(90deg, ${cfg.accent}, transparent)`,
-                boxShadow: `0 0 12px ${cfg.accentGlow}`,
+                background: 'linear-gradient(90deg, #64748b, transparent)',
+                boxShadow: '0 0 8px rgba(100,116,139,0.2)',
               }} />
 
               {/* Card header */}
@@ -366,30 +433,30 @@ export default function AnomalyTopList() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                background: cfg.accentDim,
+                background: 'rgba(100,116,139,0.06)',
               }}>
                 <div style={{
                   width: 32, height: 32, borderRadius: 8,
-                  background: `linear-gradient(135deg, ${cfg.accentDim}, rgba(0,0,0,0.06))`,
-                  border: `1px solid ${cfg.accent}33`,
+                  background: 'rgba(100,116,139,0.08)',
+                  border: '1px solid rgba(100,116,139,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
                 }}>
-                  <Icon size={16} color={cfg.accent} strokeWidth={2.5} />
+                  <Icon size={16} color="#64748b" strokeWidth={2.5} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{
                       fontSize: 9, fontWeight: 800, letterSpacing: '0.12em',
-                      color: cfg.accent, textTransform: 'uppercase',
-                      background: `${cfg.accent}18`, padding: '2px 6px', borderRadius: 3,
+                      color: '#64748b', textTransform: 'uppercase',
+                      background: 'rgba(100,116,139,0.12)', padding: '2px 6px', borderRadius: 3,
                     }}>{cfg.label}</span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{title}</span>
                   </div>
                   <div style={{ fontSize: 9, color: '#4b5563', marginTop: 2, letterSpacing: '0.03em' }}>{sub}</div>
                 </div>
                 <span style={{
-                  fontSize: 12, fontWeight: 700, color: `${cfg.accent}99`,
+                  fontSize: 12, fontWeight: 700, color: '#64748b',
                   letterSpacing: '0.04em',
                 }}>
                   TOP 5
@@ -402,11 +469,12 @@ export default function AnomalyTopList() {
                 padding: '5px 10px 4px 10px',
                 borderBottom: '1px solid rgba(0,0,0,0.06)',
               }}>
-                <span style={{ fontSize: 9, color: '#6b7280', width: 16, textAlign: 'right' }}>#</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.rank, textAlign: 'right' }}>#</span>
                 <span style={{ fontSize: 9, color: '#6b7280', flex: 1 }}>SYMBOL</span>
-                <span style={{ fontSize: 9, color: '#6b7280', width: 48 }}>BAR</span>
-                <span style={{ fontSize: 9, color: '#6b7280', minWidth: 36, textAlign: 'right' }}>SCORE</span>
-                <span style={{ fontSize: 9, color: '#6b7280', flexShrink: 0 }}>META</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.barHint }} />
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.bar }}>BAR</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.score, textAlign: 'right' }}>SCORE</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.meta, textAlign: 'right' }}>META</span>
               </div>
 
               {/* Rows */}
@@ -430,8 +498,8 @@ export default function AnomalyTopList() {
                   }}>
                     <div style={{
                       width: 24, height: 24, borderRadius: '50%',
-                      border: `2px solid ${cfg.accent}44`,
-                      borderTopColor: cfg.accent,
+                      border: '2px solid rgba(100,116,139,0.3)',
+                      borderTopColor: '#64748b',
                       animation: 'spin 1s linear infinite',
                     }} />
                     <span style={{ fontSize: 10, color: '#6b7280' }}>Loading...</span>
@@ -446,6 +514,10 @@ export default function AnomalyTopList() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes deltaPulse {
+          0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(220,38,38,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+          50% { opacity: 0.92; box-shadow: 0 0 12px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2); }
         }
       `}</style>
     </div>

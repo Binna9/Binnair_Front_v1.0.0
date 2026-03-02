@@ -751,12 +751,12 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   const pinnedVM = useMemo(() => (pinnedPoint ? buildTooltipVM(pinnedPoint) : null), [pinnedPoint]);
 
   const heights = useMemo(() => {
-    // fullscreen: 브라우저 전체화면에서 공간을 최대 활용
+    // fullscreen: 헤더·범위라벨·레전드 여유를 두고 남은 공간 사용 (짤림 방지)
     if (isFullscreen) {
-      return {
-        main: Math.max(360, viewportHeight - 340),
-        volume: 220,
-      } as const;
+      const overhead = 300; // 헤더·범위라벨·레전드·패딩 여유
+      const volume = 180;
+      const main = Math.max(360, viewportHeight - overhead - volume);
+      return { main, volume } as const;
     }
     // 기본 화면
     return {
@@ -1204,125 +1204,131 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   return (
     <div
       ref={rootRef}
-      className={`w-full h-full ${isFullscreen ? 'bg-white p-4' : ''}`}
+      className={`w-full h-full flex flex-col min-h-0 ${isFullscreen ? 'bg-white pt-10 px-4 pb-4 overflow-y-auto' : ''}`}
     >
-      <div className="flex flex-nowrap items-center justify-between gap-4 mb-3 min-w-0 overflow-x-auto pr-6">
-        {/* 왼쪽: 제목 */}
-        <div className="shrink-0">
-          <div className="text-sm font-semibold text-gray-900">Series Chart</div>
-          <div className="text-xs text-gray-500 truncate max-w-[200px]">
+      {/* 헤더: Series Chart | 날짜 | 확대해제·전체화면 */}
+      <div className="flex flex-nowrap items-stretch mb-3 rounded-xl border border-gray-200 bg-gray-50/60 overflow-hidden min-w-0 shrink-0">
+        {/* 1. Series Chart */}
+        <div className="flex flex-col justify-center px-4 py-3 border-r border-gray-200 shrink-0 min-w-[140px]">
+          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Series Chart</div>
+          <div className="text-sm font-semibold text-gray-900">시계열 차트</div>
+          <div className="text-xs text-gray-500 truncate max-w-[180px] mt-0.5">
             표본 {displayPoints.length.toLocaleString()} / 전체 {points.length.toLocaleString()}
           </div>
         </div>
 
-        {/* 가운데: Full/1M/1W/1D + 날짜 지정 */}
-        <div className="flex flex-nowrap items-center gap-3 rounded-xl border border-gray-200 bg-gray-50/80 px-4 py-2.5 shrink-0">
-          <div className="flex flex-nowrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => applyQuickRange('full')}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-              title="전체 기간"
-              disabled={!datasetExtent}
-            >
-              Full
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(30)}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-              title="최근 1개월"
-              disabled={!datasetExtent}
-            >
-              1M
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(7)}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-              title="최근 1주"
-              disabled={!datasetExtent}
-            >
-              1W
-            </button>
-            <button
-              type="button"
-              onClick={() => applyQuickRange(1)}
-              className="inline-flex items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-              title="최근 1일"
-              disabled={!datasetExtent}
-            >
-              1D
-            </button>
-          </div>
-
-          <div className="w-px h-8 bg-gray-200" />
-
-          <div className="flex flex-nowrap items-center gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
-              max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-              className="w-[120px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
-              disabled={!datasetExtent}
-            />
-            <span className="text-sm text-gray-400">~</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
-              max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-              className="w-[120px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
-              disabled={!datasetExtent}
-            />
-            <button
-              type="button"
-              onClick={onApplyDateInputs}
-              className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-800 border border-gray-200 bg-white transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none"
-              disabled={!datasetExtent || !dateFrom || !dateTo}
-              title="날짜 적용"
-            >
-              적용
-            </button>
+        {/* 2. 날짜 / 기간 */}
+        <div className="flex flex-col justify-center px-4 py-3 border-r border-gray-200 flex-1 min-w-0">
+          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">날짜</div>
+          <div className="flex flex-nowrap items-center gap-3 flex-wrap">
+            <div className="flex flex-nowrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => applyQuickRange('full')}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                title="전체 기간"
+                disabled={!datasetExtent}
+              >
+                Full
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickRange(30)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                title="최근 1개월"
+                disabled={!datasetExtent}
+              >
+                1M
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickRange(7)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                title="최근 1주"
+                disabled={!datasetExtent}
+              >
+                1W
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickRange(1)}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                title="최근 1일"
+                disabled={!datasetExtent}
+              >
+                1D
+              </button>
+            </div>
+            <div className="w-px h-6 bg-gray-200 shrink-0" />
+            <div className="flex flex-nowrap items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
+                max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
+                className="w-[110px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
+                disabled={!datasetExtent}
+              />
+              <span className="text-sm text-gray-400">~</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
+                max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
+                className="w-[110px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
+                disabled={!datasetExtent}
+              />
+              <button
+                type="button"
+                onClick={onApplyDateInputs}
+                className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold text-gray-800 border border-gray-200 bg-white transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none"
+                disabled={!datasetExtent || !dateFrom || !dateTo}
+                title="날짜 적용"
+              >
+                적용
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 오른쪽: 확대해제 + Full */}
-        <div className="flex flex-nowrap items-center gap-2 shrink-0">
-          {viewRange ? (
+        {/* 3. 확대해제·전체화면 */}
+        <div className="flex flex-col justify-center px-4 py-3 shrink-0 min-w-[140px]">
+          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">보기</div>
+          <div className="flex flex-nowrap items-center gap-2">
+            {viewRange ? (
+              <button
+                type="button"
+                onClick={resetZoom}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
+                title="확대 해제"
+              >
+                <ZoomOut className="w-4 h-4" />
+                확대 해제
+              </button>
+            ) : null}
+
             <button
               type="button"
-              onClick={resetZoom}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-              title="확대 해제"
+              onClick={toggleFullscreen}
+              aria-pressed={isFullscreen}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/20 ${
+                isFullscreen
+                  ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800'
+                  : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+              }`}
+              title={isFullscreen ? 'Full Off' : 'Full On'}
             >
-              <ZoomOut className="w-4 h-4" />
-              확대 해제
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {isFullscreen ? 'Full Off' : 'Full On'}
             </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            aria-pressed={isFullscreen}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/20 ${
-              isFullscreen
-                ? 'border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800'
-                : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900'
-            }`}
-            title={isFullscreen ? 'Full Off' : 'Full On'}
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-            {isFullscreen ? 'Full Off' : 'Full On'}
-          </button>
+          </div>
         </div>
       </div>
 
       {formattedViewRangeLabel ? (
-        <div className="mb-2 text-xs text-blue-700 font-semibold truncate">
+        <div className="mb-2 text-xs text-blue-700 font-semibold truncate shrink-0">
           확대 구간: {formattedViewRangeLabel}
         </div>
       ) : null}
@@ -1335,7 +1341,7 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
       {chartWidth > 0 && layoutReady ? (
         <div
           ref={chartsAreaRef}
-          className="w-full h-full"
+          className={`w-full ${isFullscreen ? 'flex-1 min-h-0 overflow-y-auto' : 'h-full'}`}
           style={
             prefersReducedMotion
               ? undefined

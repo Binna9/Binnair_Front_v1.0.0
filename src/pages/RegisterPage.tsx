@@ -60,17 +60,19 @@ export default function RegisterPage() {
       <div className="w-full flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         {/* 왼쪽: 로고(뒤) + 회원가입 폼(앞) - 넓게 */}
         <div className="flex-1 md:flex-[1.05] relative order-2 md:order-1 min-h-0 flex flex-col overflow-hidden py-4">
-          {/* 로고 영역 (폼 뒤에 배치, 스크롤 시 페이드아웃) */}
-          <div
-            className="absolute -top-12 -left-20 md:-top-12 md:-left-16 z-0 pointer-events-none transition-opacity duration-200"
+          {/* 로고 영역 (클릭 시 메인 이동, z-20으로 폼 위에 배치, 스크롤 시 페이드아웃) */}
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="absolute -top-12 -left-20 md:-top-12 md:-left-16 z-20 cursor-pointer transition-all duration-200 hover:scale-105"
             style={{ opacity: logoOpacity }}
           >
             <img
               src="/img/binnair_logo_black.png"
               alt="BinnAIR"
-              className="h-36 md:h-44 w-auto"
+              className="h-36 md:h-44 w-auto pointer-events-none"
             />
-          </div>
+          </button>
 
           {/* 회원가입 폼 영역 (앞에 배치, 스크롤 가능) */}
           <div

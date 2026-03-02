@@ -380,8 +380,8 @@ const AnomalyDetection: React.FC = () => {
                   <Activity className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-white tracking-tight">이상탐지</h1>
-                  <p className="mt-0.5 text-blue-100/90 text-xs">이상점수 모니터링 (Series/Final)</p>
+                  <h1 className="text-xl font-bold text-white tracking-tight">이상탐지 모니터링</h1>
+                  <p className="mt-0.5 text-blue-100/90 text-xs">Monitoring (Series/Final)</p>
                 </div>
               </div>
 
