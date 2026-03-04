@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BarChart2, Gauge, HelpCircle, Radar, TrendingUp } from 'lucide-react';
+import { Activity, BarChart2, Gauge, HelpCircle, Info, Radar, TrendingUp } from 'lucide-react';
 import anomalyService from '@/services/AnomalyService';
 import type {
   AnomalyScoreTopResponse,
@@ -43,12 +43,14 @@ const CARD_CONFIG = {
 
 const MAIN_TOP_DEFAULTS = {
   timeframe: '5m',
-  mode: 'consensus',
   limit: 10,
   deltaBars: 6,
 } as const;
 
-const MAIN_TOP_FILTER_DEFAULTS = { ...MAIN_TOP_DEFAULTS } as const;
+const MODE_DESC: Record<string, string> = {
+  consensus: '30·60·90일 점수를 가중 평균하여 합성. 변동을 완화하고 안정적인 이상도 산출.',
+  max: '30·60·90일 점수 중 최댓값 사용. 극단적 이상을 민감하게 포착.',
+};
 
 const DRIVER_DESC: Record<string, string> = {
   VOL: '거래량(Volume) 이상이 종합 점수에 가장 크게 기여했습니다. |z_vol| 기준.',
@@ -64,14 +66,17 @@ const COL_WIDTH = {
   meta: 52,
 } as const;
 
-const TOP_LIST_CONFIG = [
-  { key: 'agg' as const, title: '종합 이상', sub: 'finalScore (mode 합성)', fetch: () => anomalyService.getTop(MAIN_TOP_DEFAULTS) },
-  { key: 'vol' as const, title: '거래량 이상', sub: 'metricValue (|z_vol|)', fetch: () => anomalyService.getTopVol(MAIN_TOP_FILTER_DEFAULTS) },
-  { key: 'rng' as const, title: '변동폭 이상', sub: 'metricValue (|z_rng|)', fetch: () => anomalyService.getTopRng(MAIN_TOP_FILTER_DEFAULTS) },
-  { key: 'ret' as const, title: '급등/급락', sub: 'metricValue (|z_ret|) + direction', fetch: () => anomalyService.getTopRet(MAIN_TOP_FILTER_DEFAULTS) },
-] as const;
+function buildFetchConfig(mode: 'consensus' | 'max') {
+  const base = { ...MAIN_TOP_DEFAULTS, mode };
+  return [
+    { key: 'agg' as const, title: '종합 이상', sub: 'finalScore (mode 합성)', fetch: () => anomalyService.getTop(base) },
+    { key: 'vol' as const, title: '거래량 이상', sub: 'metricValue (|z_vol|)', fetch: () => anomalyService.getTopVol(base) },
+    { key: 'rng' as const, title: '변동폭 이상', sub: 'metricValue (|z_rng|)', fetch: () => anomalyService.getTopRng(base) },
+    { key: 'ret' as const, title: '급등/급락', sub: 'metricValue (|z_ret|) + direction', fetch: () => anomalyService.getTopRet(base) },
+  ] as const;
+}
 
-type CardKey = (typeof TOP_LIST_CONFIG)[number]['key'];
+type CardKey = 'agg' | 'vol' | 'rng' | 'ret';
 
 function formatTsFull(ts: string | undefined): string {
   if (!ts) return '--:--:--';
@@ -304,24 +309,28 @@ function CardRow({ keyType, item, onClick, accent }: {
 
 export default function AnomalyTopList() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<'consensus' | 'max'>('consensus');
   const [topLists, setTopLists] = useState<Record<string, AnomalyScoreTopResponse | null>>({
     agg: null, vol: null, rng: null, ret: null,
   });
+
   useEffect(() => {
+    const config = buildFetchConfig(mode);
     const loadTopLists = async () => {
       const results = await Promise.allSettled(
-        TOP_LIST_CONFIG.map(async (c) => ({ key: c.key, data: await c.fetch() }))
+        config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
       );
       const next: Record<string, AnomalyScoreTopResponse | null> = {};
       results.forEach((r, i) => {
-        const key = TOP_LIST_CONFIG[i].key;
+        const key = config[i].key;
         next[key] = r.status === 'fulfilled' ? r.value.data : null;
       });
       setTopLists(next);
     };
     loadTopLists();
-  }, []);
+  }, [mode]);
 
+  const topListConfig = buildFetchConfig(mode);
   const displayTs = topLists.agg?.ts ?? topLists.vol?.ts ?? topLists.rng?.ts ?? topLists.ret?.ts;
 
   return (
@@ -343,66 +352,114 @@ export default function AnomalyTopList() {
         borderBottom: '1px solid rgba(100,116,139,0.12)',
         boxShadow: '0 2px 8px rgba(15,23,42,0.06)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 12,
+        flexDirection: 'column',
+        gap: 10,
         position: 'relative',
       }}>
-        {/* Left: Title + TS */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* Header icon */}
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'rgba(100,116,139,0.12)',
-            border: '1px solid rgba(100,116,139,0.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <Radar size={20} color="#64748b" strokeWidth={2.5} />
+        {/* 1행: Title + Params */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'rgba(100,116,139,0.12)',
+              border: '1px solid rgba(100,116,139,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Radar size={20} color="#64748b" strokeWidth={2.5} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>
+                이상 탐지 리스트
+              </span>
+              <span style={{ fontSize: 9, color: '#64748b', letterSpacing: '0.03em' }}>
+                통계적 표준화 기반 이상 탐지 (Multi-Window Z-Score Engine)
+              </span>
+            </div>
           </div>
 
-          <div>
-            <div style={{ fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 2, fontWeight: 600 }}>
-              이상 탐지 리스트
-            </div>
-            <div style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em' }}>
-              {formatTsFull(displayTs)}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Params */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 10, color: '#475569', fontWeight: 600, letterSpacing: '0.04em' }}>
             현재 데이터 기준
           </span>
-          {[
-            { label: '5m', title: '5분봉' },
-            { label: 'consensus', title: '합성 모드' },
-            { label: 'Δ 6봉', title: '6개 봉(캔들) 전 대비 변화량' },
-          ].map(({ label, title }) => (
-            <span
-              key={label}
-              title={title}
-              style={{
-                fontSize: 10, padding: '3px 8px', borderRadius: 4,
-                background: 'rgba(100,116,139,0.08)',
-                border: '1px solid rgba(100,116,139,0.2)',
-                color: '#475569',
-                fontWeight: 600,
-                letterSpacing: '0.05em',
-              }}
-            >
-              {label}
-            </span>
-          ))}
+          <span
+            title="5분봉"
+            style={{
+              fontSize: 10, padding: '3px 8px', borderRadius: 4,
+              background: 'rgba(100,116,139,0.08)',
+              border: '1px solid rgba(100,116,139,0.2)',
+              color: '#475569',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+            }}
+          >
+            5m
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {(['consensus', 'max'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                title={MODE_DESC[m]}
+                style={{
+                  fontSize: 10,
+                  padding: '3px 8px',
+                  borderRadius: 4,
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  border: `1px solid ${mode === m ? 'rgba(100,116,139,0.5)' : 'rgba(100,116,139,0.2)'}`,
+                  background: mode === m ? 'rgba(100,116,139,0.15)' : 'rgba(100,116,139,0.08)',
+                  color: mode === m ? '#334155' : '#64748b',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 3,
+                }}
+              >
+                {m}
+                <HelpCircle size={10} color="#94a3b8" strokeWidth={2} />
+              </button>
+            ))}
+          </div>
+          <span
+            title="6개 봉(캔들) 전 대비 변화량"
+            style={{
+              fontSize: 10, padding: '3px 8px', borderRadius: 4,
+              background: 'rgba(100,116,139,0.08)',
+              border: '1px solid rgba(100,116,139,0.2)',
+              color: '#475569',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+            }}
+          >
+            Δ 6봉
+          </span>
+          </div>
+        </div>
+
+        {/* 2행: 설명 (전체 폭 → 한 줄) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', paddingLeft: 52 }}>
+          <Info size={12} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
+          <span style={{ fontSize: 10, color: '#64748b', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
+            30·60·90일 통계 분포를 기준으로 가격 수익률·거래량·변동폭을 Z-Score로 표준화하여, 다중 기간 합성 점수로 이상도를 측정합니다.
+          </span>
+        </div>
+
+        {/* 3행: 데이터 기준 시각 */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 52 }}>
+          <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em' }}>
+            데이터 기준 시각
+          </span>
+          <span style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em' }}>
+            {formatTsFull(displayTs)}
+          </span>
         </div>
       </div>
 
       {/* Cards Grid */}
       <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-        {TOP_LIST_CONFIG.map(({ key, title, sub }) => {
+        {topListConfig.map(({ key, title, sub }) => {
           const cfg = CARD_CONFIG[key];
           const Icon = CARD_ICONS[key];
           const items = topLists[key]?.items ?? [];

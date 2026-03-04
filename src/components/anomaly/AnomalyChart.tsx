@@ -1207,7 +1207,7 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
       className={`w-full h-full flex flex-col min-h-0 ${isFullscreen ? 'bg-white pt-10 px-4 pb-4 overflow-y-auto' : ''}`}
     >
       {/* 헤더: Series Chart | 날짜 | 확대해제·전체화면 */}
-      <div className="flex flex-nowrap items-stretch mb-3 rounded-xl border border-gray-200 bg-gray-50/60 overflow-hidden min-w-0 shrink-0">
+      <div className="flex flex-nowrap items-stretch mb-3 rounded-xl border border-gray-200 bg-gray-50/60 overflow-x-auto overflow-y-hidden min-w-0 shrink-0">
         {/* 1. Series Chart */}
         <div className="flex flex-col justify-center px-4 py-3 border-r border-gray-200 shrink-0 min-w-[140px]">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Series Chart</div>
@@ -1260,14 +1260,14 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
               </button>
             </div>
             <div className="w-px h-6 bg-gray-200 shrink-0" />
-            <div className="flex flex-nowrap items-center gap-2">
+            <div className="flex flex-nowrap items-center gap-2 shrink-0">
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
                 max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-                className="w-[110px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
+                className="w-[138px] min-w-[138px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
                 disabled={!datasetExtent}
               />
               <span className="text-sm text-gray-400">~</span>
@@ -1277,7 +1277,7 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
                 onChange={(e) => setDateTo(e.target.value)}
                 min={datasetExtent ? formatDateInputValue(datasetExtent.tMin) : undefined}
                 max={datasetExtent ? formatDateInputValue(datasetExtent.tMax) : undefined}
-                className="w-[110px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
+                className="w-[138px] min-w-[138px] text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300"
                 disabled={!datasetExtent}
               />
               <button
