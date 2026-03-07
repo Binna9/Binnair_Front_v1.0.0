@@ -12,6 +12,7 @@ FROM nginx:1.27-alpine
 
 ENV TZ=Asia/Seoul
 
+RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx/binnair.conf /etc/nginx/conf.d/binnair.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
