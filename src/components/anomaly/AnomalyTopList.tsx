@@ -314,6 +314,7 @@ export default function AnomalyTopList() {
     agg: null, vol: null, rng: null, ret: null,
   });
 
+  // 초기 로드 + mode 변경 시
   useEffect(() => {
     const config = buildFetchConfig(mode);
     const loadTopLists = async () => {
@@ -328,6 +329,47 @@ export default function AnomalyTopList() {
       setTopLists(next);
     };
     loadTopLists();
+  }, [mode]);
+
+  // 5분마다 리프레시 (10:25, 10:30, 10:35 등 5분 경계에 맞춤)
+  useEffect(() => {
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5분
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const getMsUntilNextBoundary = () => {
+      const now = Date.now();
+      const d = new Date(now);
+      const minute = d.getMinutes();
+      const second = d.getSeconds();
+      const ms = d.getMilliseconds();
+      const currentMsIntoPeriod = ((minute % 5) * 60000) + (second * 1000) + ms;
+      const msUntilNext = REFRESH_INTERVAL_MS - currentMsIntoPeriod;
+      return msUntilNext <= 0 ? REFRESH_INTERVAL_MS : msUntilNext;
+    };
+
+    const loadTopLists = () => {
+      const config = buildFetchConfig(mode);
+      Promise.allSettled(
+        config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
+      ).then((results) => {
+        const next: Record<string, AnomalyScoreTopResponse | null> = {};
+        config.forEach((c, i) => {
+          next[c.key] = results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<{ key: string; data: AnomalyScoreTopResponse }>).value.data : null;
+        });
+        setTopLists(next);
+      });
+    };
+
+    const msUntilFirst = getMsUntilNextBoundary();
+    const timeoutId = setTimeout(() => {
+      loadTopLists();
+      intervalId = setInterval(loadTopLists, REFRESH_INTERVAL_MS);
+    }, msUntilFirst);
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [mode]);
 
   const topListConfig = buildFetchConfig(mode);
