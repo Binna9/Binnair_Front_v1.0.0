@@ -138,6 +138,14 @@
     background: transparent; /* 트랙(배경) 색상 */
   }
 
+  /* 트레이딩 다크 패널 스크롤 */
+  .trading-layout .custom-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(43, 49, 57, 0.8);
+  }
+  .trading-layout .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(43, 49, 57, 1);
+  }
+
   .profile-mask {
     -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);
     mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 50%, rgba(0, 0, 0, 0) 100%);

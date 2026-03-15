@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/main/Navbar';
 import Sidebar from '@/components/main/Sidebar';
 import Footer from '@/components/main/Footer';
@@ -7,6 +8,9 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const location = useLocation();
+  const isTradePage = location.pathname === '/trade';
+
   return (
     <div className="relative w-screen min-h-screen flex flex-col z-50">
       {/* 배경 이미지 */}
@@ -20,14 +24,14 @@ export default function MainLayout({
 
       <Navbar />
 
-      <div className="relative flex flex-1">
+      <div className="relative flex flex-1 min-h-0">
         <Sidebar />
-        <main className="flex-1 p-6 min-h-[1000px]">
+        <main className="flex-1 flex flex-col min-h-0 p-6">
           {children}
         </main>
       </div>
 
-      <Footer className="mt-auto" />
+      {!isTradePage && <Footer className="mt-auto flex-shrink-0" />}
     </div>
   );
 }

@@ -11,6 +11,8 @@ import {
   BarChart2,
   Settings,
   Menu as MenuIcon,
+  Sparkles,
+  TrendingUp,
 } from 'lucide-react';
 import { useState } from 'react';
 import HamburgerMenu from '../ui/HamburgerMenu';
@@ -78,16 +80,15 @@ export default function Navbar() {
       <nav className="fixed top-0 left-0 w-full h-12 bg-zinc-900/90 backdrop-blur-md shadow-md z-50">
         {/* ✅ relative: 가운데 메뉴 absolute 중앙정렬을 위해 필요 */}
         <div className="relative h-full px-3 flex items-center">
-          {/* ✅ Left: 로고 + 검색 */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {/* 로고 (반응형 크기 조정) */}
-            <img
-              src="/img/binnair_logo_white.png"
-              alt="BinnAIR"
-              className="sm:h-24 md:h-28 lg:h-32 xl:h-36 2xl:h-40 w-auto cursor-pointer object-contain transition-transform duration-200 hover:scale-105 flex-shrink-0"
-              onClick={() => handleMenuNavigate('/')}
-            />
-          </div>
+          {/* ✅ Left: BinnAIR 텍스트 (메인 이동) */}
+          <button
+            type="button"
+            onClick={() => handleMenuNavigate('/')}
+            className="flex items-center gap-2 flex-shrink-0 ml-12 text-white font-semibold text-2xl tracking-tight rounded-md px-2 py-1 transition-all duration-200 hover:opacity-95 hover:scale-105 active:scale-100 group"
+          >
+            <TrendingUp className="w-6 h-6 text-amber-300/90 group-hover:text-amber-200 group-hover:rotate-12 transition-all duration-200" strokeWidth={2} />
+            BinnAIR
+          </button>
 
           {/* ✅ Center (lg+): 메뉴를 화면 중앙에 고정 */}
           <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 items-center gap-6">
