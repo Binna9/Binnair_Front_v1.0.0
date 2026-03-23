@@ -8,7 +8,7 @@ function buildWidgetConfig(tvSymbol: string) {
   return {
     autosize: true,
     symbol: tvSymbol,
-    interval: 'D',
+    interval: '3',
     timezone: 'Asia/Seoul',
     theme: 'dark',
     style: '1',
@@ -25,32 +25,33 @@ const ChartPanel: React.FC = () => {
   const selectedSymbol = useSymbolStore((s) => s.selectedSymbol);
   const tvSymbol = mapBinancePerpToTradingView(selectedSymbol);
   const containerRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    const widgetEl = widgetRef.current;
-    if (!container || !widgetEl) return;
+    if (!container) return;
 
-    const cleanup = () => {
-      container.querySelectorAll('script').forEach((s) => s.remove());
-      widgetEl.innerHTML = '';
-    };
+    // 기존 차트(iframe 포함) 완전 제거 후 새 위젯 마운트
+    const mountWidget = () => {
+      container.innerHTML = '';
+      const widgetDiv = document.createElement('div');
+      widgetDiv.className = 'tradingview-widget-container__widget flex-1 w-full';
+      widgetDiv.style.minHeight = '180px';
+      container.appendChild(widgetDiv);
 
-    // Strict Mode에서 effect가 두 번 돌 때, 다음 틱에 한 번만 마운트되도록 해서 차트 두 개 생기는 것 방지
-    const tid = setTimeout(() => {
-      cleanup();
+      // TradingView 위젯: config는 src가 있는 동일 script 태그 본문에 있어야 함
       const script = document.createElement('script');
       script.src = TV_SCRIPT_SRC;
       script.async = true;
       script.type = 'text/javascript';
-      script.innerHTML = JSON.stringify(buildWidgetConfig(tvSymbol));
+      script.textContent = JSON.stringify(buildWidgetConfig(tvSymbol));
       container.appendChild(script);
-    }, 0);
+    };
+
+    const tid = setTimeout(mountWidget, 0);
 
     return () => {
       clearTimeout(tid);
-      cleanup();
+      container.innerHTML = '';
     };
   }, [tvSymbol]);
 
@@ -64,13 +65,7 @@ const ChartPanel: React.FC = () => {
           ref={containerRef}
           className="tradingview-widget-container h-full w-full flex flex-col"
           style={{ minHeight: '180px' }}
-        >
-          <div
-            ref={widgetRef}
-            className="tradingview-widget-container__widget flex-1 w-full"
-            style={{ minHeight: '180px' }}
-          />
-        </div>
+        />
       </div>
     </div>
   );
