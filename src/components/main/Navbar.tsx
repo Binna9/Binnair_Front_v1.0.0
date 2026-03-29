@@ -31,6 +31,7 @@ export default function Navbar() {
   const { profileImage } = useUserImage();
   const navigate = useNavigate();
   const location = useLocation();
+  const isTradePage = location.pathname === '/trade';
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(true);
 
@@ -242,7 +243,9 @@ export default function Navbar() {
           background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.15) 80%, transparent 100%)',
         }}
       />
-      <SearchBar isOpen={isSearchOpen} onToggle={() => setIsSearchOpen(!isSearchOpen)} />
+      {location.pathname !== '/trade' && (
+        <SearchBar isOpen={isSearchOpen} onToggle={() => setIsSearchOpen(!isSearchOpen)} />
+      )}
     </>
   );
 }
