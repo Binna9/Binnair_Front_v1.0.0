@@ -60,10 +60,8 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
             </h3>
             <ul className="mt-1 space-y-1 text-xs">
               <li>📍 Seoul Korea</li>
-              <li>📧 support@shop.com</li>
-              <li>📞 02-1234-5678</li>
-              <li>사업자등록번호: 123-45-67890</li>
-              <li>통신판매업 신고번호: 2025-서울-1234</li>
+              <li>📧 binnair@gmail.com</li>
+              <li>📞 010-6338-3806</li>
             </ul>
           </div>
 
@@ -73,15 +71,7 @@ const Footer: React.FC<FooterProps> = ({ className = '' }) => {
               Social Media
             </h3>
             <div className="flex space-x-3 mt-1 text-xs">
-              <a href="#" className="hover:text-blue-500">
-                📘 Facebook
-              </a>
-              <a href="#" className="hover:text-pink-500">
-                📷 Instagram
-              </a>
-              <a href="#" className="hover:text-blue-400">
-                🐦 Twitter
-              </a>
+              <li>준비 중 입니다.</li>
             </div>
           </div>
         </div>

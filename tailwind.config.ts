@@ -13,6 +13,8 @@ export default {
         'auth-bg': "url('/img/AuthBackGround.jpg')", // ✅ auth 배경 이미지 추가
       },
       fontFamily: {
+        /** 시세·금액 숫자용 (JetBrains Mono @ index.css) */
+        price: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
         hamburg: ['Hamburg', 'sans-serif'],
         sans: ['Noto Sans KR', 'Inter', 'sans-serif'], // ✅ 한글 폰트 추가
         heading: ['Noto Sans KR', 'Poppins', 'sans-serif'], // ✅ 제목 폰트도 한글 지원

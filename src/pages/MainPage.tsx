@@ -44,7 +44,7 @@ export default function MainPage() {
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-[62rem] mx-auto px-4 overflow-visible">
+      <div className="relative z-30 w-full max-w-[62rem] mx-auto px-4 overflow-visible">
         <NoticeBoard />
         <div className="flex flex-col gap-16 py-16">
           {/* 이상 리스트 4개 영역 - 흰색 카드 */}

@@ -4,12 +4,14 @@ import {
   ChatBubbleLeftRightIcon,
   ChatBubbleOvalLeftIcon,
 } from '@heroicons/react/24/solid';
+import { FaBitcoin } from 'react-icons/fa';
 import BookmarkPopup from '../popup/BookmarkPopup';
 import ChatPopup from '../popup/ChatPopup';
+import CoinPricePopup from '../popup/CoinPricePopup';
 import RealTimeChatPopup from '../popup/RealTimeChatPopup';
 import { useLocation } from 'react-router-dom';
 
-type PopupId = 'bookmark' | 'chat' | 'realtime-chat';
+type PopupId = 'bookmark' | 'chat' | 'realtime-chat' | 'coin';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -25,6 +27,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { id: 'bookmark', icon: StarIcon, label: '즐겨찾기' },
+    { id: 'coin', icon: FaBitcoin, label: '시세' },
     { id: 'chat', icon: ChatBubbleLeftRightIcon, label: '문의' },
     { id: 'realtime-chat', icon: ChatBubbleOvalLeftIcon, label: '실시간 채팅' },
   ];
@@ -74,6 +77,13 @@ const Sidebar = () => {
         <BookmarkPopup
           isOpen={selected.includes('bookmark')}
           closePopup={() => togglePopup('bookmark')}
+        />
+      )}
+      {/* 실시간 시세 팝업 */}
+      {selected.includes('coin') && (
+        <CoinPricePopup
+          isOpen={selected.includes('coin')}
+          closePopup={() => togglePopup('coin')}
         />
       )}
       {/* 채팅 팝업 */}

@@ -4,11 +4,12 @@ import { mapBinancePerpToTradingView } from '@/utils/tradingViewSymbol';
 
 const TV_SCRIPT_SRC = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
 
+// interval: '1S' | '5S' | '15S' | '1' | '5' | '15' | '60' | 'D' | 'W' | 'M'
 function buildWidgetConfig(tvSymbol: string) {
   return {
     autosize: true,
     symbol: tvSymbol,
-    interval: 'D',
+    interval: '1S', // 초단위: 1S, 5S, 15S. 분봉: 1, 5, 15, 60. 일봉: D, W, M
     timezone: 'Asia/Seoul',
     theme: 'dark',
     style: '1',
