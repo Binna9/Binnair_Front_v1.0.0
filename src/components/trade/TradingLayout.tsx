@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSymbolStore } from '@/store/trading/symbolStore';
+import { useBinanceFuturesSocket } from '@/hooks/trading/useBinanceFuturesSocket';
 import SymbolHeader from '@/components/trade/SymbolHeader';
 import ChartPanel from '@/components/trade/ChartPanel';
 import OrderBookPanel from '@/components/trade/OrderBookPanel';
@@ -13,11 +14,14 @@ const DEFAULT_SYMBOL = 'BTCUSDT';
  * Binance Futures 스타일 트레이딩 화면 그리드 레이아웃.
  */
 const TradingLayout: React.FC = () => {
+  const selectedSymbol = useSymbolStore((s) => s.selectedSymbol);
   const setSelectedSymbol = useSymbolStore((s) => s.setSelectedSymbol);
 
   useEffect(() => {
     setSelectedSymbol(DEFAULT_SYMBOL);
   }, [setSelectedSymbol]);
+
+  useBinanceFuturesSocket(selectedSymbol);
 
   return (
     <div className="trading-layout min-h-0 flex flex-col bg-[#0b0e11] text-[#eaecef]">

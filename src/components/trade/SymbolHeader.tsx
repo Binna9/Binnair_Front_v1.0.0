@@ -2,7 +2,7 @@ import React from 'react';
 import {
   useSymbolStore,
   useSymbolMeta,
-  MOCK_SYMBOL_LIST,
+  SYMBOL_LIST,
 } from '@/store/trading/symbolStore';
 
 const SymbolHeader: React.FC = () => {
@@ -20,7 +20,7 @@ const SymbolHeader: React.FC = () => {
           title="거래 심볼 선택"
           className="font-semibold text-[#eaecef] bg-[#1e2329] border border-[#2b3139] rounded-md px-3 py-1.5 cursor-pointer min-w-[140px] hover:border-[#848e9c] focus:border-[#f0b90b] focus:outline-none focus:ring-1 focus:ring-[#f0b90b]"
         >
-          {MOCK_SYMBOL_LIST.map((s) => (
+          {SYMBOL_LIST.map((s) => (
             <option key={s.symbol} value={s.symbol}>
               {s.symbol}
             </option>
