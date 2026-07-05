@@ -35,7 +35,7 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ fillStatus }) => 
         <table className="w-full text-xs text-left">
           <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
             <tr>
-              <th className="px-3 py-2 font-medium whitespace-nowrap">시각</th>
+              <th className="px-3 py-2 font-medium whitespace-nowrap">주문 시각</th>
               <th className="px-3 py-2 font-medium">심볼</th>
               <th className="px-3 py-2 font-medium">방향</th>
               <th className="px-3 py-2 font-medium">유형</th>

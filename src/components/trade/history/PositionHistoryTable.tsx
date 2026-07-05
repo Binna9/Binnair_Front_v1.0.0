@@ -33,6 +33,8 @@ const PositionHistoryTable: React.FC = () => {
               <th className="px-3 py-2 font-medium">상태</th>
               <th className="px-3 py-2 font-medium">수량</th>
               <th className="px-3 py-2 font-medium">진입가</th>
+              <th className="px-3 py-2 font-medium">익절가(TP)</th>
+              <th className="px-3 py-2 font-medium">손절가(SL)</th>
               <th className="px-3 py-2 font-medium">청산가</th>
               <th className="px-3 py-2 font-medium">손익</th>
               <th className="px-3 py-2 font-medium">청산 사유</th>
@@ -44,19 +46,19 @@ const PositionHistoryTable: React.FC = () => {
           <tbody className="text-[#eaecef]">
             {error ? (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-[#f6465d]">
+                <td colSpan={13} className="px-3 py-6 text-center text-[#f6465d]">
                   {error}
                 </td>
               </tr>
             ) : loading && pageItems.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-[#848e9c]">
+                <td colSpan={13} className="px-3 py-6 text-center text-[#848e9c]">
                   불러오는 중...
                 </td>
               </tr>
             ) : pageItems.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-6 text-center text-[#848e9c]">
+                <td colSpan={13} className="px-3 py-6 text-center text-[#848e9c]">
                   포지션 내역이 없습니다
                 </td>
               </tr>
@@ -83,6 +85,12 @@ const PositionHistoryTable: React.FC = () => {
                     </td>
                     <td className="px-3 py-2">{p.quantity}</td>
                     <td className="px-3 py-2">{p.avg_entry_price.toLocaleString()}</td>
+                    <td className="px-3 py-2 text-[#0ecb81]">
+                      {p.tp_price != null ? p.tp_price.toLocaleString() : '-'}
+                    </td>
+                    <td className="px-3 py-2 text-[#f6465d]">
+                      {p.sl_price != null ? p.sl_price.toLocaleString() : '-'}
+                    </td>
                     <td className="px-3 py-2">
                       {p.exit_price != null ? p.exit_price.toLocaleString() : '-'}
                     </td>

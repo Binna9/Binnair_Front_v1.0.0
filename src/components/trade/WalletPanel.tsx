@@ -1,8 +1,12 @@
 import React from 'react';
 import { useLiveAccountStore } from '@/store/trading/liveAccountStore';
+import { useWalletBalances } from '@/hooks/trading/useWalletBalances';
 
 const formatUsdt = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const formatPrice = (value: number) =>
+  value.toLocaleString(undefined, { maximumFractionDigits: 6 });
 
 const WalletPanel: React.FC = () => {
   const wallet = useLiveAccountStore((s) => s.wallet);
@@ -10,6 +14,9 @@ const WalletPanel: React.FC = () => {
   const quoteAsset = useLiveAccountStore((s) => s.quoteAsset);
   const wsConnected = useLiveAccountStore((s) => s.wsConnected);
   const lastError = useLiveAccountStore((s) => s.lastError);
+  const positionsMap = useLiveAccountStore((s) => s.positions);
+  const positions = Object.values(positionsMap);
+  const balances = useWalletBalances();
 
   if (!wallet) {
     return (
@@ -22,7 +29,7 @@ const WalletPanel: React.FC = () => {
   const unrealized = wallet.total_unrealized_profit;
 
   return (
-    <div className="flex-shrink-0 border-b border-[#2b3139] bg-[#0b0e11] p-3">
+    <div className="flex-shrink-0 border-b border-[#2b3139] bg-[#0b0e11] p-3 max-h-[50vh] overflow-y-auto custom-scroll">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-[#eaecef]">지갑 (Testnet)</span>
         <div className="flex items-center gap-1.5">
@@ -75,6 +82,56 @@ const WalletPanel: React.FC = () => {
       {!wsConnected && lastError && (
         <div className="mt-2 text-[10px] text-[#f6465d]">{lastError}</div>
       )}
+
+      {balances.length > 0 && (
+        <div className="mt-3 pt-2 border-t border-[#2b3139]">
+          <div className="text-[11px] text-[#848e9c] mb-1.5">자산별 잔고</div>
+          <div className="space-y-1">
+            {balances.map((b) => (
+              <div key={b.asset} className="flex items-center justify-between text-xs">
+                <span className="text-[#848e9c]">{b.asset}</span>
+                <span className="text-[#eaecef]">{b.available_balance}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 pt-2 border-t border-[#2b3139]">
+        <div className="text-[11px] text-[#848e9c] mb-1.5">
+          진입된 포지션 {positions.length > 0 && `(${positions.length})`}
+        </div>
+        {positions.length === 0 ? (
+          <div className="text-xs text-[#848e9c]">보유 중인 포지션이 없습니다</div>
+        ) : (
+          <div className="space-y-2">
+            {positions.map((pos) => {
+              const isLong = pos.side ? pos.side === 'LONG' : pos.quantity >= 0;
+              return (
+                <div key={pos.symbol} className="text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-[#eaecef]">{pos.symbol}</span>
+                    <span className={isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'}>
+                      {isLong ? '롱' : '숏'} {Math.abs(pos.quantity)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[#848e9c] mt-0.5">
+                    <span>진입가 {formatPrice(pos.entry_price)}</span>
+                    <span
+                      className={
+                        pos.unrealized_pnl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                      }
+                    >
+                      {pos.unrealized_pnl >= 0 ? '+' : ''}
+                      {pos.unrealized_pnl.toFixed(2)} USDT
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

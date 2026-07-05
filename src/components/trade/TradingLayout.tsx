@@ -6,8 +6,6 @@ import { useLiveAccountSocket } from '@/hooks/trading/useLiveAccountSocket';
 import SymbolHeader from '@/components/trade/SymbolHeader';
 import ChartPanel from '@/components/trade/ChartPanel';
 import OrderBookPanel from '@/components/trade/OrderBookPanel';
-import TradesPanel from '@/components/trade/TradesPanel';
-import OrderEntryPlaceholder from '@/components/trade/OrderEntryPlaceholder';
 import WalletPanel from '@/components/trade/WalletPanel';
 import PositionTabsPlaceholder from '@/components/trade/PositionTabsPlaceholder';
 
@@ -35,30 +33,23 @@ const TradingLayout: React.FC = () => {
         <SymbolHeader />
       </header>
 
-      {/* 중앙: 차트·오더북·주문 — 세로 확장, 스크롤 가능 */}
+      {/* 중앙: 차트·오더북·주문 — 높이 고정(75vh)해서 차트 렌더링 변동이 하단 패널을 밀지 않게 함 */}
       <div
-        className="flex-shrink-0 min-w-0 grid grid-cols-1 lg:grid-cols-[1fr_200px_320px] gap-0"
-        style={{ minHeight: '75vh' }}
+        className="flex-shrink-0 min-w-0 grid grid-cols-1 lg:grid-cols-[1fr_200px_320px] gap-0 overflow-hidden"
+        style={{ height: '75vh' }}
       >
-        <section
-          className="min-h-0 flex flex-col border-r border-[#2b3139]"
-          style={{ minHeight: '280px' }}
-        >
+        <section className="min-h-0 h-full flex flex-col border-r border-[#2b3139] overflow-hidden">
           <ChartPanel />
         </section>
-        {/* 우측 왼쪽: Order Book + Trades */}
+        {/* 우측 왼쪽: Order Book */}
         <aside className="min-h-0 flex flex-col border-r border-[#2b3139] lg:min-w-0">
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <OrderBookPanel />
-            <TradesPanel />
           </div>
         </aside>
-        {/* 우측 오른쪽: 주문 패널 */}
+        {/* 우측 오른쪽: 지갑 패널 */}
         <aside className="min-h-0 flex flex-col lg:min-w-[280px] overflow-hidden">
           <WalletPanel />
-          <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-            <OrderEntryPlaceholder />
-          </div>
         </aside>
       </div>
 
