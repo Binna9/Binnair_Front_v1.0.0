@@ -6,6 +6,8 @@ export interface SymbolMeta {
   symbol: string;
   base: string;
   quote: string;
+  /** 한글 코인명 (예: 리플) */
+  nameKo: string;
   /** 현재가 */
   lastPrice: number;
   /** 24h 변동가 */
@@ -21,10 +23,12 @@ export interface SymbolMeta {
 }
 
 /** 거래 가능 심볼 목록 (드롭다운 표시용, 시세 값은 실시간 futuresMarketStore에서 가져옴) */
-export const SYMBOL_LIST: { symbol: string; base: string; quote: string }[] = [
-  { symbol: 'BTCUSDT', base: 'BTC', quote: 'USDT' },
-  { symbol: 'ETHUSDT', base: 'ETH', quote: 'USDT' },
-  { symbol: 'SOLUSDT', base: 'SOL', quote: 'USDT' },
+export const SYMBOL_LIST: { symbol: string; base: string; quote: string; nameKo: string }[] = [
+  { symbol: 'BTCUSDT', base: 'BTC', quote: 'USDT', nameKo: '비트코인' },
+  { symbol: 'ETHUSDT', base: 'ETH', quote: 'USDT', nameKo: '이더리움' },
+  { symbol: 'SOLUSDT', base: 'SOL', quote: 'USDT', nameKo: '솔라나' },
+  { symbol: 'XRPUSDT', base: 'XRP', quote: 'USDT', nameKo: '리플' },
+  { symbol: 'TRXUSDT', base: 'TRX', quote: 'USDT', nameKo: '트론' },
 ];
 
 interface SymbolState {

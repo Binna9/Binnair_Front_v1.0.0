@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { useSymbolStore } from '@/store/trading/symbolStore';
 import { useBinanceFuturesSocket } from '@/hooks/trading/useBinanceFuturesSocket';
+import { useAllSymbolsTicker } from '@/hooks/trading/useAllSymbolsTicker';
+import { useLiveAccountSocket } from '@/hooks/trading/useLiveAccountSocket';
 import SymbolHeader from '@/components/trade/SymbolHeader';
 import ChartPanel from '@/components/trade/ChartPanel';
 import OrderBookPanel from '@/components/trade/OrderBookPanel';
 import TradesPanel from '@/components/trade/TradesPanel';
 import OrderEntryPlaceholder from '@/components/trade/OrderEntryPlaceholder';
+import WalletPanel from '@/components/trade/WalletPanel';
 import PositionTabsPlaceholder from '@/components/trade/PositionTabsPlaceholder';
 
 const DEFAULT_SYMBOL = 'BTCUSDT';
@@ -22,6 +25,8 @@ const TradingLayout: React.FC = () => {
   }, [setSelectedSymbol]);
 
   useBinanceFuturesSocket(selectedSymbol);
+  useAllSymbolsTicker();
+  useLiveAccountSocket();
 
   return (
     <div className="trading-layout min-h-0 flex flex-col bg-[#0b0e11] text-[#eaecef]">
@@ -50,6 +55,7 @@ const TradingLayout: React.FC = () => {
         </aside>
         {/* 우측 오른쪽: 주문 패널 */}
         <aside className="min-h-0 flex flex-col lg:min-w-[280px] overflow-hidden">
+          <WalletPanel />
           <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <OrderEntryPlaceholder />
           </div>

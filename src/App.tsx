@@ -92,9 +92,7 @@ function AppRoutes() {
           <Route
             path="/trade"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
                 <TradePage />
-              </ProtectedRoute>
             }
           />
           <Route

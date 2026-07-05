@@ -1,9 +1,6 @@
 import React from 'react';
-import {
-  useSymbolStore,
-  useSymbolMeta,
-  SYMBOL_LIST,
-} from '@/store/trading/symbolStore';
+import { useSymbolStore, useSymbolMeta } from '@/store/trading/symbolStore';
+import SymbolSelect from '@/components/trade/SymbolSelect';
 
 const SymbolHeader: React.FC = () => {
   const { selectedSymbol, setSelectedSymbol } = useSymbolStore();
@@ -13,19 +10,7 @@ const SymbolHeader: React.FC = () => {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-2 flex-wrap h-full min-h-[52px]">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-[#848e9c] whitespace-nowrap">심볼</span>
-        <select
-          value={selectedSymbol}
-          onChange={(e) => setSelectedSymbol(e.target.value)}
-          title="거래 심볼 선택"
-          className="font-semibold text-[#eaecef] bg-[#1e2329] border border-[#2b3139] rounded-md px-3 py-1.5 cursor-pointer min-w-[140px] hover:border-[#848e9c] focus:border-[#f0b90b] focus:outline-none focus:ring-1 focus:ring-[#f0b90b]"
-        >
-          {SYMBOL_LIST.map((s) => (
-            <option key={s.symbol} value={s.symbol}>
-              {s.symbol}
-            </option>
-          ))}
-        </select>
+        <SymbolSelect selectedSymbol={selectedSymbol} onSelect={setSelectedSymbol} />
         <span className="text-xs text-[#848e9c]">Perp</span>
       </div>
       {meta && (

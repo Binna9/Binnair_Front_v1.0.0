@@ -22,11 +22,10 @@ function buildOrderBookSide(levels: unknown, count: number) {
 /**
  * 선택된 심볼의 바이낸스 선물 실시간 데이터를 futuresMarketStore에 반영.
  * - 호가(depth20): WebSocket 구독 (정상 동작 확인됨)
- * - 현재가/24h 통계/마크가격/펀딩비: `@ticker`, `@markPrice` WS 스트림이 메시지를 보내지 않아
- *   REST(`/fapi/v1/ticker/24hr`, `/fapi/v1/premiumIndex`) 폴링으로 대체
+ * - 마크가격/펀딩비: `@markPrice` WS 스트림이 메시지를 보내지 않아 REST(`/fapi/v1/premiumIndex`) 폴링으로 대체
+ * - 현재가/24h 통계(ticker)는 심볼 목록 전체를 다루는 `useAllSymbolsTicker`가 담당
  */
 export function useBinanceFuturesSocket(symbol: string) {
-  const setTicker = useFuturesMarketStore((s) => s.setTicker);
   const setMarkPrice = useFuturesMarketStore((s) => s.setMarkPrice);
   const setOrderBook = useFuturesMarketStore((s) => s.setOrderBook);
 
@@ -98,32 +97,17 @@ export function useBinanceFuturesSocket(symbol: string) {
 
     const poll = async () => {
       try {
-        const [tickerRes, markRes] = await Promise.all([
-          fetch(`https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=${symbol}`),
-          fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`),
-        ]);
-        if (cancelled) return;
+        const markRes = await fetch(
+          `https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`
+        );
+        if (cancelled || !markRes.ok) return;
 
-        if (tickerRes.ok) {
-          const t = await tickerRes.json();
-          setTicker(symbol, {
-            lastPrice: Number(t.lastPrice),
-            priceChange: Number(t.priceChange),
-            priceChangePercent: Number(t.priceChangePercent),
-            high24h: Number(t.highPrice),
-            low24h: Number(t.lowPrice),
-            volume24h: Number(t.volume),
-          });
-        }
-
-        if (markRes.ok) {
-          const m = await markRes.json();
-          setMarkPrice(symbol, {
-            markPrice: Number(m.markPrice),
-            indexPrice: Number(m.indexPrice),
-            fundingRate: Number(m.lastFundingRate),
-          });
-        }
+        const m = await markRes.json();
+        setMarkPrice(symbol, {
+          markPrice: Number(m.markPrice),
+          indexPrice: Number(m.indexPrice),
+          fundingRate: Number(m.lastFundingRate),
+        });
       } catch {
         // 일시적 네트워크 오류는 다음 폴링에서 재시도
       }
@@ -136,5 +120,5 @@ export function useBinanceFuturesSocket(symbol: string) {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [symbol, setTicker, setMarkPrice]);
+  }, [symbol, setMarkPrice]);
 }
