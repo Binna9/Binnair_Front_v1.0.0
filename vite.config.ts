@@ -62,6 +62,14 @@ export default defineConfig(({ mode }) => {
           secure: false,
           ws: true,
         },
+        // 트레이딩 모니터 API (FastAPI, 기본 8001) — 운영 nginx의 /trading/ 프록시와 동일하게 접두사 제거
+        '/trading': {
+          target: env.VITE_TRADING_API_TARGET || 'http://127.0.0.1:8001',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/trading/, ''),
+        },
         // 인증된 사용자만 접근 가능한 경로 (세션 쿠키 필요)
         ...createProxy([
           'users',      // /users/** - 사용자 이미지 포함
