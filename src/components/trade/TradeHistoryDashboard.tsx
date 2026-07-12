@@ -20,11 +20,13 @@ const TradeHistoryDashboard: React.FC = () => {
 
   return (
     <div className="flex flex-col h-[80vh] min-h-0 bg-[#0b0e11] text-[#eaecef] rounded-lg overflow-hidden border border-[#2b3139]">
-      <div className="flex-shrink-0 px-4 py-3 border-b border-[#2b3139]">
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 border-b border-[#2b3139]">
         <h1 className="text-base font-semibold">트레이딩 내역 / 기록</h1>
       </div>
-      <EngineStatusBar />
-      <div className="flex-shrink-0 flex items-center gap-1 px-3 py-2 border-b border-[#2b3139] overflow-x-auto custom-scroll">
+      <div className="flex-shrink-0 pt-2">
+        <EngineStatusBar />
+      </div>
+      <div className="flex-shrink-0 flex items-center gap-1 px-3 py-3 border-b border-[#2b3139] overflow-x-auto custom-scroll">
         {TABS.map((t) => (
           <button
             key={t.key}
