@@ -70,6 +70,12 @@ export default defineConfig(({ mode }) => {
           ws: true,
           rewrite: (path) => path.replace(/^\/trading/, ''),
         },
+        // UI 컨트롤 API (FastAPI, 기본 8000)
+        '/api': {
+          target: env.VITE_CONTROL_API_TARGET || 'http://127.0.0.1:8000',
+          changeOrigin: true,
+          secure: false,
+        },
         // 인증된 사용자만 접근 가능한 경로 (세션 쿠키 필요)
         ...createProxy([
           'users',      // /users/** - 사용자 이미지 포함
