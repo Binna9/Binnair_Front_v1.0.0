@@ -33,7 +33,6 @@ function mapRestTrades(
     isBuyerMaker: boolean;
   }>
 ): RecentTrade[] {
-  // REST는 오래된→최신. UI는 최신 위.
   return [...rows].reverse().map((t) => ({
     id: `t-${t.id}`,
     price: Number(t.price),
@@ -44,10 +43,8 @@ function mapRestTrades(
 }
 
 /**
- * 선택된 심볼의 바이낸스 선물 실시간 데이터를 futuresMarketStore에 반영.
- * - 호가 + 체결: combined stream 1개 (depth20 + trade)
- * - 최근 체결: REST 폴링 병합(현행화 보장) + WS 즉시 반영
- * - 마크가격/펀딩비: REST premiumIndex 폴링
+ * 선택된 심볼의 바이낸스 선물 실시간 데이터.
+ * 호가(depth) / 체결(trade) / 마크가격을 분리 구독·폴링해 심볼 전환 시에도 안정적으로 갱신.
  */
 export function useBinanceFuturesSocket(symbol: string) {
   const setMarkPrice = useFuturesMarketStore((s) => s.setMarkPrice);
@@ -55,7 +52,7 @@ export function useBinanceFuturesSocket(symbol: string) {
   const mergeRecentTrades = useFuturesMarketStore((s) => s.mergeRecentTrades);
   const pushRecentTrade = useFuturesMarketStore((s) => s.pushRecentTrade);
 
-  // 호가 + 최근 체결 combined WebSocket
+  // 호가 depth
   useEffect(() => {
     if (!symbol) return;
 
@@ -67,42 +64,20 @@ export function useBinanceFuturesSocket(symbol: string) {
     const connect = () => {
       if (cancelled) return;
 
-      // trade = 개별 체결(현행화에 유리). aggTrade보다 id/필드가 REST와 맞추기 쉬움
-      const streams = `${lower}@depth20@100ms/${lower}@trade`;
       socket = new WebSocket(
-        `wss://fstream.binance.com/stream?streams=${streams}`
+        `wss://fstream.binance.com/ws/${lower}@depth20@100ms`
       );
 
       socket.onmessage = (event: MessageEvent<string>) => {
         if (cancelled) return;
-
-        let msg: { stream?: string; data?: Record<string, unknown> };
         try {
-          msg = JSON.parse(event.data);
-        } catch {
-          return;
-        }
-
-        const stream = msg.stream ?? '';
-        const data = msg.data;
-        if (!data) return;
-
-        if (stream.includes('@depth')) {
+          const data = JSON.parse(event.data) as { a?: unknown; b?: unknown };
           setOrderBook(symbol, {
             asks: buildOrderBookSide(data.a, DEPTH_LEVELS).reverse(),
             bids: buildOrderBookSide(data.b, DEPTH_LEVELS),
           });
-          return;
-        }
-
-        if (stream.includes('@trade')) {
-          pushRecentTrade(symbol, {
-            id: `t-${String(data.t)}`,
-            price: Number(data.p),
-            qty: Number(data.q),
-            time: Number(data.T ?? data.E),
-            isBuyerMaker: Boolean(data.m),
-          });
+        } catch {
+          // ignore
         }
       };
 
@@ -134,9 +109,76 @@ export function useBinanceFuturesSocket(symbol: string) {
         }
       }
     };
-  }, [symbol, setOrderBook, pushRecentTrade]);
+  }, [symbol, setOrderBook]);
 
-  // 최근 체결 REST 폴링 — WS가 끊겨도 목록이 갱신되도록 merge
+  // 최근 체결 trade WS
+  useEffect(() => {
+    if (!symbol) return;
+
+    const lower = symbol.toLowerCase();
+    let cancelled = false;
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | undefined;
+
+    const connect = () => {
+      if (cancelled) return;
+
+      socket = new WebSocket(`wss://fstream.binance.com/ws/${lower}@trade`);
+
+      socket.onmessage = (event: MessageEvent<string>) => {
+        if (cancelled) return;
+        try {
+          const t = JSON.parse(event.data) as {
+            t: number;
+            p: string;
+            q: string;
+            T?: number;
+            E?: number;
+            m: boolean;
+          };
+          pushRecentTrade(symbol, {
+            id: `t-${String(t.t)}`,
+            price: Number(t.p),
+            qty: Number(t.q),
+            time: Number(t.T ?? t.E),
+            isBuyerMaker: Boolean(t.m),
+          });
+        } catch {
+          // ignore
+        }
+      };
+
+      socket.onclose = () => {
+        if (cancelled) return;
+        reconnectTimer = window.setTimeout(connect, 1000);
+      };
+
+      socket.onerror = () => {
+        socket?.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(reconnectTimer);
+      if (socket) {
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onclose = null;
+        if (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING
+        ) {
+          socket.close(1000, 'client');
+        }
+      }
+    };
+  }, [symbol, pushRecentTrade]);
+
+  // 최근 체결 REST 폴링
   useEffect(() => {
     if (!symbol) return;
 
@@ -165,6 +207,7 @@ export function useBinanceFuturesSocket(symbol: string) {
     };
   }, [symbol, mergeRecentTrades]);
 
+  // 마크/인덱스/펀딩 — 심볼 바뀌면 즉시 1회 + 폴링
   useEffect(() => {
     if (!symbol) return;
 
@@ -184,7 +227,7 @@ export function useBinanceFuturesSocket(symbol: string) {
           fundingRate: Number(m.lastFundingRate),
         });
       } catch {
-        // 일시적 네트워크 오류는 다음 폴링에서 재시도
+        // 다음 폴링에서 재시도
       }
     };
 

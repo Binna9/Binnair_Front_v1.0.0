@@ -24,6 +24,8 @@ const SymbolSelect: React.FC<SymbolSelectProps> = ({ selectedSymbol, onSelect })
       (s) =>
         s.symbol.toLowerCase().includes(q) ||
         s.base.toLowerCase().includes(q) ||
+        s.quote.toLowerCase().includes(q) ||
+        s.nameKo.toLowerCase().includes(q) ||
         s.nameKo.includes(query.trim())
     );
   }, [query]);
@@ -70,7 +72,7 @@ const SymbolSelect: React.FC<SymbolSelectProps> = ({ selectedSymbol, onSelect })
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 mt-1.5 w-72 bg-[#1e2329] border border-[#2b3139] rounded-lg shadow-xl z-50 py-1.5 max-h-96 flex flex-col">
+        <div className="absolute top-full left-0 mt-1.5 w-72 bg-[#1e2329] border border-[#2b3139] rounded-lg shadow-xl z-[100] py-1.5 max-h-96 flex flex-col">
           <div className="px-2.5 pb-1.5 flex-shrink-0">
             <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-[#0b0e11] border border-[#2b3139] focus-within:border-[#f0b90b]">
               <Search size={14} className="text-[#848e9c] shrink-0" />

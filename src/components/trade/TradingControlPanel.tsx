@@ -6,6 +6,14 @@ import type {
   TradingControlStatusResponse,
 } from '@/types/TradingControlTypes';
 
+const HIDDEN_CONTROL_KEY =
+  /(^|_)(tp|sl|take_?profit|stop_?loss)(_|$)/i;
+const HIDDEN_CONTROL_LABEL = /익절|손절|take\s*profit|stop\s*loss|\bTP\b|\bSL\b/i;
+
+function isHiddenControlParam(param: TradingControlSchemaParam) {
+  return HIDDEN_CONTROL_KEY.test(param.key) || HIDDEN_CONTROL_LABEL.test(param.label);
+}
+
 const TradingControlPanel: React.FC = () => {
   const [schema, setSchema] = useState<TradingControlSchemaResponse | null>(null);
   const [status, setStatus] = useState<TradingControlStatusResponse | null>(null);
@@ -40,11 +48,15 @@ const TradingControlPanel: React.FC = () => {
   }, []);
 
   const basicFields = useMemo(() => {
-    return (schema?.params ?? []).filter((param) => param.tier === 'basic');
+    return (schema?.params ?? []).filter(
+      (param) => param.tier === 'basic' && !isHiddenControlParam(param)
+    );
   }, [schema]);
 
   const advancedFields = useMemo(() => {
-    return (schema?.params ?? []).filter((param) => param.tier === 'advanced');
+    return (schema?.params ?? []).filter(
+      (param) => param.tier === 'advanced' && !isHiddenControlParam(param)
+    );
   }, [schema]);
 
   const updateField = (key: string, value: unknown) => {

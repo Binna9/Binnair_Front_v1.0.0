@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useSymbolStore } from '@/store/trading/symbolStore';
 import { useBinanceFuturesSocket } from '@/hooks/trading/useBinanceFuturesSocket';
 import { useAllSymbolsTicker } from '@/hooks/trading/useAllSymbolsTicker';
@@ -11,11 +11,14 @@ import TradingControlPanel from '@/components/trade/TradingControlPanel';
 import WalletPanel from '@/components/trade/WalletPanel';
 import PositionTabsPlaceholder from '@/components/trade/PositionTabsPlaceholder';
 
-const DEFAULT_SYMBOL = 'BTCUSDT';
-
 /** 패널 카드: 라운드 + 얕은 입체감 */
 const panelCard =
   'min-h-0 overflow-hidden rounded-xl border border-[#2b3139] bg-[#12161c] ' +
+  'shadow-[0_6px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]';
+
+/** 심볼 헤더 — 드롭다운이 잘리지 않도록 overflow visible */
+const headerCard =
+  'relative z-30 overflow-visible rounded-xl border border-[#2b3139] bg-[#12161c] ' +
   'shadow-[0_6px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]';
 
 /**
@@ -23,11 +26,6 @@ const panelCard =
  */
 const TradingLayout: React.FC = () => {
   const selectedSymbol = useSymbolStore((s) => s.selectedSymbol);
-  const setSelectedSymbol = useSymbolStore((s) => s.setSelectedSymbol);
-
-  useEffect(() => {
-    setSelectedSymbol(DEFAULT_SYMBOL);
-  }, [setSelectedSymbol]);
 
   useBinanceFuturesSocket(selectedSymbol);
   useAllSymbolsTicker();
@@ -35,8 +33,8 @@ const TradingLayout: React.FC = () => {
 
   return (
     <div className="trading-layout min-h-0 flex flex-col gap-2.5 p-2.5 bg-[#07090c] text-[#eaecef]">
-      {/* 상단: 심볼 바 */}
-      <header className={`flex-shrink-0 h-14 min-h-[56px] ${panelCard}`}>
+      {/* 상단: 심볼 바 (드롭다운용 overflow-visible) */}
+      <header className={`flex-shrink-0 h-14 min-h-[56px] ${headerCard}`}>
         <SymbolHeader />
       </header>
 

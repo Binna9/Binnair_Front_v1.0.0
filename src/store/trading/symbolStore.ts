@@ -44,7 +44,7 @@ export const useSymbolStore = create<SymbolState>((set) => ({
 /**
  * 선택된 심볼 메타를 구독하는 훅.
  * symbol/base/quote는 정적 목록에서, 시세 값은 실시간 futuresMarketStore에서 가져와 병합한다.
- * 실시간 값이 아직 도착하지 않았으면 시세 필드는 undefined로 두어 로딩 중임을 구분할 수 있게 한다.
+ * ticker/mark 중 일부만 와도 표시 가능하게 한다 (심볼 전환 시 헤더가 통째로 사라지지 않게).
  */
 export function useSymbolMeta(): SymbolMeta | undefined {
   const selectedSymbol = useSymbolStore((s) => s.selectedSymbol);
@@ -52,11 +52,19 @@ export function useSymbolMeta(): SymbolMeta | undefined {
   const ticker = useFuturesMarketStore((s) => s.tickers[selectedSymbol]);
   const markPrice = useFuturesMarketStore((s) => s.markPrices[selectedSymbol]);
 
-  if (!staticInfo || !ticker || !markPrice) return undefined;
+  if (!staticInfo) return undefined;
+  if (!ticker && !markPrice) return undefined;
 
   return {
     ...staticInfo,
-    ...ticker,
-    ...markPrice,
+    lastPrice: ticker?.lastPrice ?? markPrice?.markPrice ?? 0,
+    priceChange: ticker?.priceChange ?? 0,
+    priceChangePercent: ticker?.priceChangePercent ?? 0,
+    high24h: ticker?.high24h ?? 0,
+    low24h: ticker?.low24h ?? 0,
+    volume24h: ticker?.volume24h ?? 0,
+    markPrice: markPrice?.markPrice ?? ticker?.lastPrice ?? 0,
+    indexPrice: markPrice?.indexPrice ?? ticker?.lastPrice ?? 0,
+    fundingRate: markPrice?.fundingRate ?? 0,
   };
 }
