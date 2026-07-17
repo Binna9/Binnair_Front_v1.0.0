@@ -10,6 +10,8 @@ export default function MainLayout({
 }) {
   const location = useLocation();
   const isTradePage = location.pathname === '/trade';
+  const isHistoryPage = location.pathname === '/history';
+  const hideChrome = isTradePage || isHistoryPage;
 
   return (
     <div className="relative w-screen min-h-screen flex flex-col z-50">
@@ -25,13 +27,13 @@ export default function MainLayout({
       <Navbar />
 
       <div className="relative flex flex-1 min-h-0">
-        {!isTradePage && <Sidebar />}
+        {!hideChrome && <Sidebar />}
         <main className="flex-1 flex flex-col min-h-0 p-6">
           {children}
         </main>
       </div>
 
-      {!isTradePage && <Footer className="mt-auto flex-shrink-0" />}
+      {!hideChrome && <Footer className="mt-auto flex-shrink-0" />}
     </div>
   );
 }

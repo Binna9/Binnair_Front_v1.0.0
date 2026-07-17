@@ -18,8 +18,17 @@ function formatData(data: Record<string, unknown>): string {
 
 /** 리스크 거부·포지션 청산 등 감사(audit) 이벤트 이력 */
 const AuditLogList: React.FC = () => {
-  const { pageItems, page, setPage, hasPrev, hasNext, loading, error } = useHistoryPage(
-    (limit) => tradingAuditLogService.getAuditLogs({ limit }),
+  const { pageItems, page, goPrev, goNext, hasPrev, hasNext, loading, error } = useHistoryPage(
+    async ({ limit, offset }) => {
+      const res = await tradingAuditLogService.getAuditLogs({ limit: offset + limit });
+      const sliced = (res.items ?? []).slice(offset, offset + limit);
+      return {
+        items: sliced,
+        count: sliced.length,
+        total_count: res.count ?? res.items?.length ?? 0,
+        has_more: offset + sliced.length < (res.count ?? res.items?.length ?? 0),
+      };
+    },
     null
   );
 
@@ -62,8 +71,8 @@ const AuditLogList: React.FC = () => {
         page={page}
         hasPrev={hasPrev}
         hasNext={hasNext}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPrev={goPrev}
+        onNext={goNext}
       />
     </div>
   );

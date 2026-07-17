@@ -1,60 +1,68 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useHistoryPage } from '@/hooks/trading/useHistoryPage';
+import { useHistoryQueryParams, useTickModal } from '@/hooks/trading/useHistoryQueryParams';
 import tradingHistoryService from '@/services/TradingHistoryService';
 import Pager from './Pager';
+import TickDetailModal from './TickDetailModal';
+import HistoryEmptyState from './HistoryEmptyState';
 
 const ExecutionHistoryTable: React.FC = () => {
-  const { pageItems, page, setPage, hasPrev, hasNext, loading, error } = useHistoryPage(
-    (limit) => tradingHistoryService.getExecutions({ limit }),
-    null
-  );
+  const query = useHistoryQueryParams();
+  const { correlationId, openTick, closeTick } = useTickModal();
+  const resetKey = useMemo(() => JSON.stringify(query), [query]);
+
+  const { pageItems, page, hasPrev, hasNext, goPrev, goNext, totalCount, loading, error } =
+    useHistoryPage(
+      ({ limit, offset }) =>
+        tradingHistoryService.getExecutions({ ...query, limit, offset }),
+      resetKey
+    );
+
+  const showEmpty = error || (loading && pageItems.length === 0) || pageItems.length === 0;
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
-        <table className="w-full text-xs text-left">
-          <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
-            <tr>
-              <th className="px-3 py-2 font-medium whitespace-nowrap">체결 시각</th>
-              <th className="px-3 py-2 font-medium">심볼</th>
-              <th className="px-3 py-2 font-medium">주문 ID</th>
-              <th className="px-3 py-2 font-medium">체결가</th>
-              <th className="px-3 py-2 font-medium">체결 수량</th>
-              <th className="px-3 py-2 font-medium">명목 금액(USDT)</th>
-              <th className="px-3 py-2 font-medium">포지션 방향</th>
-              <th className="px-3 py-2 font-medium">상태</th>
-            </tr>
-          </thead>
-          <tbody className="text-[#eaecef]">
-            {error ? (
+      {showEmpty ? (
+        <HistoryEmptyState
+          message={
+            error ? error : loading ? '불러오는 중...' : '체결 내역이 없습니다'
+          }
+          variant={error ? 'error' : 'muted'}
+        />
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
+          <table className="w-full text-xs text-left">
+            <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
               <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-[#f6465d]">
-                  {error}
-                </td>
+                <th className="px-3 py-2 font-medium whitespace-nowrap">체결 시각</th>
+                <th className="px-3 py-2 font-medium">심볼</th>
+                <th className="px-3 py-2 font-medium">주문 ID</th>
+                <th className="px-3 py-2 font-medium">체결가</th>
+                <th className="px-3 py-2 font-medium">체결 수량</th>
+                <th className="px-3 py-2 font-medium">명목 금액(USDT)</th>
+                <th className="px-3 py-2 font-medium">포지션 방향</th>
+                <th className="px-3 py-2 font-medium">상태</th>
               </tr>
-            ) : loading && pageItems.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-[#848e9c]">
-                  불러오는 중...
-                </td>
-              </tr>
-            ) : pageItems.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-[#848e9c]">
-                  체결 내역이 없습니다
-                </td>
-              </tr>
-            ) : (
-              pageItems.map((e) => (
+            </thead>
+            <tbody className="text-[#eaecef]">
+              {pageItems.map((e) => (
                 <tr
                   key={e.id ?? `${e.order_id}-${e.executed_at}`}
-                  className="border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50"
+                  onClick={() => openTick(e.correlation_id)}
+                  className={`border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50 ${
+                    e.correlation_id ? 'cursor-pointer' : ''
+                  }`}
                 >
                   <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
                     {new Date(e.executed_at).toLocaleString()}
                   </td>
                   <td className="px-3 py-2 font-medium">{e.symbol}</td>
-                  <td className="px-3 py-2 text-[#848e9c]">{e.order_id}</td>
+                  <td className="px-3 py-2 text-[#848e9c]">
+                    {e.order_id}
+                    {e.synced_from_exchange && (
+                      <span className="ml-1 text-[10px] text-[#f0b90b]">거래소</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">
                     {e.executed_price != null ? e.executed_price.toLocaleString() : '-'}
                   </td>
@@ -65,18 +73,22 @@ const ExecutionHistoryTable: React.FC = () => {
                   <td className="px-3 py-2 text-[#848e9c]">{e.position_side}</td>
                   <td className="px-3 py-2 text-[#0ecb81]">{e.status}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       <Pager
         page={page}
         hasPrev={hasPrev}
         hasNext={hasNext}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPrev={goPrev}
+        onNext={goNext}
+        totalCount={totalCount}
       />
+      {correlationId && (
+        <TickDetailModal correlationId={correlationId} onClose={closeTick} />
+      )}
     </div>
   );
 };

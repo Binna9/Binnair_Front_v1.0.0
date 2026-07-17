@@ -48,8 +48,17 @@ function getSummaryColor(item: FlowTimelineItemDTO): string {
 
 /** 추론→시그널→주문→체결→포지션→감사 로그를 시간순으로 합친 매매 흐름 타임라인 */
 const FlowTimelineList: React.FC = () => {
-  const { pageItems, page, setPage, hasPrev, hasNext, loading, error } = useHistoryPage(
-    (limit) => tradingTimelineService.getTimeline({ limit }),
+  const { pageItems, page, goPrev, goNext, hasPrev, hasNext, loading, error } = useHistoryPage(
+    async ({ limit, offset }) => {
+      const res = await tradingTimelineService.getTimeline({ limit: offset + limit });
+      const sliced = (res.items ?? []).slice(offset, offset + limit);
+      return {
+        items: sliced,
+        count: sliced.length,
+        total_count: res.count ?? res.items?.length ?? 0,
+        has_more: offset + sliced.length < (res.count ?? res.items?.length ?? 0),
+      };
+    },
     null
   );
 
@@ -93,8 +102,8 @@ const FlowTimelineList: React.FC = () => {
         page={page}
         hasPrev={hasPrev}
         hasNext={hasNext}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPrev={goPrev}
+        onNext={goNext}
       />
     </div>
   );

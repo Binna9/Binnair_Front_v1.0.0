@@ -32,7 +32,7 @@ const EngineStatusBar: React.FC = () => {
 
   if (loading && !run) {
     return (
-      <div className="flex-shrink-0 px-3 py-1.5 text-xs text-[#848e9c] border-b border-[#2b3139]">
+      <div className="flex-shrink-0 px-4 py-2.5 text-sm text-[#848e9c] border-b border-[#2b3139]">
         엔진 상태 불러오는 중...
       </div>
     );
@@ -40,28 +40,28 @@ const EngineStatusBar: React.FC = () => {
 
   if (!run) {
     return (
-      <div className="flex-shrink-0 px-3 py-1.5 text-xs text-[#848e9c] border-b border-[#2b3139]">
+      <div className="flex-shrink-0 px-4 py-2.5 text-sm text-[#848e9c] border-b border-[#2b3139]">
         실행 이력이 없습니다
       </div>
     );
   }
 
   return (
-    <div className="flex-shrink-0 flex items-center gap-3 px-3 py-1.5 text-xs border-b border-[#2b3139] overflow-x-auto custom-scroll">
-      <span className="flex items-center gap-1.5 font-medium text-[#eaecef] whitespace-nowrap">
-        <span className={`w-2 h-2 rounded-full ${STATUS_DOT[run.status]}`} />
+    <div className="flex-shrink-0 flex items-center gap-4 px-4 py-2.5 text-sm border-b border-[#2b3139] overflow-x-auto custom-scroll">
+      <span className="flex items-center gap-2 font-semibold text-[#eaecef] whitespace-nowrap">
+        <span className={`w-2.5 h-2.5 rounded-full ${STATUS_DOT[run.status]}`} />
         {STATUS_LABEL[run.status]}
       </span>
-      <span className="text-[#848e9c] whitespace-nowrap">run: {run.run_id}</span>
-      <span className="text-[#848e9c] whitespace-nowrap">전략: {run.strategy_id}</span>
-      <span className="text-[#848e9c] whitespace-nowrap">모델: {run.model_version}</span>
+      <span className="text-[#b7bdc6] whitespace-nowrap">run: {run.run_id}</span>
+      <span className="text-[#b7bdc6] whitespace-nowrap">전략: {run.strategy_id}</span>
+      <span className="text-[#b7bdc6] whitespace-nowrap">모델: {run.model_version}</span>
       {run.paper_mode && (
-        <span className="px-1.5 py-0.5 rounded bg-[#f0b90b33] text-[#f0b90b] whitespace-nowrap">
+        <span className="px-2 py-0.5 rounded text-xs font-medium bg-[#f0b90b33] text-[#f0b90b] whitespace-nowrap">
           모의거래
         </span>
       )}
       {run.status === 'running' && (
-        <span className="text-[#848e9c] whitespace-nowrap ml-auto">
+        <span className="text-[#b7bdc6] whitespace-nowrap ml-auto">
           {formatElapsed(run.started_at)} 실행 중
         </span>
       )}

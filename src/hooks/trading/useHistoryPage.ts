@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { HistoryListResponse } from '@/types/TradingHistoryTypes';
 
 export const HISTORY_PAGE_SIZE = 20;
 
+export interface HistoryPageParams {
+  limit: number;
+  offset: number;
+}
+
 /**
- * BinnAIR 이력 API는 `limit`(최근 N건)만 지원하고 offset 페이지네이션이 없다.
- * 그래서 페이지가 늘어날 때마다 limit을 page*PAGE_SIZE로 키워 다시 조회한 뒤
- * 클라이언트에서 현재 페이지 구간만 잘라서 보여준다.
+ * 서버 offset 페이지네이션 (`limit` + `offset` + `has_more` / `total_count`).
  */
 export function useHistoryPage<T>(
-  fetchPage: (limit: number) => Promise<HistoryListResponse<T>>,
+  fetchPage: (params: HistoryPageParams) => Promise<HistoryListResponse<T>>,
   resetKey: unknown
 ) {
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<T[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,15 +30,29 @@ export function useHistoryPage<T>(
     let cancelled = false;
     setLoading(true);
 
-    fetchPage(page * HISTORY_PAGE_SIZE)
+    const offset = (page - 1) * HISTORY_PAGE_SIZE;
+
+    fetchPage({ limit: HISTORY_PAGE_SIZE, offset })
       .then((res) => {
         if (cancelled) return;
-        setItems(res.items);
+        setItems(res.items ?? []);
+        const itemCount = res.items?.length ?? 0;
+        const total = res.total_count ?? res.count ?? itemCount;
+        setTotalCount(total);
+        setHasMore(
+          res.has_more ??
+            (res.total_count != null
+              ? offset + itemCount < res.total_count
+              : itemCount >= HISTORY_PAGE_SIZE)
+        );
         setError(null);
       })
       .catch(() => {
         if (cancelled) return;
         setError('내역을 불러오지 못했습니다.');
+        setItems([]);
+        setTotalCount(0);
+        setHasMore(false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -45,17 +64,21 @@ export function useHistoryPage<T>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, resetKey]);
 
-  const start = (page - 1) * HISTORY_PAGE_SIZE;
-  const pageItems = items.slice(start, start + HISTORY_PAGE_SIZE);
   const hasPrev = page > 1;
-  const hasNext = items.length >= page * HISTORY_PAGE_SIZE;
+  const hasNext = hasMore;
+
+  const goPrev = useCallback(() => setPage((p) => Math.max(1, p - 1)), []);
+  const goNext = useCallback(() => setPage((p) => p + 1), []);
 
   return {
-    pageItems,
+    pageItems: items,
     page,
     setPage,
     hasPrev,
     hasNext,
+    goPrev,
+    goNext,
+    totalCount,
     loading,
     error,
   };

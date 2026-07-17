@@ -1,69 +1,101 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useHistoryPage } from '@/hooks/trading/useHistoryPage';
+import { useHistoryQueryParams } from '@/hooks/trading/useHistoryQueryParams';
 import tradingHistoryService from '@/services/TradingHistoryService';
 import Pager from './Pager';
+import HistoryEmptyState from './HistoryEmptyState';
+import { formatDuration, formatExitReason } from './historyLabels';
 
-const EXIT_REASON_LABEL: Record<string, string> = {
-  TAKE_PROFIT: '익절(TP)',
-  STOP_LOSS: '손절(SL)',
-  MODEL_SELL: '모델 매도',
-};
-
-const formatDuration = (seconds?: number | null) => {
-  if (seconds == null) return '-';
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}분 ${s}초`;
-};
+type StatusFilter = '' | 'OPEN' | 'CLOSED';
 
 const PositionHistoryTable: React.FC = () => {
-  const { pageItems, page, setPage, hasPrev, hasNext, loading, error } = useHistoryPage(
-    (limit) => tradingHistoryService.getPositions({ limit }),
-    null
+  const query = useHistoryQueryParams();
+  const [status, setStatus] = useState<StatusFilter>('');
+  const resetKey = useMemo(
+    () => JSON.stringify({ ...query, status }),
+    [query, status]
+  );
+
+  const { pageItems, page, hasPrev, hasNext, goPrev, goNext, totalCount, loading, error } =
+    useHistoryPage(
+      ({ limit, offset }) =>
+        tradingHistoryService.getPositions({
+          ...query,
+          limit,
+          offset,
+          status: status || undefined,
+        }),
+      resetKey
+    );
+
+  const showEmpty = Boolean(
+    error || (loading && pageItems.length === 0) || (!loading && pageItems.length === 0)
   );
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
-        <table className="w-full text-xs text-left">
-          <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
-            <tr>
-              <th className="px-3 py-2 font-medium">심볼</th>
-              <th className="px-3 py-2 font-medium">방향</th>
-              <th className="px-3 py-2 font-medium">상태</th>
-              <th className="px-3 py-2 font-medium">수량</th>
-              <th className="px-3 py-2 font-medium">진입가</th>
-              <th className="px-3 py-2 font-medium">익절가(TP)</th>
-              <th className="px-3 py-2 font-medium">손절가(SL)</th>
-              <th className="px-3 py-2 font-medium">청산가</th>
-              <th className="px-3 py-2 font-medium">손익</th>
-              <th className="px-3 py-2 font-medium">청산 사유</th>
-              <th className="px-3 py-2 font-medium whitespace-nowrap">진입 시각</th>
-              <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
-              <th className="px-3 py-2 font-medium">보유 시간</th>
-            </tr>
-          </thead>
-          <tbody className="text-[#eaecef]">
-            {error ? (
+      <div className="flex-shrink-0 flex flex-wrap items-center gap-3 px-3 py-2.5 border-b border-[#2b3139] text-xs">
+        <div className="inline-flex items-center gap-2 rounded-md border border-[#2b3139] bg-[#1e2329]/70 px-2.5 py-1.5">
+          <span className="text-[#b7bdc6] font-medium whitespace-nowrap pr-1.5 border-r border-[#3a4149]">
+            상태
+          </span>
+          <div className="flex items-center gap-1">
+            {(
+              [
+                { key: '', label: '전체' },
+                { key: 'OPEN', label: '보유중' },
+                { key: 'CLOSED', label: '청산완료' },
+              ] as const
+            ).map((o) => (
+              <button
+                key={o.key || 'all'}
+                type="button"
+                onClick={() => setStatus(o.key)}
+                className={`px-2.5 py-1 rounded ${
+                  status === o.key
+                    ? o.key === 'OPEN'
+                      ? 'bg-[#0ecb8133] text-[#0ecb81]'
+                      : o.key === 'CLOSED'
+                        ? 'bg-[#848e9c33] text-[#b7bdc6]'
+                        : 'bg-[#2b3139] text-[#eaecef]'
+                    : 'text-[#848e9c] hover:text-[#eaecef] hover:bg-[#2b3139]/60'
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {showEmpty ? (
+        <HistoryEmptyState
+          message={
+            error ? error : loading ? '불러오는 중...' : '포지션 내역이 없습니다'
+          }
+          variant={error ? 'error' : 'muted'}
+        />
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
+          <table className="w-full text-xs text-left">
+            <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
               <tr>
-                <td colSpan={13} className="px-3 py-6 text-center text-[#f6465d]">
-                  {error}
-                </td>
+                <th className="px-3 py-2 font-medium">심볼</th>
+                <th className="px-3 py-2 font-medium">방향</th>
+                <th className="px-3 py-2 font-medium">상태</th>
+                <th className="px-3 py-2 font-medium">수량</th>
+                <th className="px-3 py-2 font-medium">진입가</th>
+                <th className="px-3 py-2 font-medium">익절가(TP)</th>
+                <th className="px-3 py-2 font-medium">손절가(SL)</th>
+                <th className="px-3 py-2 font-medium">청산가</th>
+                <th className="px-3 py-2 font-medium">손익</th>
+                <th className="px-3 py-2 font-medium">청산 사유</th>
+                <th className="px-3 py-2 font-medium whitespace-nowrap">진입 시각</th>
+                <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
+                <th className="px-3 py-2 font-medium">보유 시간</th>
               </tr>
-            ) : loading && pageItems.length === 0 ? (
-              <tr>
-                <td colSpan={13} className="px-3 py-6 text-center text-[#848e9c]">
-                  불러오는 중...
-                </td>
-              </tr>
-            ) : pageItems.length === 0 ? (
-              <tr>
-                <td colSpan={13} className="px-3 py-6 text-center text-[#848e9c]">
-                  포지션 내역이 없습니다
-                </td>
-              </tr>
-            ) : (
-              pageItems.map((p) => {
+            </thead>
+            <tbody className="text-[#eaecef]">
+              {pageItems.map((p) => {
                 const isClosed = p.status === 'CLOSED';
                 const pnl = isClosed ? p.realized_pnl : p.unrealized_pnl;
                 const isLong = p.side === 'LONG';
@@ -78,7 +110,7 @@ const PositionHistoryTable: React.FC = () => {
                         isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
                       }`}
                     >
-                      {isLong ? '롱' : '숏'}
+                      {isLong ? '롱' : p.side === 'SHORT' ? '숏' : '-'}
                     </td>
                     <td className="px-3 py-2 text-[#848e9c]">
                       {isClosed ? '청산완료' : '보유중'}
@@ -102,7 +134,7 @@ const PositionHistoryTable: React.FC = () => {
                       {pnl != null ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}` : '-'}
                     </td>
                     <td className="px-3 py-2 text-[#848e9c]">
-                      {p.exit_reason ? EXIT_REASON_LABEL[p.exit_reason] ?? p.exit_reason : '-'}
+                      {formatExitReason(p.exit_reason)}
                     </td>
                     <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
                       {p.opened_at ? new Date(p.opened_at).toLocaleString() : '-'}
@@ -115,17 +147,18 @@ const PositionHistoryTable: React.FC = () => {
                     </td>
                   </tr>
                 );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       <Pager
         page={page}
         hasPrev={hasPrev}
         hasNext={hasNext}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPrev={goPrev}
+        onNext={goNext}
+        totalCount={totalCount}
       />
     </div>
   );

@@ -1,17 +1,28 @@
 import React from 'react';
 import { useLiveAccountStore } from '@/store/trading/liveAccountStore';
 import { useWalletBalances } from '@/hooks/trading/useWalletBalances';
+import WalletBalancesList from '@/components/trade/WalletBalancesList';
 
 const formatUsdt = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const WalletPanel: React.FC = () => {
   const wallet = useLiveAccountStore((s) => s.wallet);
-  const paperMode = useLiveAccountStore((s) => s.paperMode);
-  const quoteAsset = useLiveAccountStore((s) => s.quoteAsset);
+  const paperModeLive = useLiveAccountStore((s) => s.paperMode);
+  const quoteAssetLive = useLiveAccountStore((s) => s.quoteAsset);
   const wsConnected = useLiveAccountStore((s) => s.wsConnected);
   const lastError = useLiveAccountStore((s) => s.lastError);
-  const balances = useWalletBalances();
+  const {
+    balances,
+    paperMode: paperModeWallet,
+    quoteAsset: quoteAssetWallet,
+    loading: balancesLoading,
+    error: balancesError,
+    source,
+  } = useWalletBalances();
+
+  const paperMode = paperModeLive || paperModeWallet;
+  const quoteAsset = quoteAssetLive || quoteAssetWallet;
 
   if (!wallet) {
     return (
@@ -22,12 +33,16 @@ const WalletPanel: React.FC = () => {
   }
 
   const unrealized = wallet.total_unrealized_profit;
+  const sourceLabel =
+    source === 'monitor_testnet'
+      ? 'Monitor Testnet · 이후 실지갑 연동 예정'
+      : '연동 지갑';
 
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-[#0b0e11]">
       <div className="flex-shrink-0 border-b border-[#2b3139] bg-[#0b0e11] p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-[#eaecef]">지갑 (Testnet)</span>
+          <span className="text-xs font-medium text-[#eaecef]">지갑</span>
           <div className="flex items-center gap-1.5">
             <span
               className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded ${
@@ -81,19 +96,16 @@ const WalletPanel: React.FC = () => {
           <div className="mb-2 text-[10px] text-[#f6465d]">{lastError}</div>
         )}
 
-        {balances.length > 0 && (
-          <div className="pt-2 border-t border-[#2b3139]">
-            <div className="text-[11px] text-[#848e9c] mb-1.5">자산별 잔고</div>
-            <div className="space-y-1">
-              {balances.map((b) => (
-                <div key={b.asset} className="flex items-center justify-between text-xs">
-                  <span className="text-[#848e9c]">{b.asset}</span>
-                  <span className="text-[#eaecef]">{b.available_balance}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="pt-1 border-t border-[#2b3139]">
+          <div className="text-[11px] text-[#848e9c] mb-1">자산별 잔고</div>
+          <WalletBalancesList
+            balances={balances}
+            loading={balancesLoading}
+            error={balancesError}
+            dense
+            sourceLabel={sourceLabel}
+          />
+        </div>
       </div>
     </div>
   );

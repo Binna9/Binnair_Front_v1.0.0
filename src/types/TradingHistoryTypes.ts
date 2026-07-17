@@ -1,21 +1,31 @@
 /** BinnAIR Monitor API — GET /api/v1/history/* 응답 타입 */
 
 export interface HistorySummary {
+  engine_status?: string | null;
   open_positions: number;
   orders_total: number;
   orders_filled: number;
   orders_pending: number;
+  orders_missing_db_execution?: number;
   executions_total: number;
   closed_positions: number;
   closed_trades: number;
   realized_pnl_sum: number;
+  wins?: number;
+  losses?: number;
+  win_rate?: number | null;
   latest_signal_at?: string | null;
   latest_order_at?: string | null;
   latest_execution_at?: string | null;
   latest_position_at?: string | null;
 }
 
-export type OrderFillStatus = 'PENDING' | 'FILLED' | 'REJECTED' | 'CANCELLED';
+export type OrderFillStatus =
+  | 'PENDING'
+  | 'FILLED'
+  | 'PARTIAL'
+  | 'REJECTED'
+  | 'CANCELLED';
 
 export interface OrderHistoryItem {
   id?: number;
@@ -39,6 +49,7 @@ export interface OrderHistoryItem {
   filled_qty?: number | null;
   avg_fill_price?: number | null;
   executed_at?: string | null;
+  notional_usdt?: number | null;
   created_at?: string | null;
 }
 
@@ -59,8 +70,19 @@ export interface ExecutionHistoryItem {
   position_side: string;
   paper_mode: boolean;
   executed_at: string;
+  correlation_id?: string | null;
+  synced_from_exchange?: boolean;
   created_at?: string | null;
 }
+
+export type PositionExitReason =
+  | 'TAKE_PROFIT'
+  | 'STOP_LOSS'
+  | 'MODEL_SELL'
+  | 'TP'
+  | 'SL'
+  | 'SIGNAL'
+  | string;
 
 export interface PositionHistoryItem {
   id?: number;
@@ -76,7 +98,7 @@ export interface PositionHistoryItem {
   status?: 'OPEN' | 'CLOSED' | null;
   unrealized_pnl: number;
   realized_pnl?: number | null;
-  exit_reason?: 'TAKE_PROFIT' | 'STOP_LOSS' | 'MODEL_SELL' | null;
+  exit_reason?: PositionExitReason | null;
   exit_price?: number | null;
   opened_at?: string | null;
   closed_at?: string | null;
@@ -85,6 +107,15 @@ export interface PositionHistoryItem {
   snapshot_at: string;
   created_at?: string | null;
 }
+
+export type TradeExitReason =
+  | 'TAKE_PROFIT'
+  | 'STOP_LOSS'
+  | 'MODEL_SELL'
+  | 'TP'
+  | 'SL'
+  | 'SIGNAL'
+  | string;
 
 export interface TradeHistoryItem {
   trade_id: string;
@@ -96,14 +127,57 @@ export interface TradeHistoryItem {
   realized_pnl: number;
   pnl_pct: number;
   is_win: boolean;
-  exit_reason: 'TAKE_PROFIT' | 'STOP_LOSS' | 'MODEL_SELL';
+  exit_reason: TradeExitReason;
   opened_at: string;
   closed_at: string;
   hold_seconds?: number | null;
   holding_seconds?: number | null;
+  strategy_id?: string | null;
+  correlation_id?: string | null;
+  entry_notional_usdt?: number | null;
+  position_snapshot_id?: number | null;
+  paper_mode?: boolean;
+  run_id?: string;
+}
+
+export interface EquityHistoryItem {
+  snapshot_at: string;
+  snapshot_date?: string;
+  equity_usdt: number;
+  cumulative_realized_pnl?: number | null;
+  source?: string | null;
+  paper_mode?: boolean;
+  run_id?: string;
+  symbol?: string | null;
 }
 
 export interface HistoryListResponse<T> {
   items: T[];
   count: number;
+  total_count?: number;
+  offset?: number;
+  limit?: number;
+  has_more?: boolean;
+}
+
+export interface TickDetailResponse {
+  correlation_id: string;
+  run_id?: string | null;
+  symbol?: string | null;
+  signals?: unknown[];
+  inferences?: unknown[];
+  orders?: OrderHistoryItem[];
+  executions?: ExecutionHistoryItem[];
+  positions?: PositionHistoryItem[];
+  trades?: TradeHistoryItem[];
+  audit_logs?: unknown[];
+}
+
+export interface HistoryOverviewResponse {
+  summary: HistorySummary;
+  orders: OrderHistoryItem[];
+  executions: ExecutionHistoryItem[];
+  positions: PositionHistoryItem[];
+  trades: TradeHistoryItem[];
+  equity: EquityHistoryItem[];
 }

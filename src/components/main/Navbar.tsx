@@ -243,7 +243,7 @@ export default function Navbar() {
           background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0.15) 80%, transparent 100%)',
         }}
       />
-      {location.pathname !== '/trade' && (
+      {location.pathname !== '/trade' && location.pathname !== '/history' && (
         <SearchBar isOpen={isSearchOpen} onToggle={() => setIsSearchOpen(!isSearchOpen)} />
       )}
     </>

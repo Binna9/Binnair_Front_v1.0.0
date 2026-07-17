@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLiveAccountStore } from '@/store/trading/liveAccountStore';
+import { HistoryFilterProvider } from '@/context/HistoryFilterContext';
 import { useHistorySummary } from '@/hooks/trading/useHistorySummary';
 import LivePositionsTable from '@/components/trade/LivePositionsTable';
 import OrderHistoryTable from '@/components/trade/history/OrderHistoryTable';
@@ -15,9 +16,9 @@ type TabKey =
   | 'position_history'
   | 'trades';
 
-const PositionTabsPlaceholder: React.FC = () => {
+const TabsInner: React.FC = () => {
   const positionsMap = useLiveAccountStore((s) => s.positions);
-  const summary = useHistorySummary();
+  const { summary } = useHistorySummary();
   const [activeTab, setActiveTab] = useState<TabKey>('positions');
   const positionCount = Object.keys(positionsMap).length;
 
@@ -58,5 +59,11 @@ const PositionTabsPlaceholder: React.FC = () => {
     </div>
   );
 };
+
+const PositionTabsPlaceholder: React.FC = () => (
+  <HistoryFilterProvider enableDateFilter={false}>
+    <TabsInner />
+  </HistoryFilterProvider>
+);
 
 export default PositionTabsPlaceholder;

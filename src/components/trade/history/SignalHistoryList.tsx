@@ -17,8 +17,17 @@ const ACTION_COLOR: Record<'BUY' | 'SELL' | 'HOLD', string> = {
 
 /** Predictor/Strategy가 판단한 BUY/SELL/HOLD 시그널 이력 */
 const SignalHistoryList: React.FC = () => {
-  const { pageItems, page, setPage, hasPrev, hasNext, loading, error } = useHistoryPage(
-    (limit) => tradingSignalService.getSignals({ limit }),
+  const { pageItems, page, goPrev, goNext, hasPrev, hasNext, loading, error } = useHistoryPage(
+    async ({ limit, offset }) => {
+      const res = await tradingSignalService.getSignals({ limit: offset + limit });
+      const sliced = (res.items ?? []).slice(offset, offset + limit);
+      return {
+        items: sliced,
+        count: sliced.length,
+        total_count: res.count ?? res.items?.length ?? 0,
+        has_more: offset + sliced.length < (res.count ?? res.items?.length ?? 0),
+      };
+    },
     null
   );
 
@@ -85,8 +94,8 @@ const SignalHistoryList: React.FC = () => {
         page={page}
         hasPrev={hasPrev}
         hasNext={hasNext}
-        onPrev={() => setPage((p) => p - 1)}
-        onNext={() => setPage((p) => p + 1)}
+        onPrev={goPrev}
+        onNext={goNext}
       />
     </div>
   );
