@@ -23,7 +23,7 @@ const EquityTabPanel: React.FC = () => {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scroll">
       <div className="p-4 pb-2">
-        <div className="rounded-lg border border-[#2b3139] bg-[#12161c]/80 p-4 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.008] hover:border-[#4a5160] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)] will-change-transform">
+        <div className="rounded-lg border border-[#2b3139] bg-[#12161c]/80 p-4">
           <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
             <div>
               <h3 className="text-sm font-semibold text-[#eaecef]">보유 자산</h3>
@@ -83,7 +83,7 @@ const EquityTabPanel: React.FC = () => {
       </div>
 
       <div className="px-4 pb-4">
-        <div className="rounded-lg border border-[#2b3139] bg-[#12161c]/80 overflow-hidden transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.008] hover:border-[#4a5160] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)] will-change-transform">
+        <div className="rounded-lg border border-[#2b3139] bg-[#12161c]/80 overflow-hidden">
           <div className="px-4 pt-3 pb-1">
             <h3 className="text-sm font-semibold text-[#eaecef]">에퀴티 곡선</h3>
             <p className="text-[11px] text-[#848e9c] mt-0.5">

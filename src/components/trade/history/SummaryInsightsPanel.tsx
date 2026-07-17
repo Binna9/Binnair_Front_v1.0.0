@@ -26,9 +26,6 @@ const RED = '#f6465d';
 const MUTED = '#b7bdc6';
 const EXIT_COLORS = ['#f0b90b', '#0ecb81', '#f6465d', '#3b82f6', '#a855f7', '#848e9c'];
 
-const CHART_CARD_HOVER =
-  'transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:border-[#4a5160] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)] will-change-transform';
-
 /** Recharts 3: activeShape만으로 호버 조각 확대 (activeIndex 제거됨) */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderActivePieShape = (props: any) => {
@@ -237,7 +234,7 @@ const SummaryInsightsPanel: React.FC = () => {
     <div className="flex-1 min-h-0 overflow-y-auto custom-scroll p-4">
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)] gap-4 min-h-[420px] py-1">
         {/* 일별 실현 손익 — 메인 */}
-        <section className={`min-h-[360px] flex flex-col rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
+        <section className="min-h-[360px] flex flex-col rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="flex items-baseline justify-between mb-3 gap-2">
             <div>
               <h3 className="text-base font-bold text-[#f5f6f7]">일별 실현 손익</h3>
@@ -299,11 +296,11 @@ const SummaryInsightsPanel: React.FC = () => {
 
         {/* 승패 + 청산 사유 */}
         <div className="flex flex-col gap-4 min-h-[360px]">
-          <section className={`flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
+          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">승 / 패</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">기간 내 승률 분포</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 transition-transform duration-200 ease-out hover:scale-105">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -355,11 +352,11 @@ const SummaryInsightsPanel: React.FC = () => {
             </div>
           </section>
 
-          <section className={`flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
+          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">청산 사유</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">TP / SL / 시그널 비중</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 transition-transform duration-200 ease-out hover:scale-105">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie

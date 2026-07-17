@@ -18,7 +18,7 @@ const StatTile: React.FC<StatTileProps> = ({ label, value, colorByValue }) => {
         ? 'text-[#0ecb81]'
         : 'text-[#f6465d]';
   return (
-    <div className="bg-[#1e2329] border border-[#2b3139] rounded-md px-3 py-2.5 min-w-0 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.03] hover:border-[#4a5160] hover:shadow-[0_8px_20px_rgba(0,0,0,0.35)] will-change-transform">
+    <div className="bg-[#1e2329] border border-[#2b3139] rounded-md px-3 py-2.5 min-w-0">
       <div className="text-[11px] text-[#848e9c] truncate">{label}</div>
       <div className={`text-base font-semibold mt-0.5 truncate ${color}`}>{value}</div>
     </div>
