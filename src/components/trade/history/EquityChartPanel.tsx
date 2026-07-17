@@ -137,8 +137,13 @@ const EquityChartPanel: React.FC<EquityChartPanelProps> = ({
                 border: '1px solid #2b3139',
                 borderRadius: 6,
                 fontSize: 12,
+                color: '#eaecef',
               }}
               labelStyle={{ color: MUTED }}
+              itemStyle={{ color: '#eaecef' }}
+              animationDuration={0}
+              isAnimationActive={false}
+              wrapperStyle={{ transition: 'none', outline: 'none' }}
               formatter={(value) => [
                 `${formatUsdt(Number(value))} USDT`,
                 '잔고',

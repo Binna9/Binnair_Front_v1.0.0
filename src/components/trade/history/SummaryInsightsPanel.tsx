@@ -247,7 +247,15 @@ const SummaryInsightsPanel: React.FC = () => {
                 <Tooltip
                   content={<DailyPnlTooltip />}
                   cursor={{ fill: 'rgba(240,185,11,0.08)' }}
-                  wrapperStyle={{ outline: 'none', zIndex: 20 }}
+                  // Recharts 기본 위치 애니메이션 → 왼쪽에서 날아오는 느낌 방지 (AnomalyChart와 동일)
+                  animationDuration={0}
+                  isAnimationActive={false}
+                  wrapperStyle={{
+                    outline: 'none',
+                    zIndex: 20,
+                    transition: 'none',
+                    pointerEvents: 'none',
+                  }}
                 />
                 <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={32}>
                   {dailyPnl.map((d) => (
@@ -281,7 +289,17 @@ const SummaryInsightsPanel: React.FC = () => {
                         <Cell key={d.name} fill={d.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<PieTooltip />} wrapperStyle={{ outline: 'none', zIndex: 20 }} />
+                    <Tooltip
+                      content={<PieTooltip />}
+                      animationDuration={0}
+                      isAnimationActive={false}
+                      wrapperStyle={{
+                        outline: 'none',
+                        zIndex: 20,
+                        transition: 'none',
+                        pointerEvents: 'none',
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -326,7 +344,17 @@ const SummaryInsightsPanel: React.FC = () => {
                         <Cell key={d.reason} fill={d.color} />
                       ))}
                     </Pie>
-                    <Tooltip content={<PieTooltip />} wrapperStyle={{ outline: 'none', zIndex: 20 }} />
+                    <Tooltip
+                      content={<PieTooltip />}
+                      animationDuration={0}
+                      isAnimationActive={false}
+                      wrapperStyle={{
+                        outline: 'none',
+                        zIndex: 20,
+                        transition: 'none',
+                        pointerEvents: 'none',
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
