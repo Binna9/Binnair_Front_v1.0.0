@@ -53,7 +53,7 @@ export function useHistorySummary(poll = true) {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [runId, fromAt, toAt, symbol, poll]);
+  }, [runId, fromAt, toAt, symbol, poll, filter?.searchEpoch]);
 
   return { summary, loading, error };
 }

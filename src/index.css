@@ -162,11 +162,6 @@
     @apply border-border;
   }
 
-  *::selection {
-    background: transparent;
-    color: inherit;
-  }
-
   html {
     scrollbar-gutter: stable;
   }

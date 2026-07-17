@@ -52,8 +52,29 @@ const LivePositionsTable: React.FC = () => {
               const isLong = pos.side ? pos.side === 'LONG' : pos.quantity >= 0;
               const snapshot = snapshots[pos.symbol];
               return (
-                <tr key={pos.symbol} className="border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50">
-                  <td className="px-3 py-2 font-medium">{pos.symbol}</td>
+                <tr
+                  key={pos.symbol}
+                  className="border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50"
+                >
+                  <td className="relative px-3 py-2 pl-4 font-medium">
+                    <span
+                      aria-hidden
+                      className={`absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-sm ${
+                        isLong ? 'bg-[#0ecb81]' : 'bg-[#f6465d]'
+                      }`}
+                    />
+                    <div className="flex flex-col gap-0.5">
+                      <span>{pos.symbol}</span>
+                      <span className="flex items-center gap-1 text-[10px] text-[#848e9c] font-normal">
+                        <span className="px-1 rounded bg-[#2b3139]/80">무기한</span>
+                        {pos.leverage != null && (
+                          <span className="px-1 rounded bg-[#2b3139]/80">
+                            {pos.leverage}x
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </td>
                   <td
                     className={`px-3 py-2 font-medium ${
                       isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
@@ -61,7 +82,14 @@ const LivePositionsTable: React.FC = () => {
                   >
                     {isLong ? '롱' : '숏'}
                   </td>
-                  <td className="px-3 py-2">{Math.abs(pos.quantity)}</td>
+                  <td
+                    className={`px-3 py-2 ${
+                      isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                    }`}
+                  >
+                    {isLong ? '' : '-'}
+                    {Math.abs(pos.quantity)}
+                  </td>
                   <td className="px-3 py-2">{formatPrice(pos.entry_price)}</td>
                   <td className="px-3 py-2">
                     {pos.mark_price != null ? formatPrice(pos.mark_price) : '-'}
@@ -72,7 +100,9 @@ const LivePositionsTable: React.FC = () => {
                   <td className="px-3 py-2 text-[#f6465d]">
                     {snapshot?.sl_price != null ? formatPrice(snapshot.sl_price) : '-'}
                   </td>
-                  <td className="px-3 py-2">{pos.leverage != null ? `${pos.leverage}x` : '-'}</td>
+                  <td className="px-3 py-2">
+                    {pos.leverage != null ? `${pos.leverage}x` : '-'}
+                  </td>
                   <td className="px-3 py-2 text-[#848e9c]">{pos.margin_type ?? '-'}</td>
                   <td
                     className={`px-3 py-2 font-medium ${

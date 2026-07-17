@@ -12,7 +12,15 @@ export function useHistoryQueryParams(): HistoryQueryParams {
       from_at: filter?.fromAt,
       to_at: filter?.toAt,
     }),
-    [filter?.runId, filter?.queryParams.symbol, filter?.fromAt, filter?.toAt]
+    // searchEpoch: 날짜/심볼이 같아도 Enter·검색 시 새 객체 → 목록 재조회
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      filter?.runId,
+      filter?.queryParams.symbol,
+      filter?.fromAt,
+      filter?.toAt,
+      filter?.searchEpoch,
+    ]
   );
 }
 

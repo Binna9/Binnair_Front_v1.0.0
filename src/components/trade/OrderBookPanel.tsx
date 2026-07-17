@@ -11,12 +11,11 @@ const OrderBookPanel: React.FC = () => {
     (s) => s.tickers[selectedSymbol]?.lastPrice
   );
 
-  // asks: 낮은가가 아래에 오도록 이미 reverse 되어 있음 → 화면엔 위쪽이 높은가
   const asks = (orderBook?.asks ?? []).slice(-DISPLAY_LEVELS);
   const bids = (orderBook?.bids ?? []).slice(0, DISPLAY_LEVELS);
 
   return (
-    <div className="flex-[1.35] min-h-0 flex flex-col bg-[#0b0e11] overflow-hidden border-b border-[#2b3139]">
+    <div className="flex-[2] min-h-0 flex flex-col bg-[#0b0e11] overflow-hidden border-b border-[#2b3139]">
       <div className="flex-shrink-0 px-2.5 py-1.5 text-xs font-medium text-[#eaecef] border-b border-[#2b3139]">
         호가
       </div>
@@ -26,17 +25,19 @@ const OrderBookPanel: React.FC = () => {
         <span className="text-right">Sum</span>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* 매도(양봉/ask) 8단 */}
-        <div className="flex-1 min-h-0 flex flex-col justify-end px-2.5 py-0.5">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        {/* 매도 8단 — 행 높이 균등 분배라 겹치지 않음 */}
+        <div className="flex-1 min-h-0 grid grid-rows-8 px-2.5 content-stretch">
           {asks.map((row, i) => (
             <div
               key={`a-${i}`}
-              className="grid grid-cols-3 gap-1 text-xs leading-5 text-[#f6465d] tabular-nums"
+              className="grid grid-cols-3 gap-1 items-center text-xs text-[#f6465d] tabular-nums overflow-hidden"
             >
-              <span>{row.price.toLocaleString()}</span>
-              <span className="text-right text-[#eaecef]">{row.size}</span>
-              <span className="text-right text-[#848e9c]">{row.sum.toFixed(3)}</span>
+              <span className="truncate">{row.price.toLocaleString()}</span>
+              <span className="text-right truncate text-[#eaecef]">{row.size}</span>
+              <span className="text-right truncate text-[#848e9c]">
+                {row.sum.toFixed(3)}
+              </span>
             </div>
           ))}
         </div>
@@ -45,16 +46,18 @@ const OrderBookPanel: React.FC = () => {
           {lastPrice != null ? lastPrice.toLocaleString() : '—'}
         </div>
 
-        {/* 매수(음봉/bid) 8단 */}
-        <div className="flex-1 min-h-0 flex flex-col justify-start px-2.5 py-0.5">
+        {/* 매수 8단 */}
+        <div className="flex-1 min-h-0 grid grid-rows-8 px-2.5 content-stretch">
           {bids.map((row, i) => (
             <div
               key={`b-${i}`}
-              className="grid grid-cols-3 gap-1 text-xs leading-5 text-[#0ecb81] tabular-nums"
+              className="grid grid-cols-3 gap-1 items-center text-xs text-[#0ecb81] tabular-nums overflow-hidden"
             >
-              <span>{row.price.toLocaleString()}</span>
-              <span className="text-right text-[#eaecef]">{row.size}</span>
-              <span className="text-right text-[#848e9c]">{row.sum.toFixed(3)}</span>
+              <span className="truncate">{row.price.toLocaleString()}</span>
+              <span className="text-right truncate text-[#eaecef]">{row.size}</span>
+              <span className="text-right truncate text-[#848e9c]">
+                {row.sum.toFixed(3)}
+              </span>
             </div>
           ))}
         </div>

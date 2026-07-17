@@ -4,6 +4,7 @@ import {
   dateToFromAt,
   dateToToAt,
   daysAgoDateInput,
+  normalizeDateInput,
   todayDateInput,
 } from '@/utils/historyDateUtils';
 
@@ -19,6 +20,8 @@ export interface HistoryFilterState {
   /** API에 실제로 쓰이는 적용된 값 */
   fromAt: string | undefined;
   toAt: string | undefined;
+  /** 검색할 때마다 증가 — 값이 같아도 재조회 트리거 */
+  searchEpoch: number;
   setSymbol: (v: string) => void;
   setPreset: (p: DatePreset) => void;
   setFromDate: (v: string) => void;
@@ -79,6 +82,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   const [appliedFromDate, setAppliedFromDate] = useState(initial.from);
   const [appliedToDate, setAppliedToDate] = useState(initial.to);
   const [appliedSymbol, setAppliedSymbol] = useState('');
+  const [searchEpoch, setSearchEpoch] = useState(0);
 
   const setPreset = useCallback((p: DatePreset) => {
     setPresetState(p);
@@ -106,15 +110,21 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   }, []);
 
   const applySearch = useCallback(() => {
-    setAppliedFromDate(fromDate);
-    setAppliedToDate(toDate);
+    const from = normalizeDateInput(fromDate) || fromDate.trim();
+    const to = normalizeDateInput(toDate) || toDate.trim();
+    if (from !== fromDate) setFromDateState(from);
+    if (to !== toDate) setToDateState(to);
+    setAppliedFromDate(from);
+    setAppliedToDate(to);
     setAppliedSymbol(symbol);
+    setSearchEpoch((n) => n + 1);
   }, [fromDate, toDate, symbol]);
 
   const resetFilters = useCallback(() => {
     if (!enableDateFilter) {
       setSymbol('');
       setAppliedSymbol('');
+      setSearchEpoch((n) => n + 1);
       return;
     }
     const range = applyPreset('7d');
@@ -125,12 +135,15 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
     setAppliedFromDate(range.from);
     setAppliedToDate(range.to);
     setAppliedSymbol('');
+    setSearchEpoch((n) => n + 1);
   }, [enableDateFilter]);
 
   const fromAt = enableDateFilter
-    ? dateToFromAt(appliedFromDate || undefined)
+    ? dateToFromAt(normalizeDateInput(appliedFromDate) || appliedFromDate || undefined)
     : undefined;
-  const toAt = enableDateFilter ? dateToToAt(appliedToDate || undefined) : undefined;
+  const toAt = enableDateFilter
+    ? dateToToAt(normalizeDateInput(appliedToDate) || appliedToDate || undefined)
+    : undefined;
   const runId = run?.run_id;
 
   const queryParams = useMemo(
@@ -152,6 +165,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
       preset,
       fromAt,
       toAt,
+      searchEpoch,
       setSymbol,
       setPreset,
       setFromDate,
@@ -170,6 +184,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
       preset,
       fromAt,
       toAt,
+      searchEpoch,
       setPreset,
       setFromDate,
       setToDate,

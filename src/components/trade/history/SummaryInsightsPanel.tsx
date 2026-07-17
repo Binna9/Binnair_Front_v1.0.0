@@ -133,7 +133,7 @@ const PieTooltip: React.FC<{
  * history/trades + summary로 일별 PnL·승패·청산사유를 보여준다.
  */
 const SummaryInsightsPanel: React.FC = () => {
-  const { queryParams } = useHistoryFilter();
+  const { queryParams, searchEpoch } = useHistoryFilter();
   const { summary } = useHistorySummary(true);
   const [trades, setTrades] = useState<TradeHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,7 +162,7 @@ const SummaryInsightsPanel: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [queryParams]);
+  }, [queryParams, searchEpoch]);
 
   const dailyPnl = useMemo(() => {
     const map = new Map<string, { pnl: number; wins: number; losses: number; count: number }>();
@@ -244,7 +244,7 @@ const SummaryInsightsPanel: React.FC = () => {
               {trades.length}건
             </span>
           </div>
-          <div className="flex-1 min-h-[280px] rounded-lg bg-[#0d1117]/80 border border-[#2b3139] p-2">
+          <div className="flex-1 min-h-[280px] rounded-lg bg-[#0d1117]/80 border border-[#2b3139] p-2 outline-none [&_svg]:outline-none">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyPnl} margin={{ top: 12, right: 12, left: 4, bottom: 8 }}>
                 <CartesianGrid stroke="#2b3139" vertical={false} />
@@ -264,8 +264,7 @@ const SummaryInsightsPanel: React.FC = () => {
                 <ReferenceLine y={0} stroke="#4a5160" />
                 <Tooltip
                   content={<DailyPnlTooltip />}
-                  cursor={{ fill: 'rgba(240,185,11,0.08)' }}
-                  // Recharts 기본 위치 애니메이션 → 왼쪽에서 날아오는 느낌 방지 (AnomalyChart와 동일)
+                  cursor={false}
                   animationDuration={0}
                   isAnimationActive={false}
                   wrapperStyle={{
@@ -300,7 +299,7 @@ const SummaryInsightsPanel: React.FC = () => {
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">승 / 패</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">기간 내 승률 분포</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 outline-none [&_svg]:outline-none">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -312,6 +311,7 @@ const SummaryInsightsPanel: React.FC = () => {
                       stroke="#1a1f27"
                       strokeWidth={2}
                       activeShape={renderActivePieShape}
+                      isAnimationActive={false}
                     >
                       {winLossData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
@@ -356,7 +356,7 @@ const SummaryInsightsPanel: React.FC = () => {
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">청산 사유</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">TP / SL / 시그널 비중</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 outline-none [&_svg]:outline-none">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -368,6 +368,7 @@ const SummaryInsightsPanel: React.FC = () => {
                       stroke="#1a1f27"
                       strokeWidth={2}
                       activeShape={renderActivePieShape}
+                      isAnimationActive={false}
                     >
                       {exitBreakdown.map((d) => (
                         <Cell key={d.reason} fill={d.color} />

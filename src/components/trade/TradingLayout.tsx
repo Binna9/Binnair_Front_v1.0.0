@@ -40,10 +40,10 @@ const TradingLayout: React.FC = () => {
         <SymbolHeader />
       </header>
 
-      {/* 중앙: 차트·오더북·주문 — 높이 고정(75vh)해서 차트 렌더링 변동이 하단 패널을 밀지 않게 함 */}
+      {/* 중앙: 차트·오더북·주문 — 첫 화면에서 하단 포지션이 살짝 보이도록 높이 여유 */}
       <div
         className="flex-shrink-0 min-w-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_200px_360px] gap-2.5"
-        style={{ height: '75vh' }}
+        style={{ height: '60vh' }}
       >
         <section className={`h-full flex flex-col ${panelCard}`}>
           <ChartPanel />

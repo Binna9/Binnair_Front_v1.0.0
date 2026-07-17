@@ -29,7 +29,7 @@ const EquityChartPanel: React.FC<EquityChartPanelProps> = ({
   compact = false,
   limit = 200,
 }) => {
-  const { queryParams } = useHistoryFilter();
+  const { queryParams, searchEpoch } = useHistoryFilter();
   const [items, setItems] = useState<EquityHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,7 @@ const EquityChartPanel: React.FC<EquityChartPanelProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [queryParams, limit]);
+  }, [queryParams, limit, searchEpoch]);
 
   const chartData = items.map((e) => ({
     ...e,
