@@ -155,7 +155,12 @@ const EquityChartPanel: React.FC<EquityChartPanelProps> = ({
               stroke={GREEN}
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, fill: GREEN }}
+              activeDot={{
+                r: 6,
+                fill: GREEN,
+                stroke: '#eaecef',
+                strokeWidth: 1.5,
+              }}
             />
           </LineChart>
         </ResponsiveContainer>

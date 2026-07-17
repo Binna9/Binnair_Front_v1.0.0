@@ -61,11 +61,12 @@ export const tradingHistoryService = {
     params: HistoryQueryParams & {
       status?: 'OPEN' | 'CLOSED';
       open_only?: boolean;
-    } = {}
+    } = {},
+    options?: { skipGlobalLoading?: boolean }
   ): Promise<HistoryListResponse<PositionHistoryItem>> => {
     const response = await tradingApiClient.get<HistoryListResponse<PositionHistoryItem>>(
       `/api/v1/history/positions`,
-      { params }
+      { params, skipGlobalLoading: options?.skipGlobalLoading }
     );
     return response.data;
   },

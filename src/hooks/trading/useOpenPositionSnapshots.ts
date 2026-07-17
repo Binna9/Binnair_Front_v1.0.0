@@ -16,10 +16,13 @@ export function useOpenPositionSnapshots() {
 
     const poll = async () => {
       try {
-        const data = await tradingHistoryService.getPositions({
-          open_only: true,
-          limit: 100,
-        });
+        const data = await tradingHistoryService.getPositions(
+          {
+            open_only: true,
+            limit: 100,
+          },
+          { skipGlobalLoading: true }
+        );
         if (cancelled) return;
         setBySymbol(Object.fromEntries(data.items.map((p) => [p.symbol, p])));
       } catch {

@@ -11,6 +11,7 @@ import {
   Cell,
   PieChart,
   Pie,
+  Sector,
 } from 'recharts';
 import tradingHistoryService from '@/services/TradingHistoryService';
 import { TradeHistoryItem } from '@/types/TradingHistoryTypes';
@@ -24,6 +25,26 @@ const GREEN = '#0ecb81';
 const RED = '#f6465d';
 const MUTED = '#b7bdc6';
 const EXIT_COLORS = ['#f0b90b', '#0ecb81', '#f6465d', '#3b82f6', '#a855f7', '#848e9c'];
+
+const CHART_CARD_HOVER =
+  'transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:border-[#4a5160] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)] will-change-transform';
+
+/** 파이 조각 호버 시 살짝 키움 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderActivePieShape = (props: any) => {
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
+  return (
+    <Sector
+      cx={cx}
+      cy={cy}
+      innerRadius={innerRadius}
+      outerRadius={outerRadius + 5}
+      startAngle={startAngle}
+      endAngle={endAngle}
+      fill={fill}
+    />
+  );
+};
 
 const formatUsdt = (value: number) =>
   value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -120,6 +141,8 @@ const SummaryInsightsPanel: React.FC = () => {
   const [trades, setTrades] = useState<TradeHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [winLossActive, setWinLossActive] = useState<number | undefined>();
+  const [exitActive, setExitActive] = useState<number | undefined>();
 
   useEffect(() => {
     let cancelled = false;
@@ -214,9 +237,9 @@ const SummaryInsightsPanel: React.FC = () => {
         <div className="flex-1 min-h-0" />
       ) : (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scroll p-4">
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)] gap-4 min-h-[420px]">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)] gap-4 min-h-[420px] py-1">
         {/* 일별 실현 손익 — 메인 */}
-        <section className="min-h-[360px] flex flex-col rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <section className={`min-h-[360px] flex flex-col rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
           <div className="flex items-baseline justify-between mb-3 gap-2">
             <div>
               <h3 className="text-base font-bold text-[#f5f6f7]">일별 실현 손익</h3>
@@ -257,7 +280,16 @@ const SummaryInsightsPanel: React.FC = () => {
                     pointerEvents: 'none',
                   }}
                 />
-                <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={32}>
+                <Bar
+                  dataKey="pnl"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={32}
+                  activeBar={{
+                    stroke: '#f0b90b',
+                    strokeWidth: 1.5,
+                    fillOpacity: 1,
+                  }}
+                >
                   {dailyPnl.map((d) => (
                     <Cell key={d.day} fill={d.pnl >= 0 ? GREEN : RED} />
                   ))}
@@ -269,11 +301,11 @@ const SummaryInsightsPanel: React.FC = () => {
 
         {/* 승패 + 청산 사유 */}
         <div className="flex flex-col gap-4 min-h-[360px]">
-          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <section className={`flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">승 / 패</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">기간 내 승률 분포</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 transition-transform duration-200 ease-out hover:scale-105">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -284,6 +316,10 @@ const SummaryInsightsPanel: React.FC = () => {
                       outerRadius={54}
                       stroke="#1a1f27"
                       strokeWidth={2}
+                      activeIndex={winLossActive}
+                      activeShape={renderActivePieShape}
+                      onMouseEnter={(_, index) => setWinLossActive(index)}
+                      onMouseLeave={() => setWinLossActive(undefined)}
                     >
                       {winLossData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
@@ -324,11 +360,11 @@ const SummaryInsightsPanel: React.FC = () => {
             </div>
           </section>
 
-          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <section className={`flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${CHART_CARD_HOVER}`}>
             <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">청산 사유</h3>
             <p className="text-xs text-[#b7bdc6] mb-3">TP / SL / 시그널 비중</p>
             <div className="flex items-center gap-4">
-              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1 transition-transform duration-200 ease-out hover:scale-105">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -339,6 +375,10 @@ const SummaryInsightsPanel: React.FC = () => {
                       outerRadius={54}
                       stroke="#1a1f27"
                       strokeWidth={2}
+                      activeIndex={exitActive}
+                      activeShape={renderActivePieShape}
+                      onMouseEnter={(_, index) => setExitActive(index)}
+                      onMouseLeave={() => setExitActive(undefined)}
                     >
                       {exitBreakdown.map((d) => (
                         <Cell key={d.reason} fill={d.color} />

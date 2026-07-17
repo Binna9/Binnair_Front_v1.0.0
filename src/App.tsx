@@ -92,7 +92,7 @@ function AppRoutes() {
           <Route
             path="/trade"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+              <ProtectedRoute requiredRoles={['ROLE_TRAINER','ROLE_ADMIN']}>
                 <TradePage />
               </ProtectedRoute>  
             }
@@ -100,7 +100,7 @@ function AppRoutes() {
           <Route
             path="/anomaly-monitor"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN','ROLE_USER','ROLE_SYSTEM','ROLE_TRAINER']}>
                 <AnomalyMonitorPage />
               </ProtectedRoute>
             }
@@ -108,7 +108,7 @@ function AppRoutes() {
           <Route
             path="/history"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+              <ProtectedRoute requiredRoles={['ROLE_TRAINER','ROLE_ADMIN']}>
                 <HistoryPage />
               </ProtectedRoute>  
             }
@@ -116,7 +116,7 @@ function AppRoutes() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN','ROLE_USER','ROLE_SYSTEM','ROLE_TRAINER']}>
                 <DashBoardPage />
               </ProtectedRoute>
             }
@@ -124,7 +124,7 @@ function AppRoutes() {
           <Route
             path="/board"
             element={
-              <ProtectedRoute requiredRoles={['ROLE_ADMIN' , 'ROLE_USER' , 'ROLE_SYSTEM']}>
+              <ProtectedRoute requiredRoles={['ROLE_ADMIN','ROLE_USER','ROLE_SYSTEM','ROLE_TRAINER']}>
                 <BoardPage />
               </ProtectedRoute>
             }

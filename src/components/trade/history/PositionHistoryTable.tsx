@@ -43,8 +43,8 @@ const PositionHistoryTable: React.FC = () => {
             {(
               [
                 { key: '', label: '전체' },
-                { key: 'OPEN', label: '보유중' },
-                { key: 'CLOSED', label: '청산완료' },
+                { key: 'OPEN', label: '진입 스냅샷' },
+                { key: 'CLOSED', label: '청산 스냅샷' },
               ] as const
             ).map((o) => (
               <button
@@ -117,7 +117,7 @@ const PositionHistoryTable: React.FC = () => {
                         {isLong ? '롱' : p.side === 'SHORT' ? '숏' : '-'}
                       </td>
                       <td className="px-3 py-2 text-[#848e9c]">
-                        {isClosed ? '청산완료' : '보유중'}
+                        {isClosed ? '청산 스냅샷' : '진입 스냅샷'}
                       </td>
                       <td className="px-3 py-2">{p.quantity}</td>
                       <td className="px-3 py-2">{p.avg_entry_price.toLocaleString()}</td>

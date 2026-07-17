@@ -10,7 +10,8 @@ import HistoryRowIndex from './HistoryRowIndex';
 import { formatDuration, formatExitReason } from './historyLabels';
 
 type WinFilter = '' | 'true' | 'false';
-type ExitFilter = '' | 'TP' | 'SL' | 'SIGNAL';
+/** API/DB에 저장된 exit_reason 값 (필터 단축키 TP/SL 과 다름) */
+type ExitFilter = '' | 'TAKE_PROFIT' | 'STOP_LOSS' | 'SIGNAL' | 'MODEL_SELL';
 
 /** 청산 완료 거래(진입→청산 1 라운드트립) */
 const TradeHistoryTable: React.FC = () => {
@@ -84,9 +85,10 @@ const TradeHistoryTable: React.FC = () => {
             {(
               [
                 { key: '', label: '전체' },
-                { key: 'TP', label: 'TP' },
-                { key: 'SL', label: 'SL' },
+                { key: 'TAKE_PROFIT', label: 'TP' },
+                { key: 'STOP_LOSS', label: 'SL' },
                 { key: 'SIGNAL', label: '시그널' },
+                { key: 'MODEL_SELL', label: '모델 매도' },
               ] as const
             ).map((o) => (
               <button
