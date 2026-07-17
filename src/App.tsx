@@ -92,7 +92,9 @@ function AppRoutes() {
           <Route
             path="/trade"
             element={
+              <ProtectedRoute requiredRoles={['ROLE_TRAINER','ROLE_ADMIN']}>
                 <TradePage />
+              </ProtectedRoute>  
             }
           />
           <Route
@@ -106,7 +108,9 @@ function AppRoutes() {
           <Route
             path="/history"
             element={
+              <ProtectedRoute requiredRoles={['ROLE_TRAINER','ROLE_ADMIN']}>
                 <HistoryPage />
+              </ProtectedRoute>  
             }
           />
           <Route
