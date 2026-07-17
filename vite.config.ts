@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   // 백엔드 API 기본 URL (환경변수가 없으면 기본값 사용)
   const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:8080';
 
+  // 트레이딩 FastAPI (history/control/live)
+  const tradingApiTarget = env.VITE_TRADING_API_TARGET || 'http://127.0.0.1:8000';
+
   // 공통 프록시 설정 (세션 쿠키 전달 보장)
   const commonProxyConfig = {
     target: apiBaseUrl,
@@ -19,8 +22,8 @@ export default defineConfig(({ mode }) => {
   };
 
   // 프록시 설정 헬퍼 함수
-  const createProxy = (prefixes) => {
-    return prefixes.reduce((acc, prefix) => {
+  const createProxy = (prefixes: string[]) => {
+    return prefixes.reduce<Record<string, typeof commonProxyConfig>>((acc, prefix) => {
       acc[`/${prefix}`] = {
         ...commonProxyConfig,
       };
@@ -62,19 +65,18 @@ export default defineConfig(({ mode }) => {
           secure: false,
           ws: true,
         },
-        // 트레이딩 모니터 API (FastAPI, 기본 8001) — 운영 nginx의 /trading/ 프록시와 동일하게 접두사 제거
         '/trading': {
-          target: env.VITE_TRADING_API_TARGET || 'http://127.0.0.1:8001',
+          target: tradingApiTarget,
           changeOrigin: true,
           secure: false,
           ws: true,
           rewrite: (path) => path.replace(/^\/trading/, ''),
         },
-        // UI 컨트롤 API (FastAPI, 기본 8000)
         '/api': {
-          target: env.VITE_CONTROL_API_TARGET || 'http://127.0.0.1:8000',
+          target: tradingApiTarget,
           changeOrigin: true,
           secure: false,
+          ws: true,
         },
         // 인증된 사용자만 접근 가능한 경로 (세션 쿠키 필요)
         ...createProxy([

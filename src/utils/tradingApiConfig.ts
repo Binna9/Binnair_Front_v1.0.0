@@ -1,8 +1,12 @@
 /**
- * BinnAIR Monitor/Live API (읽기 전용, 인증 없음) 접속 정보.
- * 운영 환경에서는 trading-api가 호스트 루프백(127.0.0.1:8001)에만 바인딩되어 있어
- * 브라우저가 직접 접근할 수 없다 — nginx의 `/trading/` 리버스 프록시(→ 127.0.0.1:8001)를
- * 거치도록 같은 origin의 상대 경로를 기본값으로 사용한다.
+ * BinnAIR Monitor/Live/Control API 접속 정보.
+ *
+ * - 개발: `.env.development` 의 VITE_TRADING_API_BASE_URL (권장: `/trading`)
+ *         → Vite가 VITE_TRADING_API_TARGET 으로 프록시
+ * - 운영: 보통 .env 없음 → 기본값 `/trading`
+ *         → 호스트 nginx `/trading/` → 루프백 FastAPI
+ *
+ * 절대 URL(http://...)을 넣으면 프록시를 우회하고 그 주소로 직접 호출한다.
  */
 export const TRADING_API_BASE_URL =
   import.meta.env.VITE_TRADING_API_BASE_URL || '/trading';

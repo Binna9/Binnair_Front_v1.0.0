@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   readonly VITE_KAKAO_REDIRECT_URI: string;
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_WS_URL?: string;
+  readonly VITE_TRADING_API_BASE_URL?: string;
+  readonly VITE_TRADING_API_TARGET?: string;
+  readonly VITE_TRADING_WS_URL?: string;
   readonly MODE: string;
 }
 
