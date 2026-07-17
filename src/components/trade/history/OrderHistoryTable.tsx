@@ -6,6 +6,8 @@ import { OrderFillStatus } from '@/types/TradingHistoryTypes';
 import Pager from './Pager';
 import TickDetailModal from './TickDetailModal';
 import HistoryEmptyState from './HistoryEmptyState';
+import HistoryPanelFrame from './HistoryPanelFrame';
+import HistoryRowIndex from './HistoryRowIndex';
 
 const FILL_STATUS_LABEL: Record<OrderFillStatus, string> = {
   PENDING: '대기중',
@@ -49,26 +51,21 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ fillStatus }) => 
     );
 
   const isEmpty = !loading && !error && pageItems.length === 0;
-  const showEmpty = error || (loading && pageItems.length === 0) || isEmpty;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-      {showEmpty ? (
-        <HistoryEmptyState
-          message={
-            error
-              ? error
-              : loading
-                ? '불러오는 중...'
-                : '주문 내역이 없습니다'
-          }
-          variant={error ? 'error' : 'muted'}
-        />
+    <HistoryPanelFrame loading={loading}>
+      {error && !loading ? (
+        <HistoryEmptyState message={error} variant="error" />
+      ) : isEmpty ? (
+        <HistoryEmptyState message="주문 내역이 없습니다" />
+      ) : pageItems.length === 0 ? (
+        <div className="flex-1 min-h-0" />
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
           <table className="w-full text-xs text-left">
             <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
               <tr>
+                <th className="px-2 py-2 font-medium w-12 text-center">No.</th>
                 <th className="px-3 py-2 font-medium whitespace-nowrap">주문 시각</th>
                 <th className="px-3 py-2 font-medium">심볼</th>
                 <th className="px-3 py-2 font-medium">방향</th>
@@ -82,7 +79,7 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ fillStatus }) => 
               </tr>
             </thead>
             <tbody className="text-[#eaecef]">
-              {pageItems.map((o) => (
+              {pageItems.map((o, i) => (
                 <tr
                   key={o.id ?? `${o.correlation_id}-${o.requested_at}`}
                   onClick={() => openTick(o.correlation_id)}
@@ -90,6 +87,9 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ fillStatus }) => 
                     o.correlation_id ? 'cursor-pointer' : ''
                   }`}
                 >
+                  <td className="px-2 py-2 text-center">
+                    <HistoryRowIndex page={page} index={i} />
+                  </td>
                   <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
                     {new Date(o.requested_at).toLocaleString()}
                   </td>
@@ -136,7 +136,7 @@ const OrderHistoryTable: React.FC<OrderHistoryTableProps> = ({ fillStatus }) => 
       {correlationId && (
         <TickDetailModal correlationId={correlationId} onClose={closeTick} />
       )}
-    </div>
+    </HistoryPanelFrame>
   );
 };
 

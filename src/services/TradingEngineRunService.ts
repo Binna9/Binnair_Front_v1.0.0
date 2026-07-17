@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { TRADING_API_BASE_URL } from '@/utils/tradingApiConfig';
+import tradingApiClient from '@/utils/tradingApiClient';
 import { EngineRunDTO, EngineRunListResponse, EngineRunStatus } from '@/types/TradingEngineRunTypes';
 
 export interface EngineRunListParams {
@@ -9,19 +8,20 @@ export interface EngineRunListParams {
 }
 
 export const tradingEngineRunService = {
+  /** 폴링용 — 전역 오버레이 생략 */
   getEngineRuns: async (
     params: EngineRunListParams = {}
   ): Promise<EngineRunListResponse> => {
-    const response = await axios.get<EngineRunListResponse>(
-      `${TRADING_API_BASE_URL}/api/v1/engine-runs`,
-      { params }
+    const response = await tradingApiClient.get<EngineRunListResponse>(
+      `/api/v1/engine-runs`,
+      { params, skipGlobalLoading: true }
     );
     return response.data;
   },
 
   getEngineRun: async (runId: string, userId = 'default'): Promise<EngineRunDTO> => {
-    const response = await axios.get<EngineRunDTO>(
-      `${TRADING_API_BASE_URL}/api/v1/engine-runs/${runId}`,
+    const response = await tradingApiClient.get<EngineRunDTO>(
+      `/api/v1/engine-runs/${runId}`,
       { params: { user_id: userId } }
     );
     return response.data;

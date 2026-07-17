@@ -26,6 +26,8 @@ export interface HistoryFilterState {
   setDateRange: (from: string, to: string) => void;
   /** 검색 버튼 / Enter — draft → applied 반영 후 API 재조회 */
   applySearch: () => void;
+  /** 7일 기본값 + 심볼 비움으로 초기화 후 즉시 적용 */
+  resetFilters: () => void;
   queryParams: {
     run_id?: string;
     symbol?: string;
@@ -109,6 +111,22 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
     setAppliedSymbol(symbol);
   }, [fromDate, toDate, symbol]);
 
+  const resetFilters = useCallback(() => {
+    if (!enableDateFilter) {
+      setSymbol('');
+      setAppliedSymbol('');
+      return;
+    }
+    const range = applyPreset('7d');
+    setPresetState('7d');
+    setFromDateState(range.from);
+    setToDateState(range.to);
+    setSymbol('');
+    setAppliedFromDate(range.from);
+    setAppliedToDate(range.to);
+    setAppliedSymbol('');
+  }, [enableDateFilter]);
+
   const fromAt = enableDateFilter
     ? dateToFromAt(appliedFromDate || undefined)
     : undefined;
@@ -140,6 +158,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
       setToDate,
       setDateRange,
       applySearch,
+      resetFilters,
       queryParams,
       engineLoading,
     }),
@@ -156,6 +175,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
       setToDate,
       setDateRange,
       applySearch,
+      resetFilters,
       queryParams,
       engineLoading,
     ]

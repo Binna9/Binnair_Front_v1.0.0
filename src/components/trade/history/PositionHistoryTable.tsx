@@ -4,6 +4,8 @@ import { useHistoryQueryParams } from '@/hooks/trading/useHistoryQueryParams';
 import tradingHistoryService from '@/services/TradingHistoryService';
 import Pager from './Pager';
 import HistoryEmptyState from './HistoryEmptyState';
+import HistoryPanelFrame from './HistoryPanelFrame';
+import HistoryRowIndex from './HistoryRowIndex';
 import { formatDuration, formatExitReason } from './historyLabels';
 
 type StatusFilter = '' | 'OPEN' | 'CLOSED';
@@ -28,9 +30,7 @@ const PositionHistoryTable: React.FC = () => {
       resetKey
     );
 
-  const showEmpty = Boolean(
-    error || (loading && pageItems.length === 0) || (!loading && pageItems.length === 0)
-  );
+  const isEmpty = !loading && !error && pageItems.length === 0;
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -67,99 +67,104 @@ const PositionHistoryTable: React.FC = () => {
           </div>
         </div>
       </div>
-      {showEmpty ? (
-        <HistoryEmptyState
-          message={
-            error ? error : loading ? '불러오는 중...' : '포지션 내역이 없습니다'
-          }
-          variant={error ? 'error' : 'muted'}
+      <HistoryPanelFrame loading={loading}>
+        {error && !loading ? (
+          <HistoryEmptyState message={error} variant="error" />
+        ) : isEmpty ? (
+          <HistoryEmptyState message="포지션 내역이 없습니다" />
+        ) : pageItems.length === 0 ? (
+          <div className="flex-1 min-h-0" />
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
+            <table className="w-full text-xs text-left">
+              <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
+                <tr>
+                  <th className="px-2 py-2 font-medium w-12 text-center">No.</th>
+                  <th className="px-3 py-2 font-medium">심볼</th>
+                  <th className="px-3 py-2 font-medium">방향</th>
+                  <th className="px-3 py-2 font-medium">상태</th>
+                  <th className="px-3 py-2 font-medium">수량</th>
+                  <th className="px-3 py-2 font-medium">진입가</th>
+                  <th className="px-3 py-2 font-medium">익절가(TP)</th>
+                  <th className="px-3 py-2 font-medium">손절가(SL)</th>
+                  <th className="px-3 py-2 font-medium">청산가</th>
+                  <th className="px-3 py-2 font-medium">손익</th>
+                  <th className="px-3 py-2 font-medium">청산 사유</th>
+                  <th className="px-3 py-2 font-medium whitespace-nowrap">진입 시각</th>
+                  <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
+                  <th className="px-3 py-2 font-medium">보유 시간</th>
+                </tr>
+              </thead>
+              <tbody className="text-[#eaecef]">
+                {pageItems.map((p, i) => {
+                  const isClosed = p.status === 'CLOSED';
+                  const pnl = isClosed ? p.realized_pnl : p.unrealized_pnl;
+                  const isLong = p.side === 'LONG';
+                  return (
+                    <tr
+                      key={p.id ?? `${p.symbol}-${p.snapshot_at}`}
+                      className="border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50"
+                    >
+                      <td className="px-2 py-2 text-center">
+                        <HistoryRowIndex page={page} index={i} />
+                      </td>
+                      <td className="px-3 py-2 font-medium">{p.symbol}</td>
+                      <td
+                        className={`px-3 py-2 font-medium ${
+                          isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                        }`}
+                      >
+                        {isLong ? '롱' : p.side === 'SHORT' ? '숏' : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {isClosed ? '청산완료' : '보유중'}
+                      </td>
+                      <td className="px-3 py-2">{p.quantity}</td>
+                      <td className="px-3 py-2">{p.avg_entry_price.toLocaleString()}</td>
+                      <td className="px-3 py-2 text-[#0ecb81]">
+                        {p.tp_price != null ? p.tp_price.toLocaleString() : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#f6465d]">
+                        {p.sl_price != null ? p.sl_price.toLocaleString() : '-'}
+                      </td>
+                      <td className="px-3 py-2">
+                        {p.exit_price != null ? p.exit_price.toLocaleString() : '-'}
+                      </td>
+                      <td
+                        className={`px-3 py-2 font-medium ${
+                          pnl != null && pnl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                        }`}
+                      >
+                        {pnl != null ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}` : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {formatExitReason(p.exit_reason)}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
+                        {p.opened_at ? new Date(p.opened_at).toLocaleString() : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
+                        {p.closed_at ? new Date(p.closed_at).toLocaleString() : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {formatDuration(p.duration_seconds)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <Pager
+          page={page}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          onPrev={goPrev}
+          onNext={goNext}
+          totalCount={totalCount}
         />
-      ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
-          <table className="w-full text-xs text-left">
-            <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
-              <tr>
-                <th className="px-3 py-2 font-medium">심볼</th>
-                <th className="px-3 py-2 font-medium">방향</th>
-                <th className="px-3 py-2 font-medium">상태</th>
-                <th className="px-3 py-2 font-medium">수량</th>
-                <th className="px-3 py-2 font-medium">진입가</th>
-                <th className="px-3 py-2 font-medium">익절가(TP)</th>
-                <th className="px-3 py-2 font-medium">손절가(SL)</th>
-                <th className="px-3 py-2 font-medium">청산가</th>
-                <th className="px-3 py-2 font-medium">손익</th>
-                <th className="px-3 py-2 font-medium">청산 사유</th>
-                <th className="px-3 py-2 font-medium whitespace-nowrap">진입 시각</th>
-                <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
-                <th className="px-3 py-2 font-medium">보유 시간</th>
-              </tr>
-            </thead>
-            <tbody className="text-[#eaecef]">
-              {pageItems.map((p) => {
-                const isClosed = p.status === 'CLOSED';
-                const pnl = isClosed ? p.realized_pnl : p.unrealized_pnl;
-                const isLong = p.side === 'LONG';
-                return (
-                  <tr
-                    key={p.id ?? `${p.symbol}-${p.snapshot_at}`}
-                    className="border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50"
-                  >
-                    <td className="px-3 py-2 font-medium">{p.symbol}</td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
-                      }`}
-                    >
-                      {isLong ? '롱' : p.side === 'SHORT' ? '숏' : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {isClosed ? '청산완료' : '보유중'}
-                    </td>
-                    <td className="px-3 py-2">{p.quantity}</td>
-                    <td className="px-3 py-2">{p.avg_entry_price.toLocaleString()}</td>
-                    <td className="px-3 py-2 text-[#0ecb81]">
-                      {p.tp_price != null ? p.tp_price.toLocaleString() : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#f6465d]">
-                      {p.sl_price != null ? p.sl_price.toLocaleString() : '-'}
-                    </td>
-                    <td className="px-3 py-2">
-                      {p.exit_price != null ? p.exit_price.toLocaleString() : '-'}
-                    </td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        pnl != null && pnl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
-                      }`}
-                    >
-                      {pnl != null ? `${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}` : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {formatExitReason(p.exit_reason)}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
-                      {p.opened_at ? new Date(p.opened_at).toLocaleString() : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
-                      {p.closed_at ? new Date(p.closed_at).toLocaleString() : '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {formatDuration(p.duration_seconds)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <Pager
-        page={page}
-        hasPrev={hasPrev}
-        hasNext={hasNext}
-        onPrev={goPrev}
-        onNext={goNext}
-        totalCount={totalCount}
-      />
+      </HistoryPanelFrame>
     </div>
   );
 };

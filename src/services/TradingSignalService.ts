@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { TRADING_API_BASE_URL } from '@/utils/tradingApiConfig';
+import tradingApiClient from '@/utils/tradingApiClient';
 import { SignalListResponse } from '@/types/TradingSignalTypes';
 
 export interface SignalQueryParams {
@@ -10,12 +9,10 @@ export interface SignalQueryParams {
 }
 
 export const tradingSignalService = {
-  // Predictor/Strategy가 기록한 BUY/SELL/HOLD 시그널
   getSignals: async (params: SignalQueryParams = {}): Promise<SignalListResponse> => {
-    const response = await axios.get<SignalListResponse>(
-      `${TRADING_API_BASE_URL}/api/v1/signals`,
-      { params }
-    );
+    const response = await tradingApiClient.get<SignalListResponse>(`/api/v1/signals`, {
+      params,
+    });
     return response.data;
   },
 };

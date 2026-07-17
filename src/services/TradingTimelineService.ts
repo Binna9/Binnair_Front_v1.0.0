@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { TRADING_API_BASE_URL } from '@/utils/tradingApiConfig';
+import tradingApiClient from '@/utils/tradingApiClient';
 import { FlowTimelineListResponse } from '@/types/TradingTimelineTypes';
 
 export interface TimelineQueryParams {
@@ -10,12 +9,11 @@ export interface TimelineQueryParams {
 }
 
 export const tradingTimelineService = {
-  // 추론 → 시그널 → 주문 → 체결 → 포지션 → 감사 로그 통합 타임라인
   getTimeline: async (
     params: TimelineQueryParams = {}
   ): Promise<FlowTimelineListResponse> => {
-    const response = await axios.get<FlowTimelineListResponse>(
-      `${TRADING_API_BASE_URL}/api/v1/flow/timeline`,
+    const response = await tradingApiClient.get<FlowTimelineListResponse>(
+      `/api/v1/flow/timeline`,
       { params }
     );
     return response.data;

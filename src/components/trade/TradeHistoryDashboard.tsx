@@ -34,6 +34,23 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 /** BinnAIR /history/* API 기반 트레이딩 내역 대시보드 */
 const TradeHistoryDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('summary');
+  /** 한 번 연 탭은 유지 → 재진입 시 레이아웃/데이터 번쩍임 방지 */
+  const [visited, setVisited] = useState<Set<TabKey>>(() => new Set(['summary']));
+
+  const selectTab = (key: TabKey) => {
+    setActiveTab(key);
+    setVisited((prev) => {
+      if (prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  };
+
+  const paneClass = (key: TabKey) =>
+    `flex-1 min-h-0 flex flex-col overflow-hidden ${
+      activeTab === key ? '' : 'hidden'
+    }`;
 
   return (
     <HistoryFilterProvider enableDateFilter>
@@ -72,7 +89,7 @@ const TradeHistoryDashboard: React.FC = () => {
             <button
               key={t.key}
               type="button"
-              onClick={() => setActiveTab(t.key)}
+              onClick={() => selectTab(t.key)}
               className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-sm rounded-md transition-colors ${
                 activeTab === t.key
                   ? 'bg-[#2b3139] text-[#eaecef] shadow-sm'
@@ -85,13 +102,37 @@ const TradeHistoryDashboard: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex-1 min-h-[320px] flex flex-col overflow-hidden bg-[#0b0e11]/70">
-          {activeTab === 'summary' && <SummaryInsightsPanel />}
-          {activeTab === 'orders' && <OrderHistoryTable />}
-          {activeTab === 'executions' && <ExecutionHistoryTable />}
-          {activeTab === 'positions' && <PositionHistoryTable />}
-          {activeTab === 'trades' && <TradeHistoryTable />}
-          {activeTab === 'equity' && <EquityTabPanel />}
+        <div className="flex-1 min-h-[360px] flex flex-col overflow-hidden bg-[#0b0e11]/70">
+          {visited.has('summary') && (
+            <div className={paneClass('summary')}>
+              <SummaryInsightsPanel />
+            </div>
+          )}
+          {visited.has('orders') && (
+            <div className={paneClass('orders')}>
+              <OrderHistoryTable />
+            </div>
+          )}
+          {visited.has('executions') && (
+            <div className={paneClass('executions')}>
+              <ExecutionHistoryTable />
+            </div>
+          )}
+          {visited.has('positions') && (
+            <div className={paneClass('positions')}>
+              <PositionHistoryTable />
+            </div>
+          )}
+          {visited.has('trades') && (
+            <div className={paneClass('trades')}>
+              <TradeHistoryTable />
+            </div>
+          )}
+          {visited.has('equity') && (
+            <div className={paneClass('equity')}>
+              <EquityTabPanel />
+            </div>
+          )}
         </div>
       </div>
     </HistoryFilterProvider>

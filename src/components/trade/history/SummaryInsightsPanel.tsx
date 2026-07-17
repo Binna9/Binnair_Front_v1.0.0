@@ -17,11 +17,12 @@ import { TradeHistoryItem } from '@/types/TradingHistoryTypes';
 import { useHistoryFilter } from '@/context/HistoryFilterContext';
 import { useHistorySummary } from '@/hooks/trading/useHistorySummary';
 import HistoryEmptyState from './HistoryEmptyState';
+import HistoryPanelFrame from './HistoryPanelFrame';
 import { formatExitReason } from './historyLabels';
 
 const GREEN = '#0ecb81';
 const RED = '#f6465d';
-const MUTED = '#848e9c';
+const MUTED = '#b7bdc6';
 const EXIT_COLORS = ['#f0b90b', '#0ecb81', '#f6465d', '#3b82f6', '#a855f7', '#848e9c'];
 
 const formatUsdt = (value: number) =>
@@ -39,6 +40,75 @@ function shortDayLabel(dayKey: string): string {
   const [, m, d] = dayKey.split('-');
   return `${m}/${d}`;
 }
+
+const tooltipShellStyle: React.CSSProperties = {
+  background: 'rgba(30, 35, 41, 0.98)',
+  border: '1px solid #f0b90b66',
+  borderRadius: 10,
+  padding: '10px 12px',
+  boxShadow: '0 8px 28px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)',
+  minWidth: 160,
+};
+
+/** 일별 PnL 커스텀 툴팁 — 밝은 글자 + 강조 */
+const DailyPnlTooltip: React.FC<{
+  active?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any[];
+  label?: string;
+}> = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload as {
+    day: string;
+    pnl: number;
+    count: number;
+    wins: number;
+    losses: number;
+  };
+  const positive = row.pnl >= 0;
+
+  return (
+    <div style={tooltipShellStyle}>
+      <div className="text-[11px] text-[#b7bdc6] mb-1.5">{row.day}</div>
+      <div className="text-[11px] text-[#848e9c] mb-2">
+        {row.count}건 · 승 {row.wins} / 패 {row.losses}
+      </div>
+      <div className="text-[10px] uppercase tracking-wide text-[#f0b90b] mb-0.5">실현 손익</div>
+      <div
+        className={`text-base font-bold tabular-nums ${
+          positive ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+        }`}
+        style={{ textShadow: positive ? '0 0 12px #0ecb8144' : '0 0 12px #f6465d44' }}
+      >
+        {positive ? '+' : ''}
+        {formatUsdt(row.pnl)}{' '}
+        <span className="text-xs font-semibold text-[#eaecef]">USDT</span>
+      </div>
+    </div>
+  );
+};
+
+const PieTooltip: React.FC<{
+  active?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  payload?: any[];
+}> = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const item = payload[0];
+  const name = String(item.name ?? '');
+  const value = Number(item.value ?? 0);
+  const color = (item.payload?.color as string | undefined) ?? '#f0b90b';
+
+  return (
+    <div style={tooltipShellStyle}>
+      <div className="flex items-center gap-2 mb-1">
+        <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+        <span className="text-sm font-semibold text-[#f5f6f7]">{name}</span>
+      </div>
+      <div className="text-base font-bold text-[#eaecef] tabular-nums">{value}건</div>
+    </div>
+  );
+};
 
 /**
  * 요약 탭 인사이트 — equity(잔고 곡선)와 분리.
@@ -106,80 +176,80 @@ const SummaryInsightsPanel: React.FC = () => {
       map.set(key, (map.get(key) ?? 0) + 1);
     }
     return [...map.entries()]
-      .map(([reason, count]) => ({
+      .map(([reason, count], i) => ({
         reason,
+        name: formatExitReason(reason),
         label: formatExitReason(reason),
+        value: count,
         count,
+        color: EXIT_COLORS[i % EXIT_COLORS.length],
       }))
       .sort((a, b) => b.count - a.count);
   }, [trades]);
 
   const wins = summary?.wins ?? trades.filter((t) => t.is_win).length;
   const losses = summary?.losses ?? trades.filter((t) => !t.is_win).length;
+  const winRate =
+    summary?.win_rate != null
+      ? summary.win_rate * 100
+      : wins + losses > 0
+        ? (wins / (wins + losses)) * 100
+        : null;
   const winLossData = [
     { name: '승', value: wins, color: GREEN },
     { name: '패', value: losses, color: RED },
   ].filter((d) => d.value > 0);
 
-  if (error && trades.length === 0) {
+  if (error && trades.length === 0 && !loading) {
     return <HistoryEmptyState message={error} variant="error" />;
   }
 
-  if (loading && trades.length === 0) {
-    return <HistoryEmptyState message="요약 차트 불러오는 중..." />;
-  }
-
-  if (trades.length === 0) {
+  if (trades.length === 0 && !loading) {
     return <HistoryEmptyState message="기간 내 청산 거래가 없어 요약 차트를 그릴 수 없습니다" />;
   }
 
   return (
+    <HistoryPanelFrame loading={loading && trades.length === 0}>
+      {trades.length === 0 ? (
+        <div className="flex-1 min-h-0" />
+      ) : (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scroll p-4">
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.4fr)_minmax(260px,0.8fr)] gap-4 h-full min-h-[280px]">
-        {/* 일별 실현 손익 */}
-        <section className="min-h-[260px] flex flex-col rounded-lg border border-[#2b3139] bg-[#12161c]/80 p-3">
-          <div className="flex items-baseline justify-between mb-2">
-            <h3 className="text-sm font-semibold text-[#eaecef]">일별 실현 손익</h3>
-            <span className="text-[11px] text-[#848e9c]">
-              청산 기준 · {trades.length}건 집계
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.9fr)] gap-4 min-h-[420px]">
+        {/* 일별 실현 손익 — 메인 */}
+        <section className="min-h-[360px] flex flex-col rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="flex items-baseline justify-between mb-3 gap-2">
+            <div>
+              <h3 className="text-base font-bold text-[#f5f6f7]">일별 실현 손익</h3>
+              <p className="text-xs text-[#b7bdc6] mt-0.5">청산 기준 집계 · 가장 중요한 성과 지표</p>
+            </div>
+            <span className="text-xs text-[#f0b90b] font-medium whitespace-nowrap">
+              {trades.length}건
             </span>
           </div>
-          <div className="flex-1 min-h-[200px]">
+          <div className="flex-1 min-h-[280px] rounded-lg bg-[#0d1117]/80 border border-[#2b3139] p-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyPnl} margin={{ top: 8, right: 8, left: 0, bottom: 4 }}>
+              <BarChart data={dailyPnl} margin={{ top: 12, right: 12, left: 4, bottom: 8 }}>
                 <CartesianGrid stroke="#2b3139" vertical={false} />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: MUTED, fontSize: 11 }}
-                  axisLine={{ stroke: '#2b3139' }}
+                  tick={{ fill: MUTED, fontSize: 12 }}
+                  axisLine={{ stroke: '#3a4149' }}
                   tickLine={false}
                   interval="preserveStartEnd"
                 />
                 <YAxis
-                  tick={{ fill: MUTED, fontSize: 11 }}
+                  tick={{ fill: MUTED, fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
-                  width={52}
+                  width={56}
                 />
-                <ReferenceLine y={0} stroke="#3a4149" />
+                <ReferenceLine y={0} stroke="#4a5160" />
                 <Tooltip
-                  contentStyle={{
-                    background: '#1e2329',
-                    border: '1px solid #2b3139',
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: MUTED }}
-                  formatter={(value) => [`${formatUsdt(Number(value))} USDT`, '실현 손익']}
-                  labelFormatter={(label, payload) => {
-                    const row = payload?.[0]?.payload as
-                      | { day?: string; count?: number; wins?: number; losses?: number }
-                      | undefined;
-                    if (!row?.day) return String(label);
-                    return `${row.day} · ${row.count}건 (승 ${row.wins}/패 ${row.losses})`;
-                  }}
+                  content={<DailyPnlTooltip />}
+                  cursor={{ fill: 'rgba(240,185,11,0.08)' }}
+                  wrapperStyle={{ outline: 'none', zIndex: 20 }}
                 />
-                <Bar dataKey="pnl" radius={[3, 3, 0, 0]} maxBarSize={28}>
+                <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={32}>
                   {dailyPnl.map((d) => (
                     <Cell key={d.day} fill={d.pnl >= 0 ? GREEN : RED} />
                   ))}
@@ -190,97 +260,88 @@ const SummaryInsightsPanel: React.FC = () => {
         </section>
 
         {/* 승패 + 청산 사유 */}
-        <div className="flex flex-col gap-4 min-h-[260px]">
-          <section className="flex-1 min-h-[120px] rounded-lg border border-[#2b3139] bg-[#12161c]/80 p-3">
-            <h3 className="text-sm font-semibold text-[#eaecef] mb-1">승 / 패</h3>
-            <div className="flex items-center gap-3 h-[calc(100%-1.5rem)]">
-              <div className="w-[110px] h-[110px] flex-shrink-0">
+        <div className="flex flex-col gap-4 min-h-[360px]">
+          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">승 / 패</h3>
+            <p className="text-xs text-[#b7bdc6] mb-3">기간 내 승률 분포</p>
+            <div className="flex items-center gap-4">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={winLossData}
                       dataKey="value"
                       nameKey="name"
-                      innerRadius={28}
-                      outerRadius={48}
-                      stroke="none"
+                      innerRadius={34}
+                      outerRadius={54}
+                      stroke="#1a1f27"
+                      strokeWidth={2}
                     >
                       {winLossData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: '#1e2329',
-                        border: '1px solid #2b3139',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
+                    <Tooltip content={<PieTooltip />} wrapperStyle={{ outline: 'none', zIndex: 20 }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="text-sm space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#0ecb81]" />
-                  <span className="text-[#848e9c]">승</span>
-                  <span className="text-[#0ecb81] font-semibold">{wins}</span>
+              <div className="space-y-2.5 min-w-0">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0ecb81] shadow-[0_0_8px_#0ecb8166]" />
+                  <span className="text-[#b7bdc6]">승</span>
+                  <span className="text-[#0ecb81] text-lg font-bold tabular-nums ml-1">{wins}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#f6465d]" />
-                  <span className="text-[#848e9c]">패</span>
-                  <span className="text-[#f6465d] font-semibold">{losses}</span>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#f6465d] shadow-[0_0_8px_#f6465d66]" />
+                  <span className="text-[#b7bdc6]">패</span>
+                  <span className="text-[#f6465d] text-lg font-bold tabular-nums ml-1">{losses}</span>
                 </div>
-                <div className="text-[11px] text-[#848e9c] pt-1">
+                <div className="pt-1 text-sm text-[#eaecef]">
                   승률{' '}
-                  {summary?.win_rate != null
-                    ? `${(summary.win_rate * 100).toFixed(1)}%`
-                    : wins + losses > 0
-                      ? `${((wins / (wins + losses)) * 100).toFixed(1)}%`
-                      : '-'}
+                  <span className="text-[#f0b90b] font-bold text-lg tabular-nums">
+                    {winRate != null ? `${winRate.toFixed(1)}%` : '-'}
+                  </span>
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="flex-1 min-h-[120px] rounded-lg border border-[#2b3139] bg-[#12161c]/80 p-3">
-            <h3 className="text-sm font-semibold text-[#eaecef] mb-1">청산 사유</h3>
-            <div className="flex items-center gap-3 h-[calc(100%-1.5rem)]">
-              <div className="w-[110px] h-[110px] flex-shrink-0">
+          <section className="flex-1 min-h-[170px] rounded-xl border border-[#3a4149] bg-[#1a1f27] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <h3 className="text-base font-bold text-[#f5f6f7] mb-0.5">청산 사유</h3>
+            <p className="text-xs text-[#b7bdc6] mb-3">TP / SL / 시그널 비중</p>
+            <div className="flex items-center gap-4">
+              <div className="w-[128px] h-[128px] flex-shrink-0 rounded-full bg-[#0d1117]/80 border border-[#2b3139] p-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={exitBreakdown}
                       dataKey="count"
                       nameKey="label"
-                      innerRadius={28}
-                      outerRadius={48}
-                      stroke="none"
+                      innerRadius={34}
+                      outerRadius={54}
+                      stroke="#1a1f27"
+                      strokeWidth={2}
                     >
-                      {exitBreakdown.map((d, i) => (
-                        <Cell key={d.reason} fill={EXIT_COLORS[i % EXIT_COLORS.length]} />
+                      {exitBreakdown.map((d) => (
+                        <Cell key={d.reason} fill={d.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        background: '#1e2329',
-                        border: '1px solid #2b3139',
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
+                    <Tooltip content={<PieTooltip />} wrapperStyle={{ outline: 'none', zIndex: 20 }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <ul className="text-xs space-y-1.5 min-w-0">
-                {exitBreakdown.map((d, i) => (
-                  <li key={d.reason} className="flex items-center gap-2 truncate">
+              <ul className="text-sm space-y-2 min-w-0 flex-1">
+                {exitBreakdown.map((d) => (
+                  <li key={d.reason} className="flex items-center gap-2">
                     <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: EXIT_COLORS[i % EXIT_COLORS.length] }}
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{
+                        background: d.color,
+                        boxShadow: `0 0 8px ${d.color}66`,
+                      }}
                     />
-                    <span className="text-[#848e9c] truncate">{d.label}</span>
-                    <span className="text-[#eaecef] font-medium ml-auto">{d.count}</span>
+                    <span className="text-[#eaecef] truncate font-medium">{d.label}</span>
+                    <span className="text-[#f5f6f7] font-bold tabular-nums ml-auto">{d.count}</span>
                   </li>
                 ))}
               </ul>
@@ -288,10 +349,12 @@ const SummaryInsightsPanel: React.FC = () => {
           </section>
         </div>
       </div>
-      <p className="text-[10px] text-[#848e9c] mt-3">
-        요약 = 청산(trades) 성과 분석 · 잔고 탭 = equity_usdt 시계열 (계정 잔고 곡선)
+      <p className="text-[11px] text-[#848e9c] mt-3">
+        막대에 마우스를 올리면 해당 일 실현 손익이 강조 표시됩니다.
       </p>
     </div>
+      )}
+    </HistoryPanelFrame>
   );
 };
 

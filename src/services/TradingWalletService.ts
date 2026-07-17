@@ -1,12 +1,12 @@
-import axios from 'axios';
+import tradingApiClient from '@/utils/tradingApiClient';
 import { AccountWalletResponse } from '@/types/TradingWalletTypes';
-import { TRADING_API_BASE_URL } from '@/utils/tradingApiConfig';
 
 export const tradingWalletService = {
-  // testnet 지갑 + 엔진 sizing 진단 조회
+  /** testnet 지갑 — 폴링이라 전역 오버레이 생략 */
   getAccountWallet: async (): Promise<AccountWalletResponse> => {
-    const response = await axios.get<AccountWalletResponse>(
-      `${TRADING_API_BASE_URL}/api/v1/account/wallet`
+    const response = await tradingApiClient.get<AccountWalletResponse>(
+      `/api/v1/account/wallet`,
+      { skipGlobalLoading: true }
     );
     return response.data;
   },

@@ -5,6 +5,8 @@ import tradingHistoryService from '@/services/TradingHistoryService';
 import Pager from './Pager';
 import TickDetailModal from './TickDetailModal';
 import HistoryEmptyState from './HistoryEmptyState';
+import HistoryPanelFrame from './HistoryPanelFrame';
+import HistoryRowIndex from './HistoryRowIndex';
 
 const ExecutionHistoryTable: React.FC = () => {
   const query = useHistoryQueryParams();
@@ -18,22 +20,22 @@ const ExecutionHistoryTable: React.FC = () => {
       resetKey
     );
 
-  const showEmpty = error || (loading && pageItems.length === 0) || pageItems.length === 0;
+  const isEmpty = !loading && !error && pageItems.length === 0;
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-      {showEmpty ? (
-        <HistoryEmptyState
-          message={
-            error ? error : loading ? '불러오는 중...' : '체결 내역이 없습니다'
-          }
-          variant={error ? 'error' : 'muted'}
-        />
+    <HistoryPanelFrame loading={loading}>
+      {error && !loading ? (
+        <HistoryEmptyState message={error} variant="error" />
+      ) : isEmpty ? (
+        <HistoryEmptyState message="체결 내역이 없습니다" />
+      ) : pageItems.length === 0 ? (
+        <div className="flex-1 min-h-0" />
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
           <table className="w-full text-xs text-left">
             <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
               <tr>
+                <th className="px-2 py-2 font-medium w-12 text-center">No.</th>
                 <th className="px-3 py-2 font-medium whitespace-nowrap">체결 시각</th>
                 <th className="px-3 py-2 font-medium">심볼</th>
                 <th className="px-3 py-2 font-medium">주문 ID</th>
@@ -45,7 +47,7 @@ const ExecutionHistoryTable: React.FC = () => {
               </tr>
             </thead>
             <tbody className="text-[#eaecef]">
-              {pageItems.map((e) => (
+              {pageItems.map((e, i) => (
                 <tr
                   key={e.id ?? `${e.order_id}-${e.executed_at}`}
                   onClick={() => openTick(e.correlation_id)}
@@ -53,6 +55,9 @@ const ExecutionHistoryTable: React.FC = () => {
                     e.correlation_id ? 'cursor-pointer' : ''
                   }`}
                 >
+                  <td className="px-2 py-2 text-center">
+                    <HistoryRowIndex page={page} index={i} />
+                  </td>
                   <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
                     {new Date(e.executed_at).toLocaleString()}
                   </td>
@@ -89,7 +94,7 @@ const ExecutionHistoryTable: React.FC = () => {
       {correlationId && (
         <TickDetailModal correlationId={correlationId} onClose={closeTick} />
       )}
-    </div>
+    </HistoryPanelFrame>
   );
 };
 

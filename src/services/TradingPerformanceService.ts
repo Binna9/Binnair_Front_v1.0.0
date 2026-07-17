@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { TRADING_API_BASE_URL } from '@/utils/tradingApiConfig';
+import tradingApiClient from '@/utils/tradingApiClient';
 import {
   PerformanceSummaryDTO,
   PerformancePeriodsResponse,
@@ -24,24 +23,22 @@ export interface PerformancePeriodsParams {
 }
 
 export const tradingPerformanceService = {
-  // 승률·PnL·수익률 등 기간 성과 요약
   getSummary: async (
     params: PerformanceSummaryParams = {}
   ): Promise<PerformanceSummaryDTO> => {
-    const response = await axios.get<PerformanceSummaryDTO>(
-      `${TRADING_API_BASE_URL}/api/v1/performance/summary`,
+    const response = await tradingApiClient.get<PerformanceSummaryDTO>(
+      `/api/v1/performance/summary`,
       { params }
     );
     return response.data;
   },
 
-  // 일/주/월 단위 성과 시계열 (에쿼티 커브용)
   getPeriods: async (
     params: PerformancePeriodsParams = {}
   ): Promise<PerformancePeriodsResponse> => {
-    const response = await axios.get<PerformancePeriodsResponse>(
-      `${TRADING_API_BASE_URL}/api/v1/performance/periods`,
-      { params }
+    const response = await tradingApiClient.get<PerformancePeriodsResponse>(
+      `/api/v1/performance/periods`,
+      { params, skipGlobalLoading: true }
     );
     return response.data;
   },

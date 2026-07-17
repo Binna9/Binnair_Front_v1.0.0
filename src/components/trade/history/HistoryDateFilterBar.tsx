@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, RotateCcw } from 'lucide-react';
 import { DatePreset, useHistoryFilter } from '@/context/HistoryFilterContext';
 
 const PRESETS: { key: DatePreset; label: string }[] = [
@@ -20,6 +20,7 @@ const HistoryDateFilterBar: React.FC = () => {
     preset,
     setPreset,
     applySearch,
+    resetFilters,
     runId,
     engineLoading,
   } = useHistoryFilter();
@@ -84,6 +85,16 @@ const HistoryDateFilterBar: React.FC = () => {
       >
         <Search size={15} strokeWidth={2.5} />
         검색
+      </button>
+
+      <button
+        type="button"
+        onClick={resetFilters}
+        title="7일 기본값으로 초기화"
+        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md border border-[#3a4149] bg-[#1e2329] text-[#eaecef] text-sm font-medium transition-all duration-200 ease-out hover:border-[#848e9c] hover:bg-[#2b3139] hover:scale-105 active:scale-100"
+      >
+        <RotateCcw size={15} strokeWidth={2.25} />
+        초기화
       </button>
 
       <span className="ml-auto text-xs text-[#848e9c] truncate max-w-[220px]">

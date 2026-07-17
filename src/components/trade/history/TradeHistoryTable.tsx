@@ -5,6 +5,8 @@ import tradingHistoryService from '@/services/TradingHistoryService';
 import Pager from './Pager';
 import TickDetailModal from './TickDetailModal';
 import HistoryEmptyState from './HistoryEmptyState';
+import HistoryPanelFrame from './HistoryPanelFrame';
+import HistoryRowIndex from './HistoryRowIndex';
 import { formatDuration, formatExitReason } from './historyLabels';
 
 type WinFilter = '' | 'true' | 'false';
@@ -35,9 +37,7 @@ const TradeHistoryTable: React.FC = () => {
       resetKey
     );
 
-  const showEmpty = Boolean(
-    error || (loading && pageItems.length === 0) || (!loading && pageItems.length === 0)
-  );
+  const isEmpty = !loading && !error && pageItems.length === 0;
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -105,115 +105,120 @@ const TradeHistoryTable: React.FC = () => {
           </div>
         </div>
       </div>
-      {showEmpty ? (
-        <HistoryEmptyState
-          message={
-            error ? error : loading ? '불러오는 중...' : '청산 거래 내역이 없습니다'
-          }
-          variant={error ? 'error' : 'muted'}
-        />
-      ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
-          <table className="w-full text-xs text-left">
-            <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
-              <tr>
-                <th className="px-3 py-2 font-medium">심볼</th>
-                <th className="px-3 py-2 font-medium">방향</th>
-                <th className="px-3 py-2 font-medium">진입가</th>
-                <th className="px-3 py-2 font-medium">청산가</th>
-                <th className="px-3 py-2 font-medium">수량</th>
-                <th className="px-3 py-2 font-medium">명목</th>
-                <th className="px-3 py-2 font-medium">실현 손익</th>
-                <th className="px-3 py-2 font-medium">수익률</th>
-                <th className="px-3 py-2 font-medium">승패</th>
-                <th className="px-3 py-2 font-medium">청산 사유</th>
-                <th className="px-3 py-2 font-medium">전략</th>
-                <th className="px-3 py-2 font-medium">보유 시간</th>
-                <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
-              </tr>
-            </thead>
-            <tbody className="text-[#eaecef]">
-              {pageItems.map((t) => {
-                const isLong = t.side === 'LONG';
-                return (
-                  <tr
-                    key={t.trade_id}
-                    onClick={() => openTick(t.correlation_id)}
-                    className={`border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50 ${
-                      t.correlation_id ? 'cursor-pointer' : ''
-                    }`}
-                  >
-                    <td className="px-3 py-2 font-medium">{t.symbol}</td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+      <HistoryPanelFrame loading={loading}>
+        {error && !loading ? (
+          <HistoryEmptyState message={error} variant="error" />
+        ) : isEmpty ? (
+          <HistoryEmptyState message="청산 거래 내역이 없습니다" />
+        ) : pageItems.length === 0 ? (
+          <div className="flex-1 min-h-0" />
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto custom-scroll">
+            <table className="w-full text-xs text-left">
+              <thead className="sticky top-0 bg-[#0b0e11] text-[#848e9c] border-b border-[#2b3139]">
+                <tr>
+                  <th className="px-2 py-2 font-medium w-12 text-center">No.</th>
+                  <th className="px-3 py-2 font-medium">심볼</th>
+                  <th className="px-3 py-2 font-medium">방향</th>
+                  <th className="px-3 py-2 font-medium">진입가</th>
+                  <th className="px-3 py-2 font-medium">청산가</th>
+                  <th className="px-3 py-2 font-medium">수량</th>
+                  <th className="px-3 py-2 font-medium">명목</th>
+                  <th className="px-3 py-2 font-medium">실현 손익</th>
+                  <th className="px-3 py-2 font-medium">수익률</th>
+                  <th className="px-3 py-2 font-medium">승패</th>
+                  <th className="px-3 py-2 font-medium">청산 사유</th>
+                  <th className="px-3 py-2 font-medium">전략</th>
+                  <th className="px-3 py-2 font-medium">보유 시간</th>
+                  <th className="px-3 py-2 font-medium whitespace-nowrap">청산 시각</th>
+                </tr>
+              </thead>
+              <tbody className="text-[#eaecef]">
+                {pageItems.map((t, i) => {
+                  const isLong = t.side === 'LONG';
+                  return (
+                    <tr
+                      key={t.trade_id}
+                      onClick={() => openTick(t.correlation_id)}
+                      className={`border-b border-[#2b3139]/50 hover:bg-[#1e2329]/50 ${
+                        t.correlation_id ? 'cursor-pointer' : ''
                       }`}
                     >
-                      {isLong ? '롱' : '숏'}
-                    </td>
-                    <td className="px-3 py-2">{t.entry_price.toLocaleString()}</td>
-                    <td className="px-3 py-2">{t.exit_price.toLocaleString()}</td>
-                    <td className="px-3 py-2">{t.quantity}</td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {t.entry_notional_usdt != null
-                        ? t.entry_notional_usdt.toLocaleString()
-                        : '-'}
-                    </td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        t.realized_pnl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
-                      }`}
-                    >
-                      {t.realized_pnl >= 0 ? '+' : ''}
-                      {t.realized_pnl.toFixed(2)}
-                    </td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        t.pnl_pct >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
-                      }`}
-                    >
-                      {t.pnl_pct >= 0 ? '+' : ''}
-                      {t.pnl_pct.toFixed(2)}%
-                    </td>
-                    <td>
-                      <span
-                        className={`px-3 py-2 inline-block font-medium ${
-                          t.is_win ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                      <td className="px-2 py-2 text-center">
+                        <HistoryRowIndex page={page} index={i} />
+                      </td>
+                      <td className="px-3 py-2 font-medium">{t.symbol}</td>
+                      <td
+                        className={`px-3 py-2 font-medium ${
+                          isLong ? 'text-[#0ecb81]' : 'text-[#f6465d]'
                         }`}
                       >
-                        {t.is_win ? '승' : '패'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {formatExitReason(t.exit_reason)}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c] truncate max-w-[100px]">
-                      {t.strategy_id ?? '-'}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c]">
-                      {formatDuration(t.holding_seconds ?? t.hold_seconds)}
-                    </td>
-                    <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
-                      {new Date(t.closed_at).toLocaleString()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <Pager
-        page={page}
-        hasPrev={hasPrev}
-        hasNext={hasNext}
-        onPrev={goPrev}
-        onNext={goNext}
-        totalCount={totalCount}
-      />
-      {correlationId && (
-        <TickDetailModal correlationId={correlationId} onClose={closeTick} />
-      )}
+                        {isLong ? '롱' : '숏'}
+                      </td>
+                      <td className="px-3 py-2">{t.entry_price.toLocaleString()}</td>
+                      <td className="px-3 py-2">{t.exit_price.toLocaleString()}</td>
+                      <td className="px-3 py-2">{t.quantity}</td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {t.entry_notional_usdt != null
+                          ? t.entry_notional_usdt.toLocaleString()
+                          : '-'}
+                      </td>
+                      <td
+                        className={`px-3 py-2 font-medium ${
+                          t.realized_pnl >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                        }`}
+                      >
+                        {t.realized_pnl >= 0 ? '+' : ''}
+                        {t.realized_pnl.toFixed(2)}
+                      </td>
+                      <td
+                        className={`px-3 py-2 font-medium ${
+                          t.pnl_pct >= 0 ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                        }`}
+                      >
+                        {t.pnl_pct >= 0 ? '+' : ''}
+                        {t.pnl_pct.toFixed(2)}%
+                      </td>
+                      <td>
+                        <span
+                          className={`px-3 py-2 inline-block font-medium ${
+                            t.is_win ? 'text-[#0ecb81]' : 'text-[#f6465d]'
+                          }`}
+                        >
+                          {t.is_win ? '승' : '패'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {formatExitReason(t.exit_reason)}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c] truncate max-w-[100px]">
+                        {t.strategy_id ?? '-'}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c]">
+                        {formatDuration(t.holding_seconds ?? t.hold_seconds)}
+                      </td>
+                      <td className="px-3 py-2 text-[#848e9c] whitespace-nowrap">
+                        {new Date(t.closed_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <Pager
+          page={page}
+          hasPrev={hasPrev}
+          hasNext={hasNext}
+          onPrev={goPrev}
+          onNext={goNext}
+          totalCount={totalCount}
+        />
+        {correlationId && (
+          <TickDetailModal correlationId={correlationId} onClose={closeTick} />
+        )}
+      </HistoryPanelFrame>
     </div>
   );
 };
