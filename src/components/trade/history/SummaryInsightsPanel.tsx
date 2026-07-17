@@ -29,7 +29,7 @@ const EXIT_COLORS = ['#f0b90b', '#0ecb81', '#f6465d', '#3b82f6', '#a855f7', '#84
 const CHART_CARD_HOVER =
   'transition-all duration-200 ease-out hover:-translate-y-0.5 hover:scale-[1.012] hover:border-[#4a5160] hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)] will-change-transform';
 
-/** 파이 조각 호버 시 살짝 키움 */
+/** Recharts 3: activeShape만으로 호버 조각 확대 (activeIndex 제거됨) */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const renderActivePieShape = (props: any) => {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
@@ -141,8 +141,6 @@ const SummaryInsightsPanel: React.FC = () => {
   const [trades, setTrades] = useState<TradeHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [winLossActive, setWinLossActive] = useState<number | undefined>();
-  const [exitActive, setExitActive] = useState<number | undefined>();
 
   useEffect(() => {
     let cancelled = false;
@@ -316,10 +314,7 @@ const SummaryInsightsPanel: React.FC = () => {
                       outerRadius={54}
                       stroke="#1a1f27"
                       strokeWidth={2}
-                      activeIndex={winLossActive}
                       activeShape={renderActivePieShape}
-                      onMouseEnter={(_, index) => setWinLossActive(index)}
-                      onMouseLeave={() => setWinLossActive(undefined)}
                     >
                       {winLossData.map((d) => (
                         <Cell key={d.name} fill={d.color} />
@@ -375,10 +370,7 @@ const SummaryInsightsPanel: React.FC = () => {
                       outerRadius={54}
                       stroke="#1a1f27"
                       strokeWidth={2}
-                      activeIndex={exitActive}
                       activeShape={renderActivePieShape}
-                      onMouseEnter={(_, index) => setExitActive(index)}
-                      onMouseLeave={() => setExitActive(undefined)}
                     >
                       {exitBreakdown.map((d) => (
                         <Cell key={d.reason} fill={d.color} />
