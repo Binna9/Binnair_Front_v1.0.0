@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   // 백엔드 API 기본 URL (환경변수가 없으면 기본값 사용)
-  const apiBaseUrl = env.VITE_API_BASE_URL || 'http://localhost:8080';
+  const apiBaseUrl = env.VITE_API_BASE_URL || 'http://127.0.0.1:8080';
 
   // 트레이딩 FastAPI (history/control/live)
   const tradingApiTarget = env.VITE_TRADING_API_TARGET || 'http://127.0.0.1:8000';

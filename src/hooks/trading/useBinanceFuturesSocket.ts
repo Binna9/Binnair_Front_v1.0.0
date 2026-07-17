@@ -1,8 +1,13 @@
 import { useEffect } from 'react';
-import { useFuturesMarketStore } from '@/store/trading/futuresMarketStore';
+import {
+  RecentTrade,
+  useFuturesMarketStore,
+} from '@/store/trading/futuresMarketStore';
 
-const DEPTH_LEVELS = 10;
+const DEPTH_LEVELS = 8;
 const TICKER_POLL_MS = 2000;
+const TRADES_POLL_MS = 2000;
+const RECENT_TRADES_LIMIT = 40;
 
 function buildOrderBookSide(levels: unknown, count: number) {
   const rows = (Array.isArray(levels) ? levels : [])
@@ -19,16 +24,38 @@ function buildOrderBookSide(levels: unknown, count: number) {
   });
 }
 
+function mapRestTrades(
+  rows: Array<{
+    id: number;
+    price: string;
+    qty: string;
+    time: number;
+    isBuyerMaker: boolean;
+  }>
+): RecentTrade[] {
+  // REST는 오래된→최신. UI는 최신 위.
+  return [...rows].reverse().map((t) => ({
+    id: `t-${t.id}`,
+    price: Number(t.price),
+    qty: Number(t.qty),
+    time: t.time,
+    isBuyerMaker: Boolean(t.isBuyerMaker),
+  }));
+}
+
 /**
  * 선택된 심볼의 바이낸스 선물 실시간 데이터를 futuresMarketStore에 반영.
- * - 호가(depth20): WebSocket 구독 (정상 동작 확인됨)
- * - 마크가격/펀딩비: `@markPrice` WS 스트림이 메시지를 보내지 않아 REST(`/fapi/v1/premiumIndex`) 폴링으로 대체
- * - 현재가/24h 통계(ticker)는 심볼 목록 전체를 다루는 `useAllSymbolsTicker`가 담당
+ * - 호가 + 체결: combined stream 1개 (depth20 + trade)
+ * - 최근 체결: REST 폴링 병합(현행화 보장) + WS 즉시 반영
+ * - 마크가격/펀딩비: REST premiumIndex 폴링
  */
 export function useBinanceFuturesSocket(symbol: string) {
   const setMarkPrice = useFuturesMarketStore((s) => s.setMarkPrice);
   const setOrderBook = useFuturesMarketStore((s) => s.setOrderBook);
+  const mergeRecentTrades = useFuturesMarketStore((s) => s.mergeRecentTrades);
+  const pushRecentTrade = useFuturesMarketStore((s) => s.pushRecentTrade);
 
+  // 호가 + 최근 체결 combined WebSocket
   useEffect(() => {
     if (!symbol) return;
 
@@ -40,24 +67,43 @@ export function useBinanceFuturesSocket(symbol: string) {
     const connect = () => {
       if (cancelled) return;
 
+      // trade = 개별 체결(현행화에 유리). aggTrade보다 id/필드가 REST와 맞추기 쉬움
+      const streams = `${lower}@depth20@100ms/${lower}@trade`;
       socket = new WebSocket(
-        `wss://fstream.binance.com/ws/${lower}@depth20@100ms`
+        `wss://fstream.binance.com/stream?streams=${streams}`
       );
 
       socket.onmessage = (event: MessageEvent<string>) => {
         if (cancelled) return;
 
-        let data: { a?: unknown; b?: unknown };
+        let msg: { stream?: string; data?: Record<string, unknown> };
         try {
-          data = JSON.parse(event.data);
+          msg = JSON.parse(event.data);
         } catch {
           return;
         }
 
-        setOrderBook(symbol, {
-          asks: buildOrderBookSide(data.a, DEPTH_LEVELS).reverse(),
-          bids: buildOrderBookSide(data.b, DEPTH_LEVELS),
-        });
+        const stream = msg.stream ?? '';
+        const data = msg.data;
+        if (!data) return;
+
+        if (stream.includes('@depth')) {
+          setOrderBook(symbol, {
+            asks: buildOrderBookSide(data.a, DEPTH_LEVELS).reverse(),
+            bids: buildOrderBookSide(data.b, DEPTH_LEVELS),
+          });
+          return;
+        }
+
+        if (stream.includes('@trade')) {
+          pushRecentTrade(symbol, {
+            id: `t-${String(data.t)}`,
+            price: Number(data.p),
+            qty: Number(data.q),
+            time: Number(data.T ?? data.E),
+            isBuyerMaker: Boolean(data.m),
+          });
+        }
       };
 
       socket.onclose = () => {
@@ -88,7 +134,36 @@ export function useBinanceFuturesSocket(symbol: string) {
         }
       }
     };
-  }, [symbol, setOrderBook]);
+  }, [symbol, setOrderBook, pushRecentTrade]);
+
+  // 최근 체결 REST 폴링 — WS가 끊겨도 목록이 갱신되도록 merge
+  useEffect(() => {
+    if (!symbol) return;
+
+    let cancelled = false;
+
+    const pull = async () => {
+      try {
+        const res = await fetch(
+          `https://fapi.binance.com/fapi/v1/trades?symbol=${symbol}&limit=${RECENT_TRADES_LIMIT}`
+        );
+        if (cancelled || !res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows)) return;
+        mergeRecentTrades(symbol, mapRestTrades(rows));
+      } catch {
+        // 다음 폴링에서 재시도
+      }
+    };
+
+    pull();
+    const id = window.setInterval(pull, TRADES_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [symbol, mergeRecentTrades]);
 
   useEffect(() => {
     if (!symbol) return;
