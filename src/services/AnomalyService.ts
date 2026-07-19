@@ -11,31 +11,25 @@ import type {
   AnomalyScoreTopResponse,
 } from '@/types/AnomalyListTypes';
 
+type AnomalyRequestOptions = {
+  signal?: AbortSignal;
+};
+
+/** 실시간 폴링은 전역 로딩 오버레이에서 제외 */
+const POLL_REQUEST = { skipGlobalLoading: true } as const;
+
 /**
- * 이상탐지 관련 서비스
+ * 이상탐지 REST 서비스.
+ * 백엔드 Writer가 Redis 스냅샷을 갱신하며, FE는 기존 REST URL만 폴링한다.
+ * POST /anomaly/scores/detect 는 410 Gone — 호출하지 않는다.
  */
 export const anomalyService = {
   /**
-   * 차트용 시계열 조회 API
-   * `core.candles`의 OHLCV(확정봉) + 동일 `ts`의 `core.anomaly_scores`(score/z_*)를 합쳐서 한 배열(`points`)로 내려줍니다.
-   * 
-   * @param request - 요청 파라미터
-   * @returns 이상탐지 점수 시계열 응답
-   * 
-   * @example
-   * ```typescript
-   * const response = await anomalyService.getSeries({
-   *   venueId: 1,
-   *   instrumentId: 100,
-   *   from: '2026-02-06T00:00:00Z',
-   *   to: '2026-02-06T23:59:59Z',
-   *   timeframe: '5m',
-   *   scoreVersion: 'z_v1'
-   * });
-   * ```
+   * 차트용 시계열 (Redis series 스냅샷)
    */
   getSeries: async (
-    request: AnomalyScoreSeriesRequest
+    request: AnomalyScoreSeriesRequest,
+    options?: AnomalyRequestOptions
   ): Promise<AnomalyScoreSeriesResponse> => {
     const { venueId, instrumentId, from, to, timeframe, scoreVersion, windowDays } = request;
 
@@ -44,7 +38,6 @@ export const anomalyService = {
       to,
     };
 
-    // 선택적 파라미터 추가
     if (timeframe) {
       params.timeframe = timeframe;
     }
@@ -59,6 +52,8 @@ export const anomalyService = {
       `/anomaly/scores/${venueId}/${instrumentId}/series`,
       {
         params,
+        signal: options?.signal,
+        ...POLL_REQUEST,
       }
     );
 
@@ -66,13 +61,12 @@ export const anomalyService = {
   },
 
   /**
-   * 최종 평가 API
-   * windowDays 30/60/90에 대한 데이터를 종합하여 최종 평가를 수행합니다.
-   *
-   * @param request - 요청 파라미터
-   * @returns 최종 평가 응답
+   * 최종 평가 배지 (Redis final 스냅샷)
    */
-  getFinal: async (request: AnomalyScoreFinalRequest): Promise<AnomalyScoreFinalResponse> => {
+  getFinal: async (
+    request: AnomalyScoreFinalRequest,
+    options?: AnomalyRequestOptions
+  ): Promise<AnomalyScoreFinalResponse> => {
     const { venueId, instrumentId, timeframe, scoreVersion, mode, ts } = request;
 
     const params: Record<string, string> = {};
@@ -92,7 +86,7 @@ export const anomalyService = {
 
     const response = await apiClient.get<AnomalyScoreFinalResponse>(
       `/anomaly/scores/${venueId}/${instrumentId}/final`,
-      { params }
+      { params, signal: options?.signal, ...POLL_REQUEST }
     );
 
     return response.data;
@@ -101,10 +95,15 @@ export const anomalyService = {
   /**
    * 지금 가장 이상한 종목 Top N (종합 이상, finalScore 기준)
    */
-  getTop: async (request?: AnomalyScoreTopRequest): Promise<AnomalyScoreTopResponse> => {
+  getTop: async (
+    request?: AnomalyScoreTopRequest,
+    options?: AnomalyRequestOptions
+  ): Promise<AnomalyScoreTopResponse> => {
     const params = buildTopParams(request);
     const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top', {
       params,
+      signal: options?.signal,
+      ...POLL_REQUEST,
     });
     return response.data;
   },
@@ -112,10 +111,15 @@ export const anomalyService = {
   /**
    * 거래량 이상 Top N (z_vol 기반 정렬)
    */
-  getTopVol: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+  getTopVol: async (
+    request?: AnomalyScoreTopFilterRequest,
+    options?: AnomalyRequestOptions
+  ): Promise<AnomalyScoreTopResponse> => {
     const params = buildTopFilterParams(request);
     const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/vol', {
       params,
+      signal: options?.signal,
+      ...POLL_REQUEST,
     });
     return response.data;
   },
@@ -123,10 +127,15 @@ export const anomalyService = {
   /**
    * 변동폭 이상 Top N (z_rng 기반 정렬)
    */
-  getTopRng: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+  getTopRng: async (
+    request?: AnomalyScoreTopFilterRequest,
+    options?: AnomalyRequestOptions
+  ): Promise<AnomalyScoreTopResponse> => {
     const params = buildTopFilterParams(request);
     const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/rng', {
       params,
+      signal: options?.signal,
+      ...POLL_REQUEST,
     });
     return response.data;
   },
@@ -134,10 +143,15 @@ export const anomalyService = {
   /**
    * 급등/급락 Top N (|z_ret| 기반 정렬 + direction)
    */
-  getTopRet: async (request?: AnomalyScoreTopFilterRequest): Promise<AnomalyScoreTopResponse> => {
+  getTopRet: async (
+    request?: AnomalyScoreTopFilterRequest,
+    options?: AnomalyRequestOptions
+  ): Promise<AnomalyScoreTopResponse> => {
     const params = buildTopFilterParams(request);
     const response = await apiClient.get<AnomalyScoreTopResponse>('/anomaly/scores/top/ret', {
       params,
+      signal: options?.signal,
+      ...POLL_REQUEST,
     });
     return response.data;
   },
@@ -163,4 +177,3 @@ function buildTopFilterParams(
 }
 
 export default anomalyService;
-

@@ -1,11 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, BarChart2, Gauge, HelpCircle, Info, Radar, TrendingUp } from 'lucide-react';
+import { Activity, BarChart2, Gauge, Info, Radar, TrendingUp } from 'lucide-react';
 import anomalyService from '@/services/AnomalyService';
 import type {
   AnomalyScoreTopResponse,
   AnomalyScoreTopItem,
 } from '@/types/AnomalyListTypes';
+import { useAnomalyPolling } from '@/hooks/anomaly/useAnomalyPolling';
+import {
+  ANOMALY_POLL_INTERVAL_MS,
+  ANOMALY_SCORE_TIMEFRAME,
+  ANOMALY_WARMING_MESSAGE,
+  getAnomalyErrorMessage,
+  isAnomalyNotReady,
+} from '@/utils/anomalyRealtime';
+
+type TopListStatus = 'loading' | 'ready' | 'warming' | 'error';
 
 const CARD_ICONS = {
   agg: Activity,
@@ -41,58 +51,71 @@ const CARD_CONFIG = {
   },
 } as const;
 
+/** API score 단위(백엔드 스냅샷 키). UI에는 노출하지 않음 — 화면은 2초 폴링으로 최신 스냅샷을 표시 */
 const MAIN_TOP_DEFAULTS = {
-  timeframe: '5m',
+  timeframe: ANOMALY_SCORE_TIMEFRAME,
   limit: 10,
   deltaBars: 6,
 } as const;
 
-const MODE_DESC: Record<string, string> = {
-  consensus: '30·60·90일 점수를 가중 평균하여 합성. 변동을 완화하고 안정적인 이상도 산출.',
-  max: '30·60·90일 점수 중 최댓값 사용. 극단적 이상을 민감하게 포착.',
-};
-
-const DRIVER_DESC: Record<string, string> = {
-  VOL: '거래량(Volume) 이상이 종합 점수에 가장 크게 기여했습니다. |z_vol| 기준.',
-  RET: '수익률/급등급락(Return) 이상이 종합 점수에 가장 크게 기여했습니다. |z_ret| 기준.',
-  RNG: '변동폭(Range) 이상이 종합 점수에 가장 크게 기여했습니다. |z_rng| 기준.',
-};
-
 const COL_WIDTH = {
   rank: 16,
-  barHint: 56,
+  barHint: 88,
   bar: 48,
   score: 40,
   meta: 52,
 } as const;
 
-function buildFetchConfig(mode: 'consensus' | 'max') {
+/** 종합 이상(AGG): 종합 점수에 가장 크게 기여한(가장 이상했던) 지표 */
+const DRIVER_LABEL: Record<string, string> = {
+  VOL: '주원인:거래량',
+  RET: '주원인:수익률',
+  RNG: '주원인:변동폭',
+};
+
+function buildFetchConfig(mode: 'consensus' | 'max', signal?: AbortSignal) {
   const base = { ...MAIN_TOP_DEFAULTS, mode };
+  const opts = signal ? { signal } : undefined;
   return [
-    { key: 'agg' as const, title: '종합 이상', sub: 'finalScore (mode 합성)', fetch: () => anomalyService.getTop(base) },
-    { key: 'vol' as const, title: '거래량 이상', sub: 'metricValue (|z_vol|)', fetch: () => anomalyService.getTopVol(base) },
-    { key: 'rng' as const, title: '변동폭 이상', sub: 'metricValue (|z_rng|)', fetch: () => anomalyService.getTopRng(base) },
-    { key: 'ret' as const, title: '급등/급락', sub: 'metricValue (|z_ret|) + direction', fetch: () => anomalyService.getTopRet(base) },
+    {
+      key: 'agg' as const,
+      title: '종합 이상',
+      sub: 'finalScore (mode 합성)',
+      desc: '30·60·90일 점수를 mode로 합성한 종합 이상도입니다.',
+      fetch: () => anomalyService.getTop(base, opts),
+    },
+    {
+      key: 'vol' as const,
+      title: '거래량 이상',
+      sub: 'metricValue (|z_vol|)',
+      desc: '거래량(log volume)의 Z-Score 절댓값입니다. 평소보다 거래가 얼마나 튀었는지 봅니다.',
+      fetch: () => anomalyService.getTopVol(base, opts),
+    },
+    {
+      key: 'rng' as const,
+      title: '변동폭 이상',
+      sub: 'metricValue (|z_rng|)',
+      desc: '고가·저가 범위(range)의 Z-Score 절댓값입니다. 변동폭이 평소보다 큰지 봅니다.',
+      fetch: () => anomalyService.getTopRng(base, opts),
+    },
+    {
+      key: 'ret' as const,
+      title: '급등/급락',
+      sub: 'metricValue (|z_ret|) + direction',
+      desc: '수익률(log return) Z-Score 절댓값과 방향(UP/DOWN)입니다. 급등·급락 크기를 봅니다.',
+      fetch: () => anomalyService.getTopRet(base, opts),
+    },
   ] as const;
 }
 
 type CardKey = 'agg' | 'vol' | 'rng' | 'ret';
 
-function formatTsFull(ts: string | undefined): string {
-  if (!ts) return '--:--:--';
-  try {
-    return new Date(ts).toLocaleString('ko-KR', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-    });
-  } catch { return ts; }
-}
-
-function getMetricLevel(val: number | null): 'low' | 'mid' | 'high' | 'extreme' {
-  if (val == null || val < 1.5) return 'low';
-  if (val < 2.5) return 'mid';
-  if (val < 4.0) return 'high';
-  return 'extreme';
+function formatFetchedAt(d: Date | null): string {
+  if (!d) return '--:--:--';
+  return d.toLocaleString('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  });
 }
 
 function ScoreBar({ val, max = 5 }: { val: number | null; max?: number }) {
@@ -134,25 +157,6 @@ function FinalLevelPill({ level, showNormal = false }: { level: string; showNorm
   );
 }
 
-function DriverWithTooltip({ driver }: { driver: string }) {
-  const desc = DRIVER_DESC[driver.toUpperCase()] ?? `${driver} 지표가 종합 점수에 기여했습니다.`;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-      <span style={{ fontSize: 9, color: '#6b7280' }}>{driver}</span>
-      <span title={desc} style={{ display: 'inline-flex', cursor: 'help' }}>
-        <HelpCircle size={10} color="#94a3b8" strokeWidth={2} />
-      </span>
-    </span>
-  );
-}
-
-const DIRECTION_DESC: Record<string, string> = {
-  UP: '급등 방향: 수익률이 급격히 상승한 이상 구간입니다.',
-  DOWN: '급락 방향: 수익률이 급격히 하락한 이상 구간입니다.',
-  MIXED: '상하 혼재: 상승과 하락이 혼재된 구간입니다.',
-  FLAT: '횡보: 변동이 미미한 구간입니다.',
-};
-
 function DirectionChip({ direction }: { direction?: string }) {
   if (!direction) return null;
   const map: Record<string, { icon: string; color: string }> = {
@@ -162,10 +166,8 @@ function DirectionChip({ direction }: { direction?: string }) {
     FLAT:  { icon: '─', color: '#94a3b8' },
   };
   const m = map[direction] ?? { icon: direction, color: '#9ca3af' };
-  const desc = DIRECTION_DESC[direction];
   return (
     <span
-      title={desc}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -174,11 +176,9 @@ function DirectionChip({ direction }: { direction?: string }) {
         fontSize: 10,
         fontWeight: 700,
         flexShrink: 0,
-        cursor: desc ? 'help' : 'default',
       }}
     >
       {m.icon} {direction}
-      {desc && <HelpCircle size={9} color="#94a3b8" strokeWidth={2} style={{ flexShrink: 0 }} />}
     </span>
   );
 }
@@ -284,7 +284,9 @@ function CardRow({ keyType, item, onClick, accent }: {
       <div style={{ width: COL_WIDTH.barHint, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
         {keyType === 'ret' && <DirectionChip direction={item.direction} />}
         {keyType === 'agg' && item.driver && (
-          <DriverWithTooltip driver={item.driver} />
+          <span style={{ fontSize: 9, color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>
+            {DRIVER_LABEL[item.driver.toUpperCase()] ?? item.driver}
+          </span>
         )}
       </div>
 
@@ -313,65 +315,61 @@ export default function AnomalyTopList() {
   const [topLists, setTopLists] = useState<Record<string, AnomalyScoreTopResponse | null>>({
     agg: null, vol: null, rng: null, ret: null,
   });
+  const [status, setStatus] = useState<TopListStatus>('loading');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  /** API 응답의 봉 ts가 아니라, 폴링으로 데이터를 받은 시각 (2초마다 갱신) */
+  const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
+  const hasDataRef = useRef(false);
 
-  // 초기 로드 + mode 변경 시
-  useEffect(() => {
-    const config = buildFetchConfig(mode);
-    const loadTopLists = async () => {
-      const results = await Promise.allSettled(
-        config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
-      );
-      const next: Record<string, AnomalyScoreTopResponse | null> = {};
-      results.forEach((r, i) => {
-        const key = config[i].key;
-        next[key] = r.status === 'fulfilled' ? r.value.data : null;
-      });
-      setTopLists(next);
-    };
-    loadTopLists();
+  const pollTopLists = useCallback(async (signal: AbortSignal) => {
+    const config = buildFetchConfig(mode, signal);
+    const results = await Promise.allSettled(
+      config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
+    );
+
+    if (signal.aborted) return;
+
+    const errors: unknown[] = [];
+    let fulfilledCount = 0;
+    const patch: Partial<Record<CardKey, AnomalyScoreTopResponse>> = {};
+
+    results.forEach((r, i) => {
+      const key = config[i].key;
+      if (r.status === 'fulfilled') {
+        patch[key] = r.value.data;
+        fulfilledCount += 1;
+      } else {
+        errors.push(r.reason);
+      }
+    });
+
+    if (fulfilledCount > 0) {
+      setTopLists((prev) => ({ ...prev, ...patch }));
+      setFetchedAt(new Date());
+    }
+
+    if (fulfilledCount === 0) {
+      const allNotReady = errors.length > 0 && errors.every((e) => isAnomalyNotReady(e));
+      if (allNotReady) {
+        setStatus('warming');
+        setErrorMessage(null);
+        return;
+      }
+      if (!hasDataRef.current) {
+        setStatus('error');
+        setErrorMessage(getAnomalyErrorMessage(errors[0]));
+      }
+      return;
+    }
+
+    hasDataRef.current = true;
+    setStatus('ready');
+    setErrorMessage(null);
   }, [mode]);
 
-  // 5분마다 리프레시 (:36, :41, :46 등 현재 시각에 비례한 경계에 맞춤)
-  useEffect(() => {
-    const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5분
-    const BOUNDARY_OFFSET_MIN = 1; // :01, :06, :11, :16, :21, :26, :31, :36, :41, :46, :51, :56
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    const loadForRefresh = () => {
-      const config = buildFetchConfig(mode);
-      Promise.allSettled(
-        config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
-      ).then((results) => {
-        const next: Record<string, AnomalyScoreTopResponse | null> = {};
-        config.forEach((c, i) => {
-          next[c.key] = results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<{ key: string; data: AnomalyScoreTopResponse }>).value.data : null;
-        });
-        setTopLists(next);
-      });
-    };
-
-    // 다음 경계(:36, :41, :46...)까지 대기 후 첫 리프레시, 이후 5분 간격 반복
-    const d = new Date();
-    const minute = d.getMinutes();
-    const second = d.getSeconds();
-    const ms = d.getMilliseconds();
-    const currentMsIntoPeriod = ((minute - BOUNDARY_OFFSET_MIN + 60) % 5) * 60000 + second * 1000 + ms;
-    const msUntilNext = REFRESH_INTERVAL_MS - currentMsIntoPeriod;
-    const initialDelay = msUntilNext <= 0 ? REFRESH_INTERVAL_MS : msUntilNext;
-
-    const timeoutId = setTimeout(() => {
-      loadForRefresh();
-      intervalId = setInterval(loadForRefresh, REFRESH_INTERVAL_MS);
-    }, initialDelay);
-
-    return () => {
-      clearTimeout(timeoutId);
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [mode]);
+  useAnomalyPolling(pollTopLists, [mode]);
 
   const topListConfig = buildFetchConfig(mode);
-  const displayTs = topLists.agg?.ts ?? topLists.vol?.ts ?? topLists.rng?.ts ?? topLists.ret?.ts;
 
   return (
     <div style={{
@@ -409,97 +407,99 @@ export default function AnomalyTopList() {
               <Radar size={20} color="#64748b" strokeWidth={2.5} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 10, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>
+              <span style={{ fontSize: 12, color: '#475569', letterSpacing: '0.15em', textTransform: 'uppercase', fontWeight: 600 }}>
                 이상 탐지 리스트
               </span>
-              <span style={{ fontSize: 9, color: '#64748b', letterSpacing: '0.03em' }}>
+              <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.03em' }}>
                 통계적 표준화 기반 이상 탐지 (Multi-Window Z-Score Engine)
               </span>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 10, color: '#475569', fontWeight: 600, letterSpacing: '0.04em' }}>
-            현재 데이터 기준
-          </span>
-          <span
-            title="5분봉"
-            style={{
-              fontSize: 10, padding: '3px 8px', borderRadius: 4,
-              background: 'rgba(100,116,139,0.08)',
-              border: '1px solid rgba(100,116,139,0.2)',
-              color: '#475569',
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-            }}
-          >
-            5m
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {(['consensus', 'max'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                title={MODE_DESC[m]}
-                style={{
-                  fontSize: 10,
-                  padding: '3px 8px',
-                  borderRadius: 4,
-                  fontWeight: 600,
-                  letterSpacing: '0.05em',
-                  border: `1px solid ${mode === m ? 'rgba(100,116,139,0.5)' : 'rgba(100,116,139,0.2)'}`,
-                  background: mode === m ? 'rgba(100,116,139,0.15)' : 'rgba(100,116,139,0.08)',
-                  color: mode === m ? '#334155' : '#64748b',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-              >
-                {m}
-                <HelpCircle size={10} color="#94a3b8" strokeWidth={2} />
-              </button>
-            ))}
-          </div>
-          <span
-            title="6개 봉(캔들) 전 대비 변화량"
-            style={{
-              fontSize: 10, padding: '3px 8px', borderRadius: 4,
-              background: 'rgba(100,116,139,0.08)',
-              border: '1px solid rgba(100,116,139,0.2)',
-              color: '#475569',
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-            }}
-          >
-            Δ 6봉
-          </span>
+            <span
+              style={{
+                fontSize: 10, padding: '3px 8px', borderRadius: 4,
+                background: 'rgba(16,185,129,0.1)',
+                border: '1px solid rgba(16,185,129,0.35)',
+                color: '#047857',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+              }}
+            >
+              LIVE · {ANOMALY_POLL_INTERVAL_MS / 1000}s
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {(['consensus', 'max'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  style={{
+                    fontSize: 10,
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    border: `1px solid ${mode === m ? 'rgba(100,116,139,0.5)' : 'rgba(100,116,139,0.2)'}`,
+                    background: mode === m ? 'rgba(100,116,139,0.15)' : 'rgba(100,116,139,0.08)',
+                    color: mode === m ? '#334155' : '#64748b',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* 2행: 설명 (전체 폭 → 한 줄) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', paddingLeft: 52 }}>
-          <Info size={12} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
-          <span style={{ fontSize: 10, color: '#64748b', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-            30·60·90일 통계 분포를 기준으로 가격 수익률·거래량·변동폭을 Z-Score로 표준화하여, 다중 기간 합성 점수로 이상도를 측정합니다.
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%', paddingLeft: 52 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Info size={13} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.02em' }}>
+              30·60·90일 통계 분포를 기준으로 가격 수익률·거래량·변동폭을 Z-Score로 표준화하여, 다중 기간 합성 점수로 이상도를 측정합니다.
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Info size={13} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
+            <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.02em' }}>
+              consensus=겹치는 구간 합의 max=세 값 중 최댓값.
+            </span>
+          </div>
         </div>
 
-        {/* 3행: 데이터 기준 시각 */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 52 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, paddingLeft: 52, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em' }}>
-            데이터 기준 시각
+            갱신 시각
           </span>
           <span style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em' }}>
-            {formatTsFull(displayTs)}
+            {formatFetchedAt(fetchedAt)}
           </span>
+          {status === 'warming' && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: '#b45309',
+              background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.35)',
+              padding: '2px 8px', borderRadius: 4, letterSpacing: '0.03em',
+            }}>
+              {ANOMALY_WARMING_MESSAGE}
+            </span>
+          )}
+          {status === 'error' && errorMessage && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: '#dc2626',
+              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.3)',
+              padding: '2px 8px', borderRadius: 4,
+            }}>
+              {errorMessage}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Cards Grid */}
       <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-        {topListConfig.map(({ key, title, sub }) => {
+        {topListConfig.map(({ key, title, sub, desc }) => {
           const cfg = CARD_CONFIG[key];
           const Icon = CARD_ICONS[key];
           const items = topLists[key]?.items ?? [];
@@ -527,37 +527,45 @@ export default function AnomalyTopList() {
               <div style={{
                 padding: '12px 14px 10px',
                 borderBottom: '1px solid rgba(0,0,0,0.06)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
                 background: 'rgba(100,116,139,0.06)',
               }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  background: 'rgba(100,116,139,0.08)',
-                  border: '1px solid rgba(100,116,139,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <Icon size={16} color="#64748b" strokeWidth={2.5} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{
-                      fontSize: 9, fontWeight: 800, letterSpacing: '0.12em',
-                      color: '#64748b', textTransform: 'uppercase',
-                      background: 'rgba(100,116,139,0.12)', padding: '2px 6px', borderRadius: 3,
-                    }}>{cfg.label}</span>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#374151' }}>{title}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: 'rgba(100,116,139,0.08)',
+                    border: '1px solid rgba(100,116,139,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Icon size={16} color="#64748b" strokeWidth={2.5} />
                   </div>
-                  <div style={{ fontSize: 9, color: '#4b5563', marginTop: 2, letterSpacing: '0.03em' }}>{sub}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{
+                        fontSize: 9, fontWeight: 800, letterSpacing: '0.12em',
+                        color: '#64748b', textTransform: 'uppercase',
+                        background: 'rgba(100,116,139,0.12)', padding: '2px 6px', borderRadius: 3,
+                      }}>{cfg.label}</span>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#374151' }}>{title}</span>
+                    </div>
+                    <div style={{ fontSize: 9, color: '#4b5563', marginTop: 2, letterSpacing: '0.03em' }}>{sub}</div>
+                  </div>
+                  <span style={{
+                    fontSize: 12, fontWeight: 700, color: '#64748b',
+                    letterSpacing: '0.04em',
+                  }}>
+                    TOP 5
+                  </span>
                 </div>
-                <span style={{
-                  fontSize: 12, fontWeight: 700, color: '#64748b',
-                  letterSpacing: '0.04em',
+                <div style={{
+                  marginTop: 8,
+                  fontSize: 11,
+                  color: '#64748b',
+                  lineHeight: 1.45,
+                  letterSpacing: '0.01em',
                 }}>
-                  TOP 5
-                </span>
+                  {desc}
+                </div>
               </div>
 
               {/* Column header */}
@@ -567,11 +575,11 @@ export default function AnomalyTopList() {
                 borderBottom: '1px solid rgba(0,0,0,0.06)',
               }}>
                 <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.rank, textAlign: 'right' }}>#</span>
-                <span style={{ fontSize: 9, color: '#6b7280', flex: 1 }}>SYMBOL</span>
+                <span style={{ fontSize: 9, color: '#6b7280', flex: 1 }}>종목</span>
                 <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.barHint }} />
-                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.bar }}>BAR</span>
-                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.score, textAlign: 'right' }}>SCORE</span>
-                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.meta, textAlign: 'right' }}>META</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.bar }}>강도</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.score, textAlign: 'right' }}>점수</span>
+                <span style={{ fontSize: 9, color: '#6b7280', width: COL_WIDTH.meta, textAlign: 'right' }}>변화</span>
               </div>
 
               {/* Rows */}
@@ -591,15 +599,37 @@ export default function AnomalyTopList() {
                 ) : (
                   <div style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    height: 150, flexDirection: 'column', gap: 8,
+                    height: 150, flexDirection: 'column', gap: 8, padding: '0 16px', textAlign: 'center',
                   }}>
-                    <div style={{
-                      width: 24, height: 24, borderRadius: '50%',
-                      border: '2px solid rgba(100,116,139,0.3)',
-                      borderTopColor: '#64748b',
-                      animation: 'spin 1s linear infinite',
-                    }} />
-                    <span style={{ fontSize: 10, color: '#6b7280' }}>Loading...</span>
+                    {status === 'warming' ? (
+                      <>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#b45309' }}>
+                          {ANOMALY_WARMING_MESSAGE}
+                        </span>
+                        <span style={{ fontSize: 10, color: '#6b7280' }}>
+                          Writer 워밍업이 끝나면 자동으로 갱신됩니다.
+                        </span>
+                      </>
+                    ) : status === 'error' ? (
+                      <>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#dc2626' }}>
+                          불러오지 못했습니다
+                        </span>
+                        <span style={{ fontSize: 10, color: '#6b7280' }}>
+                          {errorMessage ?? '잠시 후 다시 시도합니다.'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          width: 24, height: 24, borderRadius: '50%',
+                          border: '2px solid rgba(100,116,139,0.3)',
+                          borderTopColor: '#64748b',
+                          animation: 'spin 1s linear infinite',
+                        }} />
+                        <span style={{ fontSize: 10, color: '#6b7280' }}>Loading...</span>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
