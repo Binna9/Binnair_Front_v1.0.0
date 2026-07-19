@@ -4,6 +4,14 @@ import { setCredentials, logout } from '@/store/slices/authSlice';
 import { useNotification } from '@/context/NotificationContext';
 import { useEffect } from 'react';
 import { apiRequestFinished, apiRequestStarted } from '@/store/slices/uiSlice';
+import { isAnomalyRequestUrl } from '@/utils/anomalyRealtime';
+
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    /** true면 GlobalLoadingOverlay apiInFlight 카운트에서 제외 (폴링용) */
+    skipGlobalLoading?: boolean;
+  }
+}
 
 // 기존 apiClient 유지
 const apiClient = axios.create({
@@ -17,7 +25,9 @@ const apiClient = axios.create({
 // ✅ 요청 인터셉터: 모든 요청에 accessToken 자동 추가
 apiClient.interceptors.request.use(
   (config) => {
-    store.dispatch(apiRequestStarted());
+    if (!config.skipGlobalLoading) {
+      store.dispatch(apiRequestStarted());
+    }
     const { accessToken } = store.getState().auth;
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -25,7 +35,9 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    store.dispatch(apiRequestFinished());
+    if (!error?.config?.skipGlobalLoading) {
+      store.dispatch(apiRequestFinished());
+    }
     return Promise.reject(error);
   }
 );
@@ -34,13 +46,17 @@ export const setupNotificationInterceptor = (showToast) => {
   // 응답 인터셉터에 에러 표시 기능 추가
   const responseInterceptor = apiClient.interceptors.response.use(
     (response) => {
-      store.dispatch(apiRequestFinished());
+      if (!response.config.skipGlobalLoading) {
+        store.dispatch(apiRequestFinished());
+      }
       return response;
     },
     async (error) => {
       // 기본적으로 “요청 1개 종료”
       // - 401 refresh retry는 apiClient(originalRequest)에서 다시 started/finished로 카운트됨
-      store.dispatch(apiRequestFinished());
+      if (!error?.config?.skipGlobalLoading) {
+        store.dispatch(apiRequestFinished());
+      }
       const originalRequest = error.config;
 
       // ✅ accessToken 만료 (401 에러) 시 처리
@@ -79,6 +95,12 @@ export const setupNotificationInterceptor = (showToast) => {
       }
 
       if (originalRequest.url && originalRequest.url.includes('/users/fetch')) {
+        return Promise.reject(error);
+      }
+
+      // anomaly 실시간 폴링(1~3초)은 화면에서 warming/error를 직접 처리.
+      // 전역 토스트를 띄우면 워밍업·일시 오류 시 스팸이 된다.
+      if (isAnomalyRequestUrl(originalRequest?.url)) {
         return Promise.reject(error);
       }
 

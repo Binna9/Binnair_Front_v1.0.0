@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import AnomalyChart from './AnomalyChart';
+import AnomalyChart, { type AnomalyChartRangeMode } from './AnomalyChart';
 import anomalyService from '@/services/AnomalyService';
 import filterService from '@/services/FilterService';
 import {
@@ -11,40 +11,50 @@ import {
   type AnomalyWindowDays,
 } from '@/types/AnomalyTypes';
 import { Activity, AlertTriangle, CheckCircle2, Eye, OctagonAlert, RefreshCw, Settings2, Star } from 'lucide-react';
-import { getNextCandleStartTime, getTimeUntilNextCandle, toISO8601UTC } from '@/utils/timeframeUtils';
+import { toISO8601UTC } from '@/utils/timeframeUtils';
 import { buildFinalCardVM, buildFinalMarkerVM, buildSeriesDataset } from '@/utils/anomalyTransform';
+import { useAnomalyPolling } from '@/hooks/anomaly/useAnomalyPolling';
+import {
+  ANOMALY_POLL_INTERVAL_MS,
+  ANOMALY_SCORE_TIMEFRAME,
+  ANOMALY_SERIES_LOOKBACK_DAYS,
+  ANOMALY_WARMING_MESSAGE,
+  getAnomalyErrorMessage,
+  isAnomalyNotReady,
+  isAnomalyTsStale,
+} from '@/utils/anomalyRealtime';
 
 /**
- * 이상탐지 메인 컴포넌트
- * - 단일 화면: Series(A)로 차트 데이터셋 구성 → Final(B)로 상태 카드/마커 구성
+ * 이상탐지 모니터링
+ * - Redis Writer 스냅샷 REST를 series/final로 폴링 (1~3초)
+ * - Series로 차트 데이터셋 구성, Final로 상태 카드/마커 구성
  */
 const AnomalyDetection: React.FC = () => {
   const [searchParams] = useSearchParams();
   const urlVenueId = searchParams.get('venueId');
   const urlInstrumentId = searchParams.get('instrumentId');
 
-  // 화면에서 설정하는 4개: venueId / instrumentId / timeframe / mode
   const [venueOptions, setVenueOptions] = useState<Array<{ id: number; label: string }>>([]);
   const [instrumentOptions, setInstrumentOptions] = useState<Array<{ id: number; label: string }>>([]);
 
-  // draft: UI에서 선택만 하고, "설정"을 눌렀을 때만 적용(applied)됩니다.
+  // draft: UI 선택값 / applied: 실제 폴링에 사용하는 값
+  // timeframe은 Writer 스냅샷 키(ANOMALY_SCORE_TIMEFRAME)로 고정 — UI 선택 없음
   const [draftVenueId, setDraftVenueId] = useState<number>(1);
   const [draftInstrumentId, setDraftInstrumentId] = useState<number>(100);
-  const [draftTimeframe, setDraftTimeframe] = useState('5m');
   const [draftMode, setDraftMode] = useState<'max' | 'consensus'>('consensus');
 
-  // applied: 실제 API 호출/자동갱신에 사용되는 값
   const [venueId, setVenueId] = useState<number>(1);
   const [instrumentId, setInstrumentId] = useState<number>(100);
-  const [timeframe, setTimeframe] = useState('5m');
-  const [scoreVersion] = useState('z_v1'); // 기본값
+  const [scoreVersion] = useState('z_v1');
   const [mode, setMode] = useState<'max' | 'consensus'>('consensus');
 
   const [series, setSeries] = useState<AnomalySeriesDataset | null>(null);
   const [finalCard, setFinalCard] = useState<AnomalyFinalCardVM | null>(null);
   const [finalMarker, setFinalMarker] = useState<AnomalyFinalMarkerVM | null>(null);
+  const [chartRangeMode, setChartRangeMode] = useState<AnomalyChartRangeMode>('1m');
+  const isChartLiveTip = chartRangeMode === '1h';
 
-  // 초기에는 90d만 보이되, 레전드에서 30/60도 나중에 켤 수 있게 상태는 유지합니다.
+  // score window 레전드: 기본 90d 표시, 30/60은 토글
   const [visibleWindows, setVisibleWindows] = useState<Record<AnomalyWindowDays, boolean>>({
     30: false,
     60: false,
@@ -52,11 +62,20 @@ const AnomalyDetection: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [warming, setWarming] = useState(false);
+  const [stale, setStale] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
-  const [nextRefreshTime, setNextRefreshTime] = useState<Date | null>(null);
-  const autoRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const SERIES_LOOKBACK_DAYS = 90;
+
+  const [fixedFromISO, setFixedFromISO] = useState<string>('');
+  const fixedFromISORef = useRef<string>('');
+  const seriesRef = useRef<AnomalySeriesDataset | null>(null);
+  const lastServerTsRef = useRef<string | null>(null);
+  const tsFirstSeenAtRef = useRef<number | null>(null);
+  const [filtersReady, setFiltersReady] = useState(false);
+  const [settingsApplied, setSettingsApplied] = useState(false);
+  const didInitialApplyRef = useRef(false);
 
   const levelMeta = useMemo(() => {
     const level = (finalCard?.finalLevel ?? '').toUpperCase();
@@ -80,18 +99,10 @@ const AnomalyDetection: React.FC = () => {
       return base;
     }
 
-    // 알 수 없는 상태라도 UI가 깨지지 않게 기본값
     return { ...base, iconBg: 'bg-gray-50', iconFg: 'text-gray-700' };
   }, [finalCard?.finalLevel]);
 
-  // "현재시간 90일 전" 고정 from (한 번 정해지면 다음 갱신에서는 to만 움직임)
-  // - 초기 로드시 "딱 1번"만 series/final을 호출하기 위해, fixedFromISO 변경이 fetch 트리거가 되지 않도록 구조를 분리합니다.
-  const [fixedFromISO, setFixedFromISO] = useState<string>('');
-  const fixedFromISORef = useRef<string>('');
-  const [filtersReady, setFiltersReady] = useState(false);
-  const didInitialApplyRef = useRef(false);
-
-  // 필터(venue/instrument) 옵션 로드
+  // 필터(venue/instrument) — /anomaly/filter/* (web.market_symbols)
   useEffect(() => {
     let cancelled = false;
 
@@ -108,7 +119,6 @@ const AnomalyDetection: React.FC = () => {
           .filter((v) => v.isActive !== false)
           .map((v) => ({
             id: v.venueId,
-            // UI 라벨에서는 id 숫자를 숨김 (예: BTC(1) 같은 표기 제거)
             label: `${v.venueCode}`,
           }));
 
@@ -116,14 +126,12 @@ const AnomalyDetection: React.FC = () => {
           .filter((i) => i.isActive !== false)
           .map((i) => ({
             id: i.instrumentId,
-            // UI 라벨에서는 id 숫자를 숨김 (예: BTC(1) 같은 표기 제거)
             label: `${i.symbol}`,
           }));
 
         setVenueOptions(vOpts);
         setInstrumentOptions(iOpts);
 
-        // URL 파라미터 우선: /anomaly-monitor?venueId=1&instrumentId=100 형태로 진입 시 해당 종목 표시
         const paramVenueId = urlVenueId ? parseInt(urlVenueId, 10) : null;
         const paramInstrumentId = urlInstrumentId ? parseInt(urlInstrumentId, 10) : null;
         const hasValidUrlVenue = paramVenueId != null && !isNaN(paramVenueId) && vOpts.some((x) => x.id === paramVenueId);
@@ -137,7 +145,6 @@ const AnomalyDetection: React.FC = () => {
         setVenueId(nextVenueId);
         setInstrumentId(nextInstrumentId);
       } catch (e) {
-        // 필터 로드는 실패해도 화면 자체는 동작 가능(기본값으로 series/final 호출)
         console.error('❌ 필터(venues/instruments) 로드 실패:', e);
       } finally {
         if (!cancelled) setFiltersReady(true);
@@ -148,155 +155,174 @@ const AnomalyDetection: React.FC = () => {
     return () => {
       cancelled = true;
     };
-    // URL params는 마운트 시점에만 반영 (리스트에서 클릭 후 진입 시)
+    // URL params는 마운트 시점에만 반영
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchSeriesThenFinal = useCallback(
+  const fetchSeriesAndFinal = useCallback(
     async (params: {
       venueId: number;
       instrumentId: number;
-      timeframe: string;
       mode: 'max' | 'consensus';
       fromISO: string;
-      toTime?: Date;
+      signal?: AbortSignal;
+      forceLoading?: boolean;
     }) => {
-      try {
+      const showLoading = Boolean(params.forceLoading) || !seriesRef.current;
+      if (showLoading) {
         setLoading(true);
-        setError(null);
+      } else {
+        setRefreshing(true);
+      }
 
-        const toISO = toISO8601UTC(params.toTime ?? new Date());
+      try {
+        const toISO = toISO8601UTC(new Date());
+        const reqOpts = params.signal ? { signal: params.signal } : undefined;
 
-        const seriesResponse = await anomalyService.getSeries({
-          venueId: params.venueId,
-          instrumentId: params.instrumentId,
-          from: params.fromISO,
-          to: toISO,
-          timeframe: params.timeframe,
-          scoreVersion,
-        });
+        const [seriesResponse, finalResponse] = await Promise.all([
+          anomalyService.getSeries(
+            {
+              venueId: params.venueId,
+              instrumentId: params.instrumentId,
+              from: params.fromISO,
+              to: toISO,
+              timeframe: ANOMALY_SCORE_TIMEFRAME,
+              scoreVersion,
+            },
+            reqOpts
+          ),
+          anomalyService.getFinal(
+            {
+              venueId: params.venueId,
+              instrumentId: params.instrumentId,
+              timeframe: ANOMALY_SCORE_TIMEFRAME,
+              scoreVersion,
+              mode: params.mode,
+            },
+            reqOpts
+          ),
+        ]);
+
+        if (params.signal?.aborted) return;
 
         const dataset = buildSeriesDataset(seriesResponse, { scoreBands: DEFAULT_ANOMALY_SCORE_BANDS });
-        setSeries(dataset);
-        setLastUpdateTime(new Date());
-
-        // series(A) 이후 final(B)
-        const finalResponse = await anomalyService.getFinal({
-          venueId: params.venueId,
-          instrumentId: params.instrumentId,
-          timeframe: params.timeframe,
-          scoreVersion,
-          mode: params.mode,
-        });
-
         const card = buildFinalCardVM(finalResponse);
         const marker = buildFinalMarkerVM(finalResponse, dataset);
 
+        seriesRef.current = dataset;
+        setSeries(dataset);
         setFinalCard(card);
         setFinalMarker(marker);
+        setWarming(false);
+        setError(null);
+        setLastUpdateTime(new Date());
 
-        const nextRefresh = getNextCandleStartTime(params.timeframe, new Date());
-        setNextRefreshTime(nextRefresh);
+        // candle ts가 아닌 Writer/서버 시각으로 지연 판단 (봉 ts는 수 분간 동일할 수 있음)
+        const serverTs = seriesResponse.meta?.serverTime ?? finalResponse.ts ?? null;
+        if (serverTs !== lastServerTsRef.current) {
+          lastServerTsRef.current = serverTs;
+          tsFirstSeenAtRef.current = Date.now();
+          setStale(false);
+        } else {
+          setStale(isAnomalyTsStale(serverTs, tsFirstSeenAtRef.current));
+        }
       } catch (err) {
+        if (params.signal?.aborted) return;
+        if (isAnomalyNotReady(err)) {
+          setWarming(true);
+          setError(null);
+          return;
+        }
         console.error('❌ 이상탐지 데이터 조회 실패:', err);
-        setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다.');
+        setWarming(false);
+        // 이미 데이터가 있으면 폴링 실패 시 차트를 지우지 않음
+        if (!seriesRef.current) {
+          setError(getAnomalyErrorMessage(err));
+        }
       } finally {
-        setLoading(false);
+        if (!params.signal?.aborted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [scoreVersion]
   );
 
-  const applySettingsAndFetch = useCallback(
-    async (reason: 'initial' | 'user') => {
+  const applySettings = useCallback(
+    (reason: 'initial' | 'user') => {
       if (!filtersReady) return;
 
       const nextVenueId = draftVenueId;
       const nextInstrumentId = draftInstrumentId;
-      const nextTimeframe = draftTimeframe;
       const nextMode = draftMode;
 
-      // 적용
       setVenueId(nextVenueId);
       setInstrumentId(nextInstrumentId);
-      setTimeframe(nextTimeframe);
       setMode(nextMode);
 
-      // from 고정 재설정(적용 시점 기준으로 90일 전)
+      // Redis retention(기본 30일)에 맞춘 조회 구간. 적용 시점 from 고정, 이후 to만 전진
       const now = new Date();
-      const from = new Date(now.getTime() - SERIES_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+      const from = new Date(now.getTime() - ANOMALY_SERIES_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
       const fromISO = toISO8601UTC(from);
       fixedFromISORef.current = fromISO;
       setFixedFromISO(fromISO);
 
-      await fetchSeriesThenFinal({
+      // 종목/설정 변경 시 이전 차트는 유지하되, 첫 페인트는 loading
+      if (reason === 'user') {
+        seriesRef.current = null;
+        setSeries(null);
+        setFinalCard(null);
+        setFinalMarker(null);
+        lastServerTsRef.current = null;
+        tsFirstSeenAtRef.current = null;
+        setStale(false);
+      }
+
+      setSettingsApplied(true);
+      setWarming(false);
+      setError(null);
+
+      void fetchSeriesAndFinal({
         venueId: nextVenueId,
         instrumentId: nextInstrumentId,
-        timeframe: nextTimeframe,
         mode: nextMode,
         fromISO,
+        forceLoading: true,
       });
-
-      if (reason === 'user') {
-        // 적용을 눌렀을 때만 명시적으로 갱신 시간 표시가 바뀌게 됨(UX)
-        setLastUpdateTime(new Date());
-      }
     },
-    [draftInstrumentId, draftMode, draftTimeframe, draftVenueId, fetchSeriesThenFinal, filtersReady]
+    [draftInstrumentId, draftMode, draftVenueId, fetchSeriesAndFinal, filtersReady]
   );
 
-  // 초기 1회만 자동 적용(화면 렌더 시 series 1번 + final 1번)
+  // 필터 준비 후 1회 자동 적용
   useEffect(() => {
     if (!filtersReady) return;
     if (didInitialApplyRef.current) return;
     didInitialApplyRef.current = true;
-    applySettingsAndFetch('initial').catch(() => {
-      // 에러는 fetch 내부에서 처리
-    });
-  }, [applySettingsAndFetch, filtersReady]);
+    applySettings('initial');
+  }, [applySettings, filtersReady]);
 
-  // 자동 갱신: 다음 봉 시작 시점에 series → final 재호출
-  useEffect(() => {
-    let cancelled = false;
+  // Redis 스냅샷 실시간 폴링 (보고 있는 종목만)
+  const pollRealtime = useCallback(
+    async (signal: AbortSignal) => {
+      if (!fixedFromISORef.current) return;
+      await fetchSeriesAndFinal({
+        venueId,
+        instrumentId,
+        mode,
+        fromISO: fixedFromISORef.current,
+        signal,
+      });
+    },
+    [fetchSeriesAndFinal, instrumentId, mode, venueId]
+  );
 
-    if (autoRefreshTimeoutRef.current) {
-      clearTimeout(autoRefreshTimeoutRef.current);
-      autoRefreshTimeoutRef.current = null;
-    }
-    if (!filtersReady) return;
-    if (!fixedFromISORef.current) return;
-
-    const scheduleNext = () => {
-      if (cancelled) return;
-      const now = new Date();
-      const waitMs = Math.max(getTimeUntilNextCandle(timeframe, now), 1000);
-      autoRefreshTimeoutRef.current = setTimeout(() => {
-        if (cancelled) return;
-        const nextCandleStart = getNextCandleStartTime(timeframe, new Date());
-        fetchSeriesThenFinal({
-          venueId,
-          instrumentId,
-          timeframe,
-          mode,
-          fromISO: fixedFromISORef.current,
-          toTime: nextCandleStart,
-        })
-          .catch(() => {
-            // 실패해도 다음 스케줄은 유지
-          })
-          .finally(() => scheduleNext());
-      }, waitMs);
-    };
-
-    scheduleNext();
-    return () => {
-      cancelled = true;
-      if (autoRefreshTimeoutRef.current) {
-        clearTimeout(autoRefreshTimeoutRef.current);
-        autoRefreshTimeoutRef.current = null;
-      }
-    };
-  }, [filtersReady, fetchSeriesThenFinal, instrumentId, mode, timeframe, venueId]);
+  // Final 카드 + 시계열 차트 모두 항상 2초 폴링 (기간 버튼은 보기 구간만 변경)
+  useAnomalyPolling(pollRealtime, [venueId, instrumentId, mode, fixedFromISO], {
+    enabled: filtersReady && settingsApplied && Boolean(fixedFromISO),
+    intervalMs: ANOMALY_POLL_INTERVAL_MS,
+    immediate: false,
+  });
 
   const toggleWindow = useCallback((wd: AnomalyWindowDays) => {
     setVisibleWindows((prev) => ({ ...prev, [wd]: !prev[wd] }));
@@ -310,7 +336,6 @@ const AnomalyDetection: React.FC = () => {
     return instrumentOptions.find((i) => i.id === instrumentId)?.label ?? String(instrumentId);
   }, [instrumentId, instrumentOptions]);
 
-  // 이 화면 전용 즐겨찾기(venue/instrument) - 로컬 저장
   const ANOMALY_FAVORITES_STORAGE_KEY = 'anomaly.favorites.v1';
   const currentFavoriteId = useMemo(() => `${venueId}:${instrumentId}`, [venueId, instrumentId]);
   const [favoriteIds, setFavoriteIds] = useState<string[]>(() => {
@@ -341,21 +366,21 @@ const AnomalyDetection: React.FC = () => {
 
   const headerSubtitle = useMemo(() => {
     const nowISO = toISO8601UTC(new Date());
-    return `${timeframe} • (최근 ${SERIES_LOOKBACK_DAYS}일 고정) ${fixedFromISO} ~ ${nowISO}`;
-  }, [fixedFromISO, timeframe]);
+    return `LIVE · ${ANOMALY_POLL_INTERVAL_MS / 1000}s • (최근 ${ANOMALY_SERIES_LOOKBACK_DAYS}일) ${fixedFromISO || '-'} ~ ${nowISO}`;
+  }, [fixedFromISO]);
 
   const handleRefresh = useCallback(() => {
     if (!fixedFromISORef.current) return;
-    fetchSeriesThenFinal({
+    void fetchSeriesAndFinal({
       venueId,
       instrumentId,
-      timeframe,
       mode,
       fromISO: fixedFromISORef.current,
-    }).catch(() => {
-      // 에러는 fetch 내부에서 처리
+      forceLoading: !seriesRef.current,
     });
-  }, [fetchSeriesThenFinal, instrumentId, mode, timeframe, venueId]);
+  }, [fetchSeriesAndFinal, instrumentId, mode, venueId]);
+
+  const busy = loading || refreshing;
 
   return (
     <div className="container mx-auto p-4 flex justify-center mt-24 min-h-[700px]">
@@ -381,29 +406,43 @@ const AnomalyDetection: React.FC = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white tracking-tight">이상탐지 모니터링</h1>
-                  <p className="mt-0.5 text-blue-100/90 text-xs">Monitoring (Series/Final)</p>
+                  <p className="mt-0.5 text-blue-100/90 text-xs">
+                    Series/Final · {ANOMALY_POLL_INTERVAL_MS / 1000}초마다 갱신
+                  </p>
                 </div>
               </div>
 
-              {/* 우측: 업데이트/다음 + 새로고침 */}
+              {/* 우측: 실시간 상태 + 새로고침 */}
               <div className="flex items-center gap-3">
                 <div className="hidden sm:flex items-center gap-2 text-xs text-white/85">
+                  <span className="rounded bg-emerald-400/20 px-2 py-0.5 text-emerald-100 font-semibold">
+                    LIVE · {ANOMALY_POLL_INTERVAL_MS / 1000}s
+                  </span>
                   <span>
                     {lastUpdateTime
-                      ? `업데이트: ${lastUpdateTime.toLocaleTimeString()}`
-                      : '업데이트: -'}
+                      ? `갱신: ${lastUpdateTime.toLocaleTimeString()}`
+                      : '갱신: -'}
                   </span>
-                  {nextRefreshTime ? <span>{`다음: ${nextRefreshTime.toLocaleTimeString()}`}</span> : null}
+                  {warming ? (
+                    <span className="rounded bg-amber-400/20 px-2 py-0.5 text-amber-100 font-semibold">
+                      {ANOMALY_WARMING_MESSAGE}
+                    </span>
+                  ) : null}
+                  {!warming && stale ? (
+                    <span className="rounded bg-amber-400/20 px-2 py-0.5 text-amber-100 font-semibold">
+                      실시간 지연
+                    </span>
+                  ) : null}
                 </div>
 
                 <button
                   type="button"
                   onClick={handleRefresh}
-                  disabled={loading || !filtersReady}
+                  disabled={busy || !filtersReady}
                   className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/15 disabled:opacity-50"
                   title="새로고침"
                 >
-                  <RefreshCw className={`w-4 h-4 text-white ${loading ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-4 h-4 text-white ${busy ? 'animate-spin' : ''}`} />
                 </button>
               </div>
             </div>
@@ -414,9 +453,46 @@ const AnomalyDetection: React.FC = () => {
         <div className="p-6">
           <div className="space-y-6">
             {/* 설정 패널 */}
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative pb-20">
-              {/* 1줄: 셀렉박스 + mode(옆에 붙임) */}
-              <div className="flex flex-wrap items-end gap-3">
+            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 relative">
+              {/* 우상단: 즐겨찾기 (가로 위치 유지, 위로만 이동) */}
+              <button
+                type="button"
+                onClick={toggleFavorite}
+                aria-pressed={isFavorited}
+                className={`absolute top-6 right-3 z-10 group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm transition-all select-none ${
+                  isFavorited
+                    ? 'border-amber-200 bg-amber-50 hover:bg-amber-100/70 hover:shadow-md'
+                    : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-md'
+                }`}
+                title={isFavorited ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+              >
+                <span
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-[1.03] ${
+                    isFavorited ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  <Star
+                    className="w-5 h-5"
+                    fill={isFavorited ? 'currentColor' : 'none'}
+                  />
+                </span>
+
+                <span className="min-w-0 text-left">
+                  <span className={`block text-[11px] font-bold tracking-wide ${
+                    isFavorited ? 'text-amber-700' : 'text-gray-500'
+                  }`}>
+                    FAVORITE
+                  </span>
+                  <span className="block text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight truncate max-w-[360px]">
+                    {currentVenueLabel}
+                    <span className="mx-2 text-gray-300">/</span>
+                    {currentInstrumentLabel}
+                  </span>
+                </span>
+              </button>
+
+              {/* 1줄: 셀렉박스 + mode — 우측 즐겨찾기와 겹치지 않게 pr */}
+              <div className="flex flex-wrap items-end gap-3 pr-[min(100%,420px)]">
                 <div className="w-full sm:w-[200px]">
                   <label className="block text-xs font-medium text-gray-700 mb-1">venue</label>
                   <select
@@ -447,24 +523,7 @@ const AnomalyDetection: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="w-full sm:w-[160px]">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">timeframe</label>
-                  <select
-                    value={draftTimeframe}
-                    onChange={(e) => setDraftTimeframe(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="1m">1분</option>
-                    <option value="5m">5분</option>
-                    <option value="15m">15분</option>
-                    <option value="30m">30분</option>
-                    <option value="1h">1시간</option>
-                    <option value="4h">4시간</option>
-                    <option value="1d">1일</option>
-                  </select>
-                </div>
-
-                {/* mode + 설정: timeframe 옆(간격/디자인 개선) */}
+                {/* mode + 설정 — mode는 draft만 바꾸고, 설정 클릭 시 적용 */}
                 <div className="flex items-center gap-4 pb-1 ml-1 pl-4 border-l border-gray-200">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-gray-800">MODE</span>
@@ -498,71 +557,36 @@ const AnomalyDetection: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => applySettingsAndFetch('user')}
+                    onClick={() => applySettings('user')}
                     className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-semibold border shadow-sm transition-all hover:shadow-md ${
-                      loading
+                      busy
                         ? 'bg-gray-100 text-gray-500 border-gray-200'
                         : 'bg-white text-gray-800 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                     }`}
                     title="설정"
-                    disabled={loading || !filtersReady}
+                    disabled={busy || !filtersReady}
                   >
                     <Settings2 className="w-4 h-4" />
                     <span>설정</span>
                   </button>
                 </div>
-
-                {/* 업데이트/다음 문구는 헤더(새로고침 아이콘 옆)로 이동 */}
               </div>
 
-              {/* 밑: 설정 버튼 */}
-              <div className="mt-2 text-xs text-gray-500">{headerSubtitle}</div>
-
-              {/* 우하단 고정: 즐겨찾기 + 현재 심볼(venue/instrument) */}
-              <button
-                type="button"
-                onClick={toggleFavorite}
-                aria-pressed={isFavorited}
-                className={`absolute bottom-3 right-3 group inline-flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm transition-all select-none ${
-                  isFavorited
-                    ? 'border-amber-200 bg-amber-50 hover:bg-amber-100/70 hover:shadow-md'
-                    : 'border-gray-200 bg-white hover:bg-gray-50 hover:shadow-md'
-                }`}
-                title={isFavorited ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-              >
-                <span
-                  className={`h-10 w-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-[1.03] ${
-                    isFavorited ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'
-                  }`}
-                >
-                  <Star
-                    className="w-5 h-5"
-                    fill={isFavorited ? 'currentColor' : 'none'}
-                  />
-                </span>
-
-                <span className="min-w-0 text-left">
-                  <span className={`block text-[11px] font-bold tracking-wide ${
-                    isFavorited ? 'text-amber-700' : 'text-gray-500'
-                  }`}>
-                    FAVORITE
-                  </span>
-                  <span className="block text-lg sm:text-xl font-extrabold text-gray-900 tracking-tight truncate max-w-[360px]">
-                    {currentVenueLabel}
-                    <span className="mx-2 text-gray-300">/</span>
-                    {currentInstrumentLabel}
-                  </span>
-                </span>
-              </button>
+              <div className="mt-2 text-xs text-gray-500 pr-[min(100%,420px)]">{headerSubtitle}</div>
             </div>
 
-            {/* 상단 현재 상태 카드 */}
+            {/* 상단 현재 상태 카드 — 항상 2초 폴링 */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               {finalCard ? (
                 <div className="flex flex-col md:flex-row gap-6 md:items-start md:justify-between">
                   {/* 현재 상태 블록만 살짝 오른쪽으로 */}
                   <div className="pl-2">
-                    <div className="text-sm text-gray-500">• STAUTS</div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>• STATUS</span>
+                      <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                        LIVE · {ANOMALY_POLL_INTERVAL_MS / 1000}s
+                      </span>
+                    </div>
                     <div className="mt-1 flex items-center gap-3">
                       <span
                         className={`inline-flex items-center justify-center w-10 h-10 rounded-xl ${levelMeta.iconBg}`}
@@ -581,8 +605,11 @@ const AnomalyDetection: React.FC = () => {
                       </span>
                       <span>basis: <strong>{finalCard.basis ?? '-'}</strong></span>
                     </div>
-                    <div className="mt-2 text-sm text-gray-500">
-                      ts: {finalCard.ts ?? '-'} {finalMarker ? '' : '(마커 없음)'}
+                    <div className="mt-2 text-sm text-gray-600">
+                      갱신 시각:{' '}
+                      <strong className="tabular-nums">
+                        {lastUpdateTime ? lastUpdateTime.toLocaleString('ko-KR') : '-'}
+                      </strong>
                     </div>
                   </div>
 
@@ -624,9 +651,6 @@ const AnomalyDetection: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <div className="pt-1 text-[11px] text-gray-500">
-                        Tip: 차트를 클릭하면 해당 시점 상세가 고정되고, 차트 밖(또는 빈 공간)을 클릭하면 해제돼요.
-                      </div>
                     </div>
                   </div>
 
@@ -650,24 +674,58 @@ const AnomalyDetection: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              ) : warming ? (
+                <div className="text-amber-700 font-medium">{ANOMALY_WARMING_MESSAGE}… Writer 워밍업 후 자동 갱신됩니다.</div>
               ) : (
                 <div className="text-gray-500">{loading ? 'Final 로딩 중...' : 'Final 데이터가 없습니다.'}</div>
               )}
             </div>
 
-            {/* 차트 */}
+            {/* 시계열 차트 — 기간은 보기만. 배지/설명은 1H(tip LIVE) vs 그 외(5m) */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              {error ? (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold text-gray-800">시계열 차트</span>
+                {isChartLiveTip ? (
+                  <span className="rounded bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200">
+                    LIVE · {ANOMALY_POLL_INTERVAL_MS / 1000}s
+                  </span>
+                ) : (
+                  <span className="rounded bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 border border-slate-200">
+                    5m
+                  </span>
+                )}
+              </div>
+              <p className="mb-4 text-xs text-gray-500">
+                {isChartLiveTip
+                  ? `1H는 tip 샘플 궤적 보기입니다. 차트는 ${ANOMALY_POLL_INTERVAL_MS / 1000}초마다 폴링되며, tip이 샘플 시각으로 이어집니다(최근 1시간 보관).`
+                  : '1M/1W/1D는 5분 확정봉 중심 보기입니다. tip 밀도는 맨 끝 최근 1시간에만 있고, 그 이전은 5m 봉입니다.'}
+              </p>
+              {warming && !series ? (
+                <div className="text-amber-700 font-medium">
+                  {ANOMALY_WARMING_MESSAGE} — 시세 스냅샷이 준비되면 차트가 표시됩니다.
+                </div>
+              ) : error && !series ? (
                 <div className="text-red-600">❌ {error}</div>
               ) : !series ? (
                 <div className="text-gray-500">{loading ? 'Series 로딩 중...' : '표시할 데이터가 없습니다.'}</div>
               ) : (
-                <AnomalyChart
-                  dataset={series}
-                  visibleWindows={visibleWindows}
-                  onToggleWindow={toggleWindow}
-                  finalMarker={finalMarker}
-                />
+                <>
+                  {warming ? (
+                    <div className="mb-3 text-sm text-amber-700 font-medium">
+                      {ANOMALY_WARMING_MESSAGE} — 마지막 성공 스냅샷을 유지합니다.
+                    </div>
+                  ) : null}
+                  {stale && !warming ? (
+                    <div className="mb-3 text-sm text-amber-700 font-medium">실시간 지연 — 서버 스냅샷이 잠시 갱신되지 않습니다.</div>
+                  ) : null}
+                  <AnomalyChart
+                    dataset={series}
+                    visibleWindows={visibleWindows}
+                    onToggleWindow={toggleWindow}
+                    finalMarker={finalMarker}
+                    onRangeModeChange={setChartRangeMode}
+                  />
+                </>
               )}
             </div>
           </div>

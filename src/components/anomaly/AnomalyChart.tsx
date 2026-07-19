@@ -21,11 +21,28 @@ import {
 } from '@/types/AnomalyTypes';
 import { buildTooltipVM } from '@/utils/anomalyTransform';
 
+export type AnomalyChartRangeMode = '1m' | '1w' | '1d' | '1h' | 'custom';
+
+/** 균등 다운샘플로 DOM 상한 유지 (마지막 tip 포인트는 항상 포함) */
+function downsampleEven(
+  src: AnomalySeriesChartPoint[],
+  maxPoints: number
+): AnomalySeriesChartPoint[] {
+  if (src.length <= maxPoints) return src;
+  const step = Math.ceil(src.length / maxPoints);
+  const sampled: AnomalySeriesChartPoint[] = [];
+  for (let i = 0; i < src.length; i += step) sampled.push(src[i]);
+  const last = src[src.length - 1];
+  if (sampled.length === 0 || sampled[sampled.length - 1].t !== last.t) sampled.push(last);
+  return sampled;
+}
+
 interface AnomalyChartProps {
   dataset: AnomalySeriesDataset;
   visibleWindows: Record<AnomalyWindowDays, boolean>;
   finalMarker?: AnomalyFinalMarkerVM | null;
   onToggleWindow?: (wd: AnomalyWindowDays) => void;
+  onRangeModeChange?: (mode: AnomalyChartRangeMode) => void;
 }
 
 const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
@@ -33,6 +50,7 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   visibleWindows,
   finalMarker,
   onToggleWindow,
+  onRangeModeChange,
 }) => {
   const points = dataset.points;
   const scoreBands = dataset.scoreBands;
@@ -134,9 +152,15 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
     [setViewRangeSmooth]
   );
 
-  // 90d@5m면 포인트가 2~3만개까지 늘어 DOM 렌더링이 급격히 느려집니다.
-  // 표시용으로만 다운샘플링해서 DOM 노드 수를 제한합니다(툴팁/렌더링 모두 이 표본을 사용).
+  // 기간 버튼은 보기 구간만 변경. 데이터는 부모가 항상 2초 폴링.
+  // 확정봉=5m, tip=최근 1시간 샘플 append. 1H는 tip 밀도(최대 1800), 긴 구간은 800 다운샘플.
   const MAX_RENDER_POINTS = 800;
+  const MAX_RENDER_POINTS_1H = 1800;
+  const [rangeMode, setRangeMode] = useState<AnomalyChartRangeMode>('1m');
+
+  useEffect(() => {
+    onRangeModeChange?.(rangeMode);
+  }, [onRangeModeChange, rangeMode]);
 
   const pointsInRange = useMemo(() => {
     if (!viewRange) return points;
@@ -152,6 +176,39 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
     if (!Number.isFinite(tMin) || !Number.isFinite(tMax)) return null;
     return { tMin, tMax };
   }, [points]);
+
+  // 기본: 최근 1개월
+  const didInitDefaultRangeRef = useRef(false);
+  useEffect(() => {
+    if (!datasetExtent || didInitDefaultRangeRef.current) return;
+    didInitDefaultRangeRef.current = true;
+    const monthMs = 30 * 24 * 60 * 60 * 1000;
+    const right = datasetExtent.tMax;
+    const left = Math.max(datasetExtent.tMin, right - monthMs);
+    setRangeMode('1m');
+    setViewRange({ left, right });
+  }, [datasetExtent]);
+
+  // tip 갱신 시 최신 끝을 보고 있으면 창 follow (모든 기간 공통)
+  const prevTMaxRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!datasetExtent) return;
+    const tMax = datasetExtent.tMax;
+    const prev = prevTMaxRef.current;
+    prevTMaxRef.current = tMax;
+    if (prev == null || tMax === prev) return;
+
+    setViewRange((vr) => {
+      if (!vr) return vr;
+      const nearLiveEdge = Math.abs(vr.right - prev) <= 6 * 60 * 1000;
+      if (!nearLiveEdge) return vr;
+      const span = Math.max(0, vr.right - vr.left);
+      return {
+        left: Math.max(datasetExtent.tMin, tMax - span),
+        right: tMax,
+      };
+    });
+  }, [datasetExtent]);
 
   const formatDateInputValue = useCallback((t: number): string => {
     const d = new Date(t);
@@ -203,15 +260,9 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   }, [datasetExtent, formatDateInputValue, viewRange]);
 
   const displayPoints = useMemo(() => {
-    const src = pointsInRange;
-    if (src.length <= MAX_RENDER_POINTS) return src;
-    const step = Math.ceil(src.length / MAX_RENDER_POINTS);
-    const sampled: AnomalySeriesChartPoint[] = [];
-    for (let i = 0; i < src.length; i += step) sampled.push(src[i]);
-    const last = src[src.length - 1];
-    if (sampled.length === 0 || sampled[sampled.length - 1].t !== last.t) sampled.push(last);
-    return sampled;
-  }, [pointsInRange]);
+    if (rangeMode === '1h') return downsampleEven(pointsInRange, MAX_RENDER_POINTS_1H);
+    return downsampleEven(pointsInRange, MAX_RENDER_POINTS);
+  }, [pointsInRange, rangeMode]);
 
   const timeExtent = useMemo(() => {
     if (displayPoints.length === 0) return null;
@@ -654,24 +705,32 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
   }, [pinnedPoint]);
 
   const resetZoom = useCallback(() => {
-    applyViewRangeSmooth(null);
-  }, [applyViewRangeSmooth]);
+    if (!datasetExtent) {
+      setRangeMode('1m');
+      applyViewRangeSmooth(null);
+      return;
+    }
+    const monthMs = 30 * 24 * 60 * 60 * 1000;
+    const right = datasetExtent.tMax;
+    const left = Math.max(datasetExtent.tMin, right - monthMs);
+    setRangeMode('1m');
+    applyViewRangeSmooth({ left, right });
+  }, [applyViewRangeSmooth, datasetExtent]);
 
   const applyViewRange = useCallback((next: TimeRange | null) => {
     applyViewRangeSmooth(next);
   }, [applyViewRangeSmooth]);
 
   const applyQuickRange = useCallback(
-    (days: number | 'full') => {
+    (mode: '1m' | '1w' | '1d' | '1h') => {
       if (!datasetExtent) return;
-      if (days === 'full') {
-        applyViewRange(null);
-        return;
-      }
-
-      const D = 24 * 60 * 60 * 1000;
+      setRangeMode(mode);
+      const H = 60 * 60 * 1000;
+      const D = 24 * H;
+      const spanMs =
+        mode === '1m' ? 30 * D : mode === '1w' ? 7 * D : mode === '1d' ? D : H;
       const right = datasetExtent.tMax;
-      const left = Math.max(datasetExtent.tMin, right - days * D);
+      const left = Math.max(datasetExtent.tMin, right - spanMs);
       applyViewRange({ left, right });
     },
     [applyViewRange, datasetExtent]
@@ -685,6 +744,7 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
     const parsed = parseDateInputToRange(from, to);
     if (!parsed) return;
 
+    setRangeMode('custom');
     const left = Math.max(datasetExtent.tMin, Math.min(parsed.left, parsed.right));
     const right = Math.min(datasetExtent.tMax, Math.max(parsed.left, parsed.right));
     if (left >= right) {
@@ -1212,52 +1272,40 @@ const AnomalyChartInner: React.FC<AnomalyChartProps> = ({
         <div className="flex flex-col justify-center px-4 py-3 border-r border-gray-200 shrink-0 min-w-[140px]">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Series Chart</div>
           <div className="text-sm font-semibold text-gray-900">시계열 차트</div>
-          <div className="text-xs text-gray-500 truncate max-w-[180px] mt-0.5">
-            표본 {displayPoints.length.toLocaleString()} / 전체 {points.length.toLocaleString()}
+          <div className="text-xs text-gray-500 truncate max-w-[220px] mt-0.5">
+            표시 {displayPoints.length.toLocaleString()} / 구간 {pointsInRange.length.toLocaleString()}
           </div>
         </div>
 
-        {/* 2. 날짜 / 기간 */}
+        {/* 2. 날짜 / 기간 — 보기 구간만 변경 (폴링은 항상 2초) */}
         <div className="flex flex-col justify-center px-4 py-3 border-r border-gray-200 flex-1 min-w-0">
           <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">날짜</div>
           <div className="flex flex-nowrap items-center gap-3 flex-wrap">
             <div className="flex flex-nowrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => applyQuickRange('full')}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-                title="전체 기간"
-                disabled={!datasetExtent}
-              >
-                Full
-              </button>
-              <button
-                type="button"
-                onClick={() => applyQuickRange(30)}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-                title="최근 1개월"
-                disabled={!datasetExtent}
-              >
-                1M
-              </button>
-              <button
-                type="button"
-                onClick={() => applyQuickRange(7)}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-                title="최근 1주"
-                disabled={!datasetExtent}
-              >
-                1W
-              </button>
-              <button
-                type="button"
-                onClick={() => applyQuickRange(1)}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-800 transition-all hover:bg-gray-900 hover:text-white hover:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20"
-                title="최근 1일"
-                disabled={!datasetExtent}
-              >
-                1D
-              </button>
+              {([
+                { mode: '1m' as const, label: '1M', title: '최근 1개월' },
+                { mode: '1w' as const, label: '1W', title: '최근 1주' },
+                { mode: '1d' as const, label: '1D', title: '최근 1일' },
+                { mode: '1h' as const, label: '1H', title: '최근 1시간 (tip 샘플 궤적)' },
+              ]).map(({ mode, label, title }) => {
+                const active = rangeMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => applyQuickRange(mode)}
+                    className={`inline-flex items-center px-3 py-1.5 rounded-lg border text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-gray-900/20 ${
+                      active
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-900 hover:text-white hover:border-gray-900'
+                    }`}
+                    title={title}
+                    disabled={!datasetExtent}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             <div className="w-px h-6 bg-gray-200 shrink-0" />
             <div className="flex flex-nowrap items-center gap-2 shrink-0">
