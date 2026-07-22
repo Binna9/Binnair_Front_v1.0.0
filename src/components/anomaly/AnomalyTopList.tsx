@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, BarChart2, Gauge, Info, Radar, TrendingUp } from 'lucide-react';
 import anomalyService from '@/services/AnomalyService';
@@ -14,6 +14,12 @@ import {
   getAnomalyErrorMessage,
   isAnomalyNotReady,
 } from '@/utils/anomalyRealtime';
+import {
+  SoftCloudMotionStyles,
+  SoftCloudText,
+  useCloudMist,
+  usePrefersReducedMotion,
+} from '@/components/anomaly/softCloudMotion';
 
 type TopListStatus = 'loading' | 'ready' | 'warming' | 'error';
 
@@ -127,7 +133,7 @@ function ScoreBar({ val, max = 5 }: { val: number | null; max?: number }) {
         width: `${pct}%`,
         background: '#111827',
         borderRadius: 2,
-        transition: 'width 0.6s ease',
+        transition: 'width 1.35s cubic-bezier(0.4, 0, 0.2, 1)',
       }} />
     </div>
   );
@@ -216,25 +222,38 @@ function RapidChangeBadge({ delta }: { delta: number | null }) {
         boxShadow: '0 0 6px rgba(249,115,22,0.25)',
       };
 
-  return <span style={badgeStyle as React.CSSProperties}>{badge}</span>;
+  return <span style={badgeStyle as CSSProperties}>{badge}</span>;
 }
 
-function DeltaChip({ delta }: { delta: number | null }) {
-  if (delta == null) return <span style={{ color: '#64748b', fontSize: 10 }}>—</span>;
+function DeltaChip({ delta, reducedMotion }: { delta: number | null; reducedMotion: boolean }) {
+  if (delta == null) {
+    return <span style={{ color: '#64748b', fontSize: 10 }}>—</span>;
+  }
   const isUp = delta > 0;
   const color = isUp ? '#dc2626' : '#2563eb';
+  const text = `${isUp ? '↑' : '↓'} ${delta.toFixed(2)}`;
   return (
-    <span style={{ color, fontWeight: 600, fontSize: 10, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-      {isUp ? '↑' : '↓'} {delta.toFixed(2)}
-    </span>
+    <SoftCloudText
+      text={text}
+      reducedMotion={reducedMotion}
+      style={{
+        color,
+        fontWeight: 600,
+        fontSize: 10,
+        fontVariantNumeric: 'tabular-nums',
+        flexShrink: 0,
+        display: 'inline-block',
+      }}
+    />
   );
 }
 
-function CardRow({ keyType, item, onClick, accent }: {
+function CardRow({ keyType, item, onClick, accent, reducedMotion }: {
   keyType: CardKey;
   item: AnomalyScoreTopItem;
   onClick: () => void;
   accent: string;
+  reducedMotion: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -243,29 +262,48 @@ function CardRow({ keyType, item, onClick, accent }: {
     : (item.metricValue ?? null);
 
   const valStr = metricVal != null ? metricVal.toFixed(2) : '—';
+  const mistKey = [
+    item.rank,
+    item.finalLevel,
+    metricVal == null ? 'n' : Math.round(metricVal * 100),
+    item.delta == null ? 'n' : Math.round(item.delta * 100),
+  ].join('|');
+  const mist = useCloudMist(mistKey, reducedMotion);
 
   return (
     <div
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className={mist ? 'anomaly-row-mist' : undefined}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 8,
         padding: '7px 10px',
-        borderRadius: 3,
+        borderRadius: 6,
         cursor: 'pointer',
-        background: hovered ? 'rgba(0,0,0,0.04)' : 'transparent',
+        background: hovered ? 'rgba(0,0,0,0.03)' : 'transparent',
         borderLeft: `2px solid ${hovered ? accent : 'transparent'}`,
-        transition: 'all 0.15s ease',
+        transition: 'background 0.55s ease, border-color 0.45s ease',
         overflow: 'hidden',
+        position: 'relative',
       }}
     >
       {/* Rank */}
-      <span style={{ fontSize: 10, color: '#6b7280', width: COL_WIDTH.rank, flexShrink: 0, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-        {item.rank}
-      </span>
+      <SoftCloudText
+        text={String(item.rank)}
+        reducedMotion={reducedMotion}
+        style={{
+          fontSize: 10,
+          color: '#6b7280',
+          width: COL_WIDTH.rank,
+          flexShrink: 0,
+          textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
+          display: 'inline-block',
+        }}
+      />
 
       {/* Symbol + 정상/급변 배지 */}
       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
@@ -294,16 +332,24 @@ function CardRow({ keyType, item, onClick, accent }: {
       <ScoreBar val={metricVal} />
 
       {/* Value */}
-      <span style={{
-        fontSize: 12, fontWeight: 700, color: '#111827',
-        fontVariantNumeric: 'tabular-nums', flexShrink: 0, width: COL_WIDTH.score, textAlign: 'right',
-      }}>
-        {valStr}
-      </span>
+      <SoftCloudText
+        text={valStr}
+        reducedMotion={reducedMotion}
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: '#111827',
+          fontVariantNumeric: 'tabular-nums',
+          flexShrink: 0,
+          width: COL_WIDTH.score,
+          textAlign: 'right',
+          display: 'inline-block',
+        }}
+      />
 
       {/* META */}
       <div style={{ width: COL_WIDTH.meta, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-        <DeltaChip delta={item.delta} />
+        <DeltaChip delta={item.delta} reducedMotion={reducedMotion} />
       </div>
     </div>
   );
@@ -311,6 +357,7 @@ function CardRow({ keyType, item, onClick, accent }: {
 
 export default function AnomalyTopList() {
   const navigate = useNavigate();
+  const reducedMotion = usePrefersReducedMotion();
   const [mode, setMode] = useState<'consensus' | 'max'>('consensus');
   const [topLists, setTopLists] = useState<Record<string, AnomalyScoreTopResponse | null>>({
     agg: null, vol: null, rng: null, ret: null,
@@ -418,6 +465,7 @@ export default function AnomalyTopList() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span
+              className={reducedMotion ? undefined : 'anomaly-live-soft'}
               style={{
                 fontSize: 10, padding: '3px 8px', borderRadius: 4,
                 background: 'rgba(16,185,129,0.1)',
@@ -473,9 +521,11 @@ export default function AnomalyTopList() {
           <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600, letterSpacing: '0.04em' }}>
             갱신 시각
           </span>
-          <span style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em' }}>
-            {formatFetchedAt(fetchedAt)}
-          </span>
+          <SoftCloudText
+            text={formatFetchedAt(fetchedAt)}
+            reducedMotion={reducedMotion}
+            style={{ fontSize: 13, color: '#0f172a', fontWeight: 700, letterSpacing: '0.04em', display: 'inline-block' }}
+          />
           {status === 'warming' && (
             <span style={{
               fontSize: 10, fontWeight: 700, color: '#b45309',
@@ -587,10 +637,11 @@ export default function AnomalyTopList() {
                 {items.length > 0 ? (
                   items.map((item) => (
                     <CardRow
-                      key={`${item.venueId}-${item.instrumentId}-${item.rank}`}
+                      key={`${key}-${item.venueId}-${item.instrumentId}`}
                       keyType={key}
                       item={item}
                       accent={cfg.accent}
+                      reducedMotion={reducedMotion}
                       onClick={() =>
                         navigate(`/anomaly-monitor?venueId=${item.venueId}&instrumentId=${item.instrumentId}`)
                       }
@@ -647,6 +698,7 @@ export default function AnomalyTopList() {
           50% { opacity: 0.92; box-shadow: 0 0 12px rgba(220,38,38,0.45), inset 0 1px 0 rgba(255,255,255,0.2); }
         }
       `}</style>
+      <SoftCloudMotionStyles />
     </div>
   );
 }
