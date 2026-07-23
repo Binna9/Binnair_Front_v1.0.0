@@ -25,13 +25,13 @@ import { store, persistor, type AppDispatch } from './store/store';
 import { NotificationProvider } from './context/NotificationContext';
 import { useNotification } from './context/NotificationContext';
 import { setupNotificationInterceptor } from './utils/apiClient';
-import { useEffect, useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect, type ReactNode } from 'react';
 import { ThemeProvider } from './context/Theme/ThemeProvider';
 import '@/index.css';
 import { routeTransitionFinished, routeTransitionStarted } from '@/store/slices/uiSlice';
 import { GlobalLoadingOverlay } from '@/components/ui/GlobalLoadingOverlay';
 
-function NotificationInterceptorSetup({ children }) {
+function NotificationInterceptorSetup({ children }: { children: ReactNode }) {
   const { showToast } = useNotification();
 
   useLayoutEffect(() => {
