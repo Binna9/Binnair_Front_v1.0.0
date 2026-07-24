@@ -79,15 +79,15 @@ const DRIVER_LABEL: Record<string, string> = {
   RNG: '주원인:변동폭',
 };
 
-function buildFetchConfig(mode: 'consensus' | 'max', signal?: AbortSignal) {
-  const base = { ...MAIN_TOP_DEFAULTS, mode };
+function buildFetchConfig(signal?: AbortSignal) {
+  const base = { ...MAIN_TOP_DEFAULTS };
   const opts = signal ? { signal } : undefined;
   return [
     {
       key: 'agg' as const,
       title: '종합 이상',
-      sub: 'finalScore (mode 합성)',
-      desc: '30·60·90일 점수를 mode로 합성한 종합 이상도입니다.',
+      sub: 'finalScore (consensus)',
+      desc: '30·60·90일 점수를 consensus로 합성한 종합 이상도입니다.',
       fetch: () => anomalyService.getTop(base, opts),
     },
     {
@@ -358,7 +358,6 @@ function CardRow({ keyType, item, onClick, accent, reducedMotion }: {
 export default function AnomalyTopList() {
   const navigate = useNavigate();
   const reducedMotion = usePrefersReducedMotion();
-  const [mode, setMode] = useState<'consensus' | 'max'>('consensus');
   const [topLists, setTopLists] = useState<Record<string, AnomalyScoreTopResponse | null>>({
     agg: null, vol: null, rng: null, ret: null,
   });
@@ -369,7 +368,7 @@ export default function AnomalyTopList() {
   const hasDataRef = useRef(false);
 
   const pollTopLists = useCallback(async (signal: AbortSignal) => {
-    const config = buildFetchConfig(mode, signal);
+    const config = buildFetchConfig(signal);
     const results = await Promise.allSettled(
       config.map(async (c) => ({ key: c.key, data: await c.fetch() }))
     );
@@ -412,11 +411,11 @@ export default function AnomalyTopList() {
     hasDataRef.current = true;
     setStatus('ready');
     setErrorMessage(null);
-  }, [mode]);
+  }, []);
 
-  useAnomalyPolling(pollTopLists, [mode]);
+  useAnomalyPolling(pollTopLists, []);
 
-  const topListConfig = buildFetchConfig(mode);
+  const topListConfig = buildFetchConfig();
 
   return (
     <div style={{
@@ -477,28 +476,6 @@ export default function AnomalyTopList() {
             >
               LIVE · {ANOMALY_POLL_INTERVAL_MS / 1000}s
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {(['consensus', 'max'] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  style={{
-                    fontSize: 10,
-                    padding: '3px 8px',
-                    borderRadius: 4,
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    border: `1px solid ${mode === m ? 'rgba(100,116,139,0.5)' : 'rgba(100,116,139,0.2)'}`,
-                    background: mode === m ? 'rgba(100,116,139,0.15)' : 'rgba(100,116,139,0.08)',
-                    color: mode === m ? '#334155' : '#64748b',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -507,12 +484,6 @@ export default function AnomalyTopList() {
             <Info size={13} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
             <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.02em' }}>
               30·60·90일 통계 분포를 기준으로 가격 수익률·거래량·변동폭을 Z-Score로 표준화하여, 다중 기간 합성 점수로 이상도를 측정합니다.
-            </span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Info size={13} color="#64748b" strokeWidth={2} style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: '#64748b', letterSpacing: '0.02em' }}>
-              consensus=겹치는 구간 합의 max=세 값 중 최댓값.
             </span>
           </div>
         </div>

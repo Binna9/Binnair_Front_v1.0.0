@@ -39,14 +39,13 @@ const AnomalyDetection: React.FC = () => {
 
   // draft: UI 선택값 / applied: 실제 폴링에 사용하는 값
   // timeframe은 Writer 스냅샷 키(ANOMALY_SCORE_TIMEFRAME)로 고정 — UI 선택 없음
+  // mode는 서버 consensus 고정 — UI/요청 파라미터 없음
   const [draftVenueId, setDraftVenueId] = useState<number>(1);
   const [draftInstrumentId, setDraftInstrumentId] = useState<number>(100);
-  const [draftMode, setDraftMode] = useState<'max' | 'consensus'>('consensus');
 
   const [venueId, setVenueId] = useState<number>(1);
   const [instrumentId, setInstrumentId] = useState<number>(100);
   const [scoreVersion] = useState('z_v1');
-  const [mode, setMode] = useState<'max' | 'consensus'>('consensus');
 
   const [series, setSeries] = useState<AnomalySeriesDataset | null>(null);
   const [finalCard, setFinalCard] = useState<AnomalyFinalCardVM | null>(null);
@@ -163,7 +162,6 @@ const AnomalyDetection: React.FC = () => {
     async (params: {
       venueId: number;
       instrumentId: number;
-      mode: 'max' | 'consensus';
       fromISO: string;
       signal?: AbortSignal;
       forceLoading?: boolean;
@@ -197,7 +195,6 @@ const AnomalyDetection: React.FC = () => {
               instrumentId: params.instrumentId,
               timeframe: ANOMALY_SCORE_TIMEFRAME,
               scoreVersion,
-              mode: params.mode,
             },
             reqOpts
           ),
@@ -255,11 +252,9 @@ const AnomalyDetection: React.FC = () => {
 
       const nextVenueId = draftVenueId;
       const nextInstrumentId = draftInstrumentId;
-      const nextMode = draftMode;
 
       setVenueId(nextVenueId);
       setInstrumentId(nextInstrumentId);
-      setMode(nextMode);
 
       // Redis retention(기본 30일)에 맞춘 조회 구간. 적용 시점 from 고정, 이후 to만 전진
       const now = new Date();
@@ -286,12 +281,11 @@ const AnomalyDetection: React.FC = () => {
       void fetchSeriesAndFinal({
         venueId: nextVenueId,
         instrumentId: nextInstrumentId,
-        mode: nextMode,
         fromISO,
         forceLoading: true,
       });
     },
-    [draftInstrumentId, draftMode, draftVenueId, fetchSeriesAndFinal, filtersReady]
+    [draftInstrumentId, draftVenueId, fetchSeriesAndFinal, filtersReady]
   );
 
   // 필터 준비 후 1회 자동 적용
@@ -309,16 +303,15 @@ const AnomalyDetection: React.FC = () => {
       await fetchSeriesAndFinal({
         venueId,
         instrumentId,
-        mode,
         fromISO: fixedFromISORef.current,
         signal,
       });
     },
-    [fetchSeriesAndFinal, instrumentId, mode, venueId]
+    [fetchSeriesAndFinal, instrumentId, venueId]
   );
 
   // Final 카드 + 시계열 차트 모두 항상 2초 폴링 (기간 버튼은 보기 구간만 변경)
-  useAnomalyPolling(pollRealtime, [venueId, instrumentId, mode, fixedFromISO], {
+  useAnomalyPolling(pollRealtime, [venueId, instrumentId, fixedFromISO], {
     enabled: filtersReady && settingsApplied && Boolean(fixedFromISO),
     intervalMs: ANOMALY_POLL_INTERVAL_MS,
     immediate: false,
@@ -374,11 +367,10 @@ const AnomalyDetection: React.FC = () => {
     void fetchSeriesAndFinal({
       venueId,
       instrumentId,
-      mode,
       fromISO: fixedFromISORef.current,
       forceLoading: !seriesRef.current,
     });
-  }, [fetchSeriesAndFinal, instrumentId, mode, venueId]);
+  }, [fetchSeriesAndFinal, instrumentId, venueId]);
 
   const busy = loading || refreshing;
 
@@ -491,7 +483,7 @@ const AnomalyDetection: React.FC = () => {
                 </span>
               </button>
 
-              {/* 1줄: 셀렉박스 + mode — 우측 즐겨찾기와 겹치지 않게 pr */}
+              {/* 1줄: 셀렉박스 + 설정 — 우측 즐겨찾기와 겹치지 않게 pr */}
               <div className="flex flex-wrap items-end gap-3 pr-[min(100%,420px)]">
                 <div className="w-full sm:w-[200px]">
                   <label className="block text-xs font-medium text-gray-700 mb-1">venue</label>
@@ -523,38 +515,7 @@ const AnomalyDetection: React.FC = () => {
                   </select>
                 </div>
 
-                {/* mode + 설정 — mode는 draft만 바꾸고, 설정 클릭 시 적용 */}
                 <div className="flex items-center gap-4 pb-1 ml-1 pl-4 border-l border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-800">MODE</span>
-                    <div className="inline-flex items-center bg-white border border-gray-200 rounded-full p-1 shadow-sm">
-                      <label className="relative">
-                        <input
-                          className="peer sr-only"
-                          type="radio"
-                          name="final-mode"
-                          checked={draftMode === 'consensus'}
-                          onChange={() => setDraftMode('consensus')}
-                        />
-                        <span className="cursor-pointer select-none px-3 py-1.5 text-sm font-semibold rounded-full text-gray-600 transition-colors hover:bg-gray-100 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:hover:bg-gray-800">
-                          consensus
-                        </span>
-                      </label>
-                      <label className="relative">
-                        <input
-                          className="peer sr-only"
-                          type="radio"
-                          name="final-mode"
-                          checked={draftMode === 'max'}
-                          onChange={() => setDraftMode('max')}
-                        />
-                        <span className="cursor-pointer select-none px-3 py-1.5 text-sm font-semibold rounded-full text-gray-600 transition-colors hover:bg-gray-100 peer-checked:bg-gray-900 peer-checked:text-white peer-checked:hover:bg-gray-800">
-                          max
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-
                   <button
                     type="button"
                     onClick={() => applySettings('user')}

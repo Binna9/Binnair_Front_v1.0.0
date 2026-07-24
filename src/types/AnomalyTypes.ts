@@ -24,7 +24,7 @@ export interface AnomalyScoreSeriesResponse {
  */
 export interface AnomalyScoreFinalResponse {
   ts: string | null; // ISO 8601 (OffsetDateTime)
-  mode: string; // 예: 'max' | 'consensus'
+  mode: string; // 예: 'consensus'
   finalScore: number | null;
   finalLevel: string | null;
   basis: string | null;
@@ -236,16 +236,18 @@ export interface AnomalyScoreSeriesRequest {
 /**
  * 최종 평가 요청 파라미터
  * Path Parameters: venueId, instrumentId
- * Query Parameters: timeframe, scoreVersion, mode, ts (모두 선택)
+ * Query Parameters: timeframe, scoreVersion, ts (모두 선택)
+ * mode는 서버 consensus 고정 — FE에서 전달하지 않음
  */
-export type AnomalyScoreFinalMode = 'max' | 'consensus';
+export type AnomalyScoreFinalMode = 'consensus';
 
 export interface AnomalyScoreFinalRequest {
   venueId: number; // Path Parameter
   instrumentId: number; // Path Parameter
   timeframe?: string; // 캔들 주기 (기본: '5m')
   scoreVersion?: string; // 점수 버전 (기본: 'z_v1')
-  mode?: AnomalyScoreFinalMode; // 평가 모드 (기본: 'consensus')
+  /** @deprecated 서버 consensus 고정. 전달하지 않음 */
+  mode?: AnomalyScoreFinalMode;
   ts?: string; // ISO 8601 (OffsetDateTime) - optional, 없으면 최신 공통 ts 사용
 }
 

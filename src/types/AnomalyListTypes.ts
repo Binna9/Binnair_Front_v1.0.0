@@ -43,7 +43,8 @@ export interface AnomalyScoreTopItem {
  */
 export interface AnomalyScoreTopRequest {
   timeframe?: string;
-  mode?: string; // 기본: consensus
+  /** @deprecated 서버 consensus 고정. FE에서 전달하지 않음 */
+  mode?: string;
   limit?: number; // 기본: 20
   deltaBars?: number; // 기본: 12
 }
