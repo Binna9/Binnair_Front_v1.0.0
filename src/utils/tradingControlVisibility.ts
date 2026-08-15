@@ -1,4 +1,34 @@
-import type { TradingControlSchemaParam } from '@/types/TradingControlTypes';
+import type {
+  TradingControlSchemaGroup,
+  TradingControlSchemaParam,
+} from '@/types/TradingControlTypes';
+
+/**
+ * schema visible_when이 없거나 구 API여도
+ * timesfm_* / fincast_* 키·그룹은 predictor_type에 따라 상호 배타.
+ */
+export function resolveVisibleWhen(
+  visibleWhen: Record<string, string> | undefined,
+  keyOrGroupId?: string
+): Record<string, string> | undefined {
+  if (visibleWhen && Object.keys(visibleWhen).length > 0) {
+    return visibleWhen;
+  }
+  if (!keyOrGroupId) return undefined;
+  if (
+    keyOrGroupId === 'timesfm' ||
+    keyOrGroupId.startsWith('timesfm_')
+  ) {
+    return { predictor_type: 'timesfm' };
+  }
+  if (
+    keyOrGroupId === 'fincast' ||
+    keyOrGroupId.startsWith('fincast_')
+  ) {
+    return { predictor_type: 'fincast' };
+  }
+  return undefined;
+}
 
 /** schema visible_when — 현재 form 값과 모두 일치해야 표시 */
 export function matchesVisibleWhen(
@@ -29,8 +59,19 @@ export function isControlParamVisible(
   param: TradingControlSchemaParam,
   values: Record<string, unknown>
 ): boolean {
+  const rule =
+    resolveVisibleWhen(param.visible_when, param.key) ??
+    resolveVisibleWhen(undefined, param.group);
   return (
-    matchesVisibleWhen(param.visible_when, values) &&
+    matchesVisibleWhen(rule, values) &&
     isAutopilotGatedVisible(param.key, values)
   );
+}
+
+export function isControlGroupVisible(
+  group: TradingControlSchemaGroup,
+  values: Record<string, unknown>
+): boolean {
+  const rule = resolveVisibleWhen(group.visible_when, group.id);
+  return matchesVisibleWhen(rule, values);
 }

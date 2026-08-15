@@ -74,9 +74,15 @@ export function applyPredictorPreset(
   };
 
   if (predictorType === 'fincast') {
-    next.fincast_checkpoint_path =
-      preset.fincast_checkpoint_path ?? next.fincast_checkpoint_path;
-    next.fincast_repo_path = preset.fincast_repo_path ?? next.fincast_repo_path;
+    // 경로/백엔드는 비어 있거나 timesfm 잔여일 때 운영 기본값으로 맞춤
+    const ck = String(next.fincast_checkpoint_path ?? '');
+    const repo = String(next.fincast_repo_path ?? '');
+    if (!ck || ck.includes('timesfm') || ck.includes('huggingface')) {
+      next.fincast_checkpoint_path = preset.fincast_checkpoint_path;
+    }
+    if (!repo || repo.includes('timesfm')) {
+      next.fincast_repo_path = preset.fincast_repo_path;
+    }
     if (!next.fincast_backend) {
       next.fincast_backend = preset.fincast_backend;
     }

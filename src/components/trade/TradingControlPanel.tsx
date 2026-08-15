@@ -8,8 +8,8 @@ import type {
 } from '@/types/TradingControlTypes';
 import { applyPredictorPreset } from '@/utils/predictorPresets';
 import {
+  isControlGroupVisible,
   isControlParamVisible,
-  matchesVisibleWhen,
 } from '@/utils/tradingControlVisibility';
 
 function mergeStatusConfig(statusData: TradingControlStatusResponse) {
@@ -18,6 +18,12 @@ function mergeStatusConfig(statusData: TradingControlStatusResponse) {
     ...(statusData.config_basic ?? {}),
     ...(statusData.config_advanced ?? {}),
   };
+}
+
+/** status/DB 값이 timesfm 잔여여도 현재 predictor_type에 맞게 run/model 동기화 */
+function formValuesFromStatus(statusData: TradingControlStatusResponse) {
+  const merged = mergeStatusConfig(statusData);
+  return applyPredictorPreset(merged, merged.predictor_type);
 }
 
 const TradingControlPanel: React.FC = () => {
@@ -38,7 +44,7 @@ const TradingControlPanel: React.FC = () => {
         ]);
         setSchema(schemaData);
         setStatus(statusData);
-        setFormValues(mergeStatusConfig(statusData));
+        setFormValues(formValuesFromStatus(statusData));
       } catch (error) {
         console.error('Failed to load trading control data', error);
       } finally {
@@ -76,7 +82,7 @@ const TradingControlPanel: React.FC = () => {
   const visibleGroups = useMemo(() => {
     const fromSchema = schema?.groups;
     if (fromSchema && fromSchema.length > 0) {
-      return fromSchema.filter((g) => matchesVisibleWhen(g.visible_when, formValues));
+      return fromSchema.filter((g) => isControlGroupVisible(g, formValues));
     }
     // schema에 groups 없으면 등장 순서 기반
     const seen = new Set<string>();
@@ -86,7 +92,7 @@ const TradingControlPanel: React.FC = () => {
       seen.add(p.group);
       inferred.push({ id: p.group, label: groupLabelById.get(p.group) ?? p.group });
     }
-    return inferred;
+    return inferred.filter((g) => isControlGroupVisible(g, formValues));
   }, [schema, formValues, visibleParams, groupLabelById]);
 
   const updateField = (key: string, value: unknown) => {
@@ -104,7 +110,7 @@ const TradingControlPanel: React.FC = () => {
       await TradingControlService.saveConfig(formValues);
       const statusData = await TradingControlService.getStatus();
       setStatus(statusData);
-      setFormValues(mergeStatusConfig(statusData));
+      setFormValues(formValuesFromStatus(statusData));
     } catch (error) {
       console.error('Failed to save config', error);
     } finally {
@@ -117,7 +123,7 @@ const TradingControlPanel: React.FC = () => {
       await TradingControlService.startTrading(formValues);
       const statusData = await TradingControlService.getStatus();
       setStatus(statusData);
-      setFormValues(mergeStatusConfig(statusData));
+      setFormValues(formValuesFromStatus(statusData));
     } catch (error) {
       console.error('Failed to start trading', error);
     }
@@ -324,7 +330,7 @@ const TradingControlPanel: React.FC = () => {
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={() => status && setFormValues(mergeStatusConfig(status))}
+            onClick={() => status && setFormValues(formValuesFromStatus(status))}
             className="min-w-[92px] rounded-lg border border-[#2b3139] bg-[#11161b] px-3.5 py-2 text-[12px] font-medium text-[#848e9c] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#3a434d] hover:bg-[#171d24] hover:text-[#eaecef] active:translate-y-0"
           >
             초기화
