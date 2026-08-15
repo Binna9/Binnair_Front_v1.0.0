@@ -1,6 +1,6 @@
 /** BinnAIR Monitor API — GET /api/v1/engine-runs, /engine-runs/{run_id} 응답 타입 */
 
-export type EngineRunStatus = 'running' | 'stopped' | 'error';
+export type EngineRunStatus = 'running' | 'paused' | 'stopped' | 'error';
 
 export interface EngineRunDTO {
   id?: number;
@@ -22,4 +22,12 @@ export interface EngineRunDTO {
 export interface EngineRunListResponse {
   items: EngineRunDTO[];
   count: number;
+}
+
+/** 활성(running) run 우선, 없으면 목록 첫 행 */
+export function pickActiveEngineRun(
+  items: EngineRunDTO[] | undefined | null
+): EngineRunDTO | null {
+  if (!items?.length) return null;
+  return items.find((r) => r.status === 'running') ?? items[0] ?? null;
 }

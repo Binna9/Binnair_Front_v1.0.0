@@ -7,6 +7,7 @@ import OrderHistoryTable from '@/components/trade/history/OrderHistoryTable';
 import ExecutionHistoryTable from '@/components/trade/history/ExecutionHistoryTable';
 import PositionHistoryTable from '@/components/trade/history/PositionHistoryTable';
 import TradeHistoryTable from '@/components/trade/history/TradeHistoryTable';
+import HistoryRunSelect from '@/components/trade/history/HistoryRunSelect';
 
 type TabKey =
   | 'positions'
@@ -33,21 +34,24 @@ const TabsInner: React.FC = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-[#0b0e11]">
-      <div className="flex-shrink-0 flex items-center gap-1 px-3 py-2 border-b border-[#2b3139] overflow-x-auto custom-scroll">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setActiveTab(t.key)}
-            className={`flex-shrink-0 px-3 py-1.5 text-sm rounded transition-colors ${
-              activeTab === t.key
-                ? 'bg-[#2b3139] text-[#eaecef]'
-                : 'text-[#848e9c] hover:text-[#eaecef]'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-[#2b3139] overflow-x-auto custom-scroll">
+        <HistoryRunSelect compact />
+        <div className="flex items-center gap-1 min-w-0">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={`flex-shrink-0 px-3 py-1.5 text-sm rounded transition-colors ${
+                activeTab === t.key
+                  ? 'bg-[#2b3139] text-[#eaecef]'
+                  : 'text-[#848e9c] hover:text-[#eaecef]'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {activeTab === 'positions' && <LivePositionsTable />}

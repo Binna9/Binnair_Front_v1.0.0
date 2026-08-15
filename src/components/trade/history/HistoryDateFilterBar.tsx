@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, RotateCcw, CalendarDays } from 'lucide-react';
 import { DatePreset, useHistoryFilter } from '@/context/HistoryFilterContext';
+import HistoryRunSelect from '@/components/trade/history/HistoryRunSelect';
 
 const PRESETS: { key: DatePreset; label: string }[] = [
   { key: 'today', label: '오늘' },
@@ -217,8 +218,6 @@ const HistoryDateFilterBar: React.FC = () => {
     setPreset,
     applySearch,
     resetFilters,
-    runId,
-    engineLoading,
   } = useHistoryFilter();
 
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -233,6 +232,8 @@ const HistoryDateFilterBar: React.FC = () => {
       className="flex-shrink-0 flex flex-wrap items-center gap-2.5 px-4 py-3 border-b border-[#2b3139] text-sm"
       onKeyDown={onKeyDown}
     >
+      <HistoryRunSelect />
+
       <div className="flex items-center gap-1.5">
         {PRESETS.map((p) => (
           <button
@@ -276,20 +277,12 @@ const HistoryDateFilterBar: React.FC = () => {
       <button
         type="button"
         onClick={resetFilters}
-        title="7일 기본값으로 초기화"
+        title="활성 run + 7일 기본값으로 초기화"
         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md border border-[#3a4149] bg-[#1e2329] text-[#eaecef] text-sm font-medium transition-all duration-200 ease-out hover:border-[#848e9c] hover:bg-[#2b3139] hover:scale-105 active:scale-100"
       >
         <RotateCcw size={15} strokeWidth={2.25} />
         초기화
       </button>
-
-      <span className="ml-auto text-xs text-[#848e9c] truncate max-w-[220px]">
-        {engineLoading && !runId
-          ? 'run 조회 중...'
-          : runId
-            ? `run: ${runId}`
-            : 'run 없음'}
-      </span>
     </div>
   );
 };

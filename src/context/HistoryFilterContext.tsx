@@ -1,5 +1,13 @@
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+} from 'react';
 import { useEngineRun } from '@/hooks/trading/useEngineRun';
+import { EngineRunDTO, pickActiveEngineRun } from '@/types/TradingEngineRunTypes';
 import {
   dateToFromAt,
   dateToToAt,
@@ -10,8 +18,13 @@ import {
 
 export type DatePreset = 'today' | '7d' | '30d' | 'all' | 'custom';
 
+/** 전체 run (API에 run_id 미전달) */
+export const HISTORY_RUN_ALL = '';
+
 export interface HistoryFilterState {
   runId: string | undefined;
+  runs: EngineRunDTO[];
+  setRunId: (runId: string) => void;
   /** 입력 중인(미적용) 값 */
   symbol: string;
   fromDate: string;
@@ -68,7 +81,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   children,
   enableDateFilter = true,
 }) => {
-  const { run, loading: engineLoading } = useEngineRun();
+  const { run, runs, loading: engineLoading } = useEngineRun();
   const initial = enableDateFilter ? applyPreset('7d') : { from: '', to: '' };
   const initialPreset: DatePreset = enableDateFilter ? '7d' : 'all';
 
@@ -78,11 +91,28 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   const [toDate, setToDateState] = useState(initial.to);
   const [symbol, setSymbol] = useState('');
 
-  // applied (API) — 초기값은 draft와 동일하게 한 번 적용
+  // applied (API)
   const [appliedFromDate, setAppliedFromDate] = useState(initial.from);
   const [appliedToDate, setAppliedToDate] = useState(initial.to);
   const [appliedSymbol, setAppliedSymbol] = useState('');
   const [searchEpoch, setSearchEpoch] = useState(0);
+
+  /** undefined = 아직 엔진 run 목록 대기 / '' = 전체 / 그 외 = 선택 run */
+  const [selectedRunId, setSelectedRunId] = useState<string | undefined>(undefined);
+  const [runTouched, setRunTouched] = useState(false);
+
+  // 사용자 미선택 시 활성(running) run으로 기본 바인딩
+  useEffect(() => {
+    if (runTouched) return;
+    const fallback = pickActiveEngineRun(runs)?.run_id ?? run?.run_id;
+    if (fallback) setSelectedRunId(fallback);
+  }, [runs, run, runTouched]);
+
+  const setRunId = useCallback((id: string) => {
+    setRunTouched(true);
+    setSelectedRunId(id === HISTORY_RUN_ALL ? HISTORY_RUN_ALL : id);
+    setSearchEpoch((n) => n + 1);
+  }, []);
 
   const setPreset = useCallback((p: DatePreset) => {
     setPresetState(p);
@@ -121,6 +151,9 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   }, [fromDate, toDate, symbol]);
 
   const resetFilters = useCallback(() => {
+    setRunTouched(false);
+    const active = pickActiveEngineRun(runs)?.run_id ?? run?.run_id;
+    setSelectedRunId(active);
     if (!enableDateFilter) {
       setSymbol('');
       setAppliedSymbol('');
@@ -136,7 +169,7 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
     setAppliedToDate(range.to);
     setAppliedSymbol('');
     setSearchEpoch((n) => n + 1);
-  }, [enableDateFilter]);
+  }, [enableDateFilter, runs, run]);
 
   const fromAt = enableDateFilter
     ? dateToFromAt(normalizeDateInput(appliedFromDate) || appliedFromDate || undefined)
@@ -144,7 +177,9 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   const toAt = enableDateFilter
     ? dateToToAt(normalizeDateInput(appliedToDate) || appliedToDate || undefined)
     : undefined;
-  const runId = run?.run_id;
+
+  const runId =
+    selectedRunId === HISTORY_RUN_ALL ? undefined : selectedRunId || undefined;
 
   const queryParams = useMemo(
     () => ({
@@ -159,6 +194,8 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
   const value = useMemo<HistoryFilterState>(
     () => ({
       runId,
+      runs,
+      setRunId,
       symbol,
       fromDate,
       toDate,
@@ -178,6 +215,8 @@ export const HistoryFilterProvider: React.FC<HistoryFilterProviderProps> = ({
     }),
     [
       runId,
+      runs,
+      setRunId,
       symbol,
       fromDate,
       toDate,

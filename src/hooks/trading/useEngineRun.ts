@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import tradingEngineRunService from '@/services/TradingEngineRunService';
-import { EngineRunDTO } from '@/types/TradingEngineRunTypes';
+import {
+  EngineRunDTO,
+  pickActiveEngineRun,
+} from '@/types/TradingEngineRunTypes';
 
 const POLL_MS = 15000;
 
-/** 가장 최근 엔진 실행 세션(run) 상태를 폴링 — 엔진 생존 여부·run_id·모델 버전 표시용 */
+/**
+ * 엔진 실행 세션 폴링.
+ * timesfm / fincast 등 run_id별 행이 여러 개일 수 있으므로
+ * running 세션을 우선 표시한다 (없으면 최신 1건).
+ */
 export function useEngineRun() {
   const [run, setRun] = useState<EngineRunDTO | null>(null);
+  const [runs, setRuns] = useState<EngineRunDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,9 +22,11 @@ export function useEngineRun() {
 
     const poll = async () => {
       try {
-        const data = await tradingEngineRunService.getEngineRuns({ limit: 1 });
+        const data = await tradingEngineRunService.getEngineRuns({ limit: 20 });
         if (cancelled) return;
-        setRun(data.items[0] ?? null);
+        const items = data.items ?? [];
+        setRuns(items);
+        setRun(pickActiveEngineRun(items));
       } catch {
         // 다음 폴링에서 재시도
       } finally {
@@ -33,5 +43,5 @@ export function useEngineRun() {
     };
   }, []);
 
-  return { run, loading };
+  return { run, runs, loading };
 }
