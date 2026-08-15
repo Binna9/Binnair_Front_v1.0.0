@@ -14,7 +14,7 @@ const EVENT_ICON: Record<FlowEventType, string> = {
 };
 
 const EVENT_LABEL: Record<FlowEventType, string> = {
-  inference: 'TimesFM 추론',
+  inference: '모델 추론',
   signal: '시그널',
   order_request: '주문 요청',
   order_execution: '체결',

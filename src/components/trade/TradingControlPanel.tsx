@@ -1,17 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TradingControlService } from '@/services/TradingControlService';
 import type {
+  TradingControlSchemaGroup,
   TradingControlSchemaParam,
   TradingControlSchemaResponse,
   TradingControlStatusResponse,
 } from '@/types/TradingControlTypes';
+import { applyPredictorPreset } from '@/utils/predictorPresets';
+import {
+  isControlParamVisible,
+  matchesVisibleWhen,
+} from '@/utils/tradingControlVisibility';
 
-const HIDDEN_CONTROL_KEY =
-  /(^|_)(tp|sl|take_?profit|stop_?loss)(_|$)/i;
-const HIDDEN_CONTROL_LABEL = /익절|손절|take\s*profit|stop\s*loss|\bTP\b|\bSL\b/i;
-
-function isHiddenControlParam(param: TradingControlSchemaParam) {
-  return HIDDEN_CONTROL_KEY.test(param.key) || HIDDEN_CONTROL_LABEL.test(param.label);
+function mergeStatusConfig(statusData: TradingControlStatusResponse) {
+  return {
+    ...(statusData.config ?? {}),
+    ...(statusData.config_basic ?? {}),
+    ...(statusData.config_advanced ?? {}),
+  };
 }
 
 const TradingControlPanel: React.FC = () => {
@@ -32,11 +38,7 @@ const TradingControlPanel: React.FC = () => {
         ]);
         setSchema(schemaData);
         setStatus(statusData);
-        setFormValues({
-          ...(statusData.config ?? {}),
-          ...(statusData.config_basic ?? {}),
-          ...(statusData.config_advanced ?? {}),
-        });
+        setFormValues(mergeStatusConfig(statusData));
       } catch (error) {
         console.error('Failed to load trading control data', error);
       } finally {
@@ -47,20 +49,53 @@ const TradingControlPanel: React.FC = () => {
     load();
   }, []);
 
-  const basicFields = useMemo(() => {
-    return (schema?.params ?? []).filter(
-      (param) => param.tier === 'basic' && !isHiddenControlParam(param)
+  const visibleParams = useMemo(() => {
+    return (schema?.params ?? []).filter((param) =>
+      isControlParamVisible(param, formValues)
     );
+  }, [schema, formValues]);
+
+  const basicFields = useMemo(
+    () => visibleParams.filter((p) => p.tier === 'basic'),
+    [visibleParams]
+  );
+
+  const advancedFields = useMemo(
+    () => visibleParams.filter((p) => p.tier === 'advanced'),
+    [visibleParams]
+  );
+
+  const groupLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of schema?.groups ?? []) {
+      map.set(g.id, g.label);
+    }
+    return map;
   }, [schema]);
 
-  const advancedFields = useMemo(() => {
-    return (schema?.params ?? []).filter(
-      (param) => param.tier === 'advanced' && !isHiddenControlParam(param)
-    );
-  }, [schema]);
+  const visibleGroups = useMemo(() => {
+    const fromSchema = schema?.groups;
+    if (fromSchema && fromSchema.length > 0) {
+      return fromSchema.filter((g) => matchesVisibleWhen(g.visible_when, formValues));
+    }
+    // schema에 groups 없으면 등장 순서 기반
+    const seen = new Set<string>();
+    const inferred: TradingControlSchemaGroup[] = [];
+    for (const p of visibleParams) {
+      if (seen.has(p.group)) continue;
+      seen.add(p.group);
+      inferred.push({ id: p.group, label: groupLabelById.get(p.group) ?? p.group });
+    }
+    return inferred;
+  }, [schema, formValues, visibleParams, groupLabelById]);
 
   const updateField = (key: string, value: unknown) => {
-    setFormValues((prev) => ({ ...prev, [key]: value }));
+    setFormValues((prev) => {
+      if (key === 'predictor_type') {
+        return applyPredictorPreset(prev, value);
+      }
+      return { ...prev, [key]: value };
+    });
   };
 
   const handleSave = async () => {
@@ -69,6 +104,7 @@ const TradingControlPanel: React.FC = () => {
       await TradingControlService.saveConfig(formValues);
       const statusData = await TradingControlService.getStatus();
       setStatus(statusData);
+      setFormValues(mergeStatusConfig(statusData));
     } catch (error) {
       console.error('Failed to save config', error);
     } finally {
@@ -81,6 +117,7 @@ const TradingControlPanel: React.FC = () => {
       await TradingControlService.startTrading(formValues);
       const statusData = await TradingControlService.getStatus();
       setStatus(statusData);
+      setFormValues(mergeStatusConfig(statusData));
     } catch (error) {
       console.error('Failed to start trading', error);
     }
@@ -100,6 +137,9 @@ const TradingControlPanel: React.FC = () => {
     const value = formValues[param.key];
     const inputClassName =
       'w-full rounded border border-[#2b3139] bg-[#0b0e11] px-2 py-1.5 text-xs text-[#eaecef] outline-none focus:border-[#0ecb81]';
+    const hint = param.hint ? (
+      <span className="text-[10px] text-[#5e6673]">{param.hint}</span>
+    ) : null;
 
     if (param.options && param.options.length > 0) {
       return (
@@ -116,6 +156,7 @@ const TradingControlPanel: React.FC = () => {
               </option>
             ))}
           </select>
+          {hint}
         </label>
       );
     }
@@ -124,15 +165,18 @@ const TradingControlPanel: React.FC = () => {
       return (
         <label
           key={param.key}
-          className="flex items-center justify-between rounded border border-[#2b3139] bg-[#11161b] px-2 py-2 text-[11px] text-[#eaecef]"
+          className="flex flex-col gap-1 rounded border border-[#2b3139] bg-[#0b0e11] px-2 py-2 text-[11px] text-[#eaecef]"
         >
-          <span>{param.label}</span>
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => updateField(param.key, e.target.checked)}
-            className="h-4 w-4 rounded border-[#2b3139] bg-[#0b0e11]"
-          />
+          <div className="flex items-center justify-between">
+            <span>{param.label}</span>
+            <input
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => updateField(param.key, e.target.checked)}
+              className="h-4 w-4 rounded border-[#2b3139] bg-[#0b0e11]"
+            />
+          </div>
+          {hint}
         </label>
       );
     }
@@ -142,6 +186,9 @@ const TradingControlPanel: React.FC = () => {
         <span>{param.label}</span>
         <input
           type={param.type === 'number' || param.type === 'int' ? 'number' : 'text'}
+          min={param.min}
+          max={param.max}
+          placeholder={param.example}
           value={value === null || value === undefined ? '' : String(value)}
           onChange={(e) => {
             const rawValue = e.target.value;
@@ -153,8 +200,24 @@ const TradingControlPanel: React.FC = () => {
           }}
           className={inputClassName}
         />
+        {hint}
       </label>
     );
+  };
+
+  const renderGroupedFields = (fields: TradingControlSchemaParam[]) => {
+    return visibleGroups.map((group) => {
+      const groupFields = fields.filter((f) => f.group === group.id);
+      if (groupFields.length === 0) return null;
+      return (
+        <div key={group.id} className="space-y-2">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-[#5e6673]">
+            {group.label}
+          </div>
+          <div className="grid grid-cols-1 gap-2">{groupFields.map(renderField)}</div>
+        </div>
+      );
+    });
   };
 
   if (loading) {
@@ -164,6 +227,8 @@ const TradingControlPanel: React.FC = () => {
       </div>
     );
   }
+
+  const engineStatus = status?.engine_run?.status;
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#0b0e11]">
@@ -190,15 +255,34 @@ const TradingControlPanel: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="flex items-center justify-between rounded-lg border border-[#2b3139] bg-[#11161b] px-2.5 py-2 text-[11px]">
-          <span className="text-[#848e9c]">매매 상태</span>
-          <span
-            className={`rounded-full px-2 py-0.5 font-semibold ${
-              status?.trading_enabled ? 'bg-[#0ecb8133] text-[#0ecb81]' : 'bg-[#f6465d33] text-[#f6465d]'
-            }`}
-          >
-            {status?.trading_enabled ? 'ON' : 'OFF'}
-          </span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between rounded-lg border border-[#2b3139] bg-[#11161b] px-2.5 py-2 text-[11px]">
+            <span className="text-[#848e9c]">매매 상태</span>
+            <span
+              className={`rounded-full px-2 py-0.5 font-semibold ${
+                status?.trading_enabled
+                  ? 'bg-[#0ecb8133] text-[#0ecb81]'
+                  : 'bg-[#f6465d33] text-[#f6465d]'
+              }`}
+            >
+              {status?.trading_enabled ? 'ON' : 'OFF'}
+            </span>
+          </div>
+          {engineStatus ? (
+            <div className="flex items-center justify-between rounded-lg border border-[#2b3139] bg-[#11161b] px-2.5 py-2 text-[11px]">
+              <span className="text-[#848e9c]">엔진 run</span>
+              <span className="font-semibold text-[#eaecef]">{engineStatus}</span>
+            </div>
+          ) : null}
+          {typeof formValues.predictor_type === 'string' ? (
+            <div className="flex items-center justify-between rounded-lg border border-[#2b3139] bg-[#11161b] px-2.5 py-2 text-[11px]">
+              <span className="text-[#848e9c]">모델</span>
+              <span className="font-semibold text-[#eaecef]">
+                {String(formValues.predictor_type)}
+                {formValues.model_version ? ` · ${String(formValues.model_version)}` : ''}
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -209,9 +293,7 @@ const TradingControlPanel: React.FC = () => {
               <div className="text-[11px] font-semibold text-[#eaecef]">기본 설정</div>
               <div className="text-[10px] text-[#848e9c]">basic</div>
             </div>
-            <div className="grid grid-cols-1 gap-2">
-              {basicFields.map(renderField)}
-            </div>
+            <div className="space-y-3">{renderGroupedFields(basicFields)}</div>
           </section>
 
           <section className="rounded-lg border border-[#2b3139] bg-[#11161b] p-2.5">
@@ -234,9 +316,7 @@ const TradingControlPanel: React.FC = () => {
               </div>
             </button>
             {showAdvanced && (
-              <div className="grid grid-cols-1 gap-2">
-                {advancedFields.map(renderField)}
-              </div>
+              <div className="space-y-3">{renderGroupedFields(advancedFields)}</div>
             )}
           </section>
         </div>
@@ -244,7 +324,7 @@ const TradingControlPanel: React.FC = () => {
         <div className="mt-3 flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={() => setFormValues({ ...(status?.config_basic ?? {}), ...(status?.config_advanced ?? {}) })}
+            onClick={() => status && setFormValues(mergeStatusConfig(status))}
             className="min-w-[92px] rounded-lg border border-[#2b3139] bg-[#11161b] px-3.5 py-2 text-[12px] font-medium text-[#848e9c] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#3a434d] hover:bg-[#171d24] hover:text-[#eaecef] active:translate-y-0"
           >
             초기화
