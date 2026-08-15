@@ -229,60 +229,69 @@ const HistoryDateFilterBar: React.FC = () => {
 
   return (
     <div
-      className="flex-shrink-0 flex flex-wrap items-center gap-2.5 px-4 py-3 border-b border-[#2b3139] text-sm"
+      className="flex-shrink-0 border-b border-[#2b3139] px-4 py-3 text-sm"
       onKeyDown={onKeyDown}
     >
-      <HistoryRunSelect />
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+        <HistoryRunSelect className="lg:max-w-[26rem] lg:shrink-0" />
 
-      <div className="flex items-center gap-1.5">
-        {PRESETS.map((p) => (
+        <div
+          className="hidden w-px shrink-0 self-stretch bg-[#2b3139] lg:block"
+          aria-hidden
+        />
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5 rounded-lg border border-[#2b3139]/bg-[#0b0e11]/40 px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            {PRESETS.map((p) => (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => setPreset(p.key)}
+                className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  preset === p.key
+                    ? 'bg-[#2b3139] text-[#eaecef]'
+                    : 'text-[#848e9c] hover:text-[#eaecef] hover:bg-[#1e2329]'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 text-[#848e9c]">
+            <DateField value={fromDate} onChange={setFromDate} ariaLabel="시작일" />
+            <span className="text-sm">~</span>
+            <DateField value={toDate} onChange={setToDate} ariaLabel="종료일" />
+          </div>
+
+          <input
+            type="text"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+            placeholder="심볼 (예: XRPUSDT)"
+            className="w-40 bg-[#1e2329] border border-[#2b3139] rounded-md px-2.5 py-1.5 text-sm text-[#eaecef] placeholder:text-[#848e9c] outline-none focus:border-[#848e9c]"
+          />
+
           <button
-            key={p.key}
             type="button"
-            onClick={() => setPreset(p.key)}
-            className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-              preset === p.key
-                ? 'bg-[#2b3139] text-[#eaecef]'
-                : 'text-[#848e9c] hover:text-[#eaecef] hover:bg-[#1e2329]'
-            }`}
+            onClick={applySearch}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#f0b90b] text-[#0b0e11] text-sm font-semibold transition-all duration-200 ease-out hover:bg-[#f8d12f] hover:scale-105 hover:shadow-[0_4px_14px_rgba(240,185,11,0.35)] active:scale-100"
           >
-            {p.label}
+            <Search size={15} strokeWidth={2.5} />
+            검색
           </button>
-        ))}
+
+          <button
+            type="button"
+            onClick={resetFilters}
+            title="활성 run + 7일 기본값으로 초기화"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md border border-[#3a4149] bg-[#1e2329] text-[#eaecef] text-sm font-medium transition-all duration-200 ease-out hover:border-[#848e9c] hover:bg-[#2b3139] hover:scale-105 active:scale-100"
+          >
+            <RotateCcw size={15} strokeWidth={2.25} />
+            초기화
+          </button>
+        </div>
       </div>
-
-      <div className="flex items-center gap-2 text-[#848e9c]">
-        <DateField value={fromDate} onChange={setFromDate} ariaLabel="시작일" />
-        <span className="text-sm">~</span>
-        <DateField value={toDate} onChange={setToDate} ariaLabel="종료일" />
-      </div>
-
-      <input
-        type="text"
-        value={symbol}
-        onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-        placeholder="심볼 (예: XRPUSDT)"
-        className="w-40 bg-[#1e2329] border border-[#2b3139] rounded-md px-2.5 py-1.5 text-sm text-[#eaecef] placeholder:text-[#848e9c] outline-none focus:border-[#848e9c]"
-      />
-
-      <button
-        type="button"
-        onClick={applySearch}
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#f0b90b] text-[#0b0e11] text-sm font-semibold transition-all duration-200 ease-out hover:bg-[#f8d12f] hover:scale-105 hover:shadow-[0_4px_14px_rgba(240,185,11,0.35)] active:scale-100"
-      >
-        <Search size={15} strokeWidth={2.5} />
-        검색
-      </button>
-
-      <button
-        type="button"
-        onClick={resetFilters}
-        title="활성 run + 7일 기본값으로 초기화"
-        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md border border-[#3a4149] bg-[#1e2329] text-[#eaecef] text-sm font-medium transition-all duration-200 ease-out hover:border-[#848e9c] hover:bg-[#2b3139] hover:scale-105 active:scale-100"
-      >
-        <RotateCcw size={15} strokeWidth={2.25} />
-        초기화
-      </button>
     </div>
   );
 };

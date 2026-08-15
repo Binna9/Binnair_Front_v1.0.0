@@ -34,9 +34,13 @@ const TabsInner: React.FC = () => {
 
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden bg-[#0b0e11]">
-      <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b border-[#2b3139] overflow-x-auto custom-scroll">
-        <HistoryRunSelect compact />
-        <div className="flex items-center gap-1 min-w-0">
+      <div className="flex-shrink-0 flex flex-col gap-2 border-b border-[#2b3139] px-3 py-2 sm:flex-row sm:items-stretch sm:gap-3">
+        <HistoryRunSelect compact className="sm:max-w-[24rem] sm:shrink-0" />
+        <div
+          className="hidden w-px shrink-0 self-stretch bg-[#2b3139] sm:block"
+          aria-hidden
+        />
+        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto custom-scroll rounded-lg border border-[#2b3139]/bg-[#0b0e11]/40 px-2 py-1.5">
           {tabs.map((t) => (
             <button
               key={t.key}
